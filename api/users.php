@@ -1,35 +1,39 @@
 <?php
+/**
+ * Users API
+ *
+ * Endpoints:
+ * - GET /api/users.php - Get all users (for task assignment dropdown)
+ */
+
 session_start();
-require_once '../config/Database.php';
-require_once '../config/config.php';
+
+// Load configuration
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/Database.php';
 
 header('Content-Type: application/json');
 
-// 检查登录
+// Check authentication
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
-    echo json_encode(['error' => '未授权']);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
-$db = Database::getInstance()->getConnection();
-$method = $_SERVER['REQUEST_METHOD'];
+try {
+    $db = Database::getInstance()->getConnection();
 
-switch ($method) {
-    case 'GET':
-        // 获取所有用户（用于任务分配）
-        $stmt = $db->prepare("
-            SELECT id, username, nickname, role, created_at
-            FROM users
-            ORDER BY created_at ASC
-        ");
-        $stmt->execute();
-        $users = $stmt->fetchAll();
+    // Get all users
+    $stmt = $db->query("SELECT id, username, nickname, role FROM users ORDER BY nickname");
+    $users = $stmt->fetchAll();
 
-        echo json_encode($users);
-        break;
-
-    default:
-        http_response_code(405);
-        echo json_encode(['error' => '方法不允许']);
+    echo json_encode([
+        'success' => true,
+        'users' => $users
+    ]);
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 }

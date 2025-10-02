@@ -1,98 +1,121 @@
-<div class="step-content">
-    <h2>数据库配置</h2>
-    <p>请填写数据库连接信息</p>
+<?php
+/**
+ * Installation Step 2: Database Configuration
+ */
 
-    <form id="dbForm" class="install-form">
-        <div class="form-group">
-            <label>数据库主机</label>
-            <input type="text" name="db_host" value="localhost" required>
-            <small>通常为 localhost 或 127.0.0.1</small>
-        </div>
-
-        <div class="form-group">
-            <label>数据库端口</label>
-            <input type="text" name="db_port" value="3306" required>
-            <small>MySQL 默认端口为 3306</small>
-        </div>
-
-        <div class="form-group">
-            <label>数据库名称</label>
-            <input type="text" name="db_name" value="family_tasks" required>
-            <small>数据库必须已存在，系统会自动创建表</small>
-        </div>
-
-        <div class="form-group">
-            <label>数据库用户名</label>
-            <input type="text" name="db_user" value="root" required>
-        </div>
-
-        <div class="form-group">
-            <label>数据库密码</label>
-            <input type="password" name="db_pass">
-            <small>如果没有密码请留空</small>
-        </div>
-
-        <div class="form-group">
-            <label>表前缀（可选）</label>
-            <input type="text" name="db_prefix" value="">
-            <small>如需在同一数据库安装多个系统，请设置表前缀</small>
-        </div>
-
-        <div class="button-group">
-            <button type="button" class="btn-secondary" onclick="location.href='?step=1'">上一步</button>
-            <button type="button" class="btn-primary" onclick="testConnection()">测试连接</button>
-            <button type="submit" class="btn-primary" id="nextBtn" style="display: none;">下一步</button>
-        </div>
-    </form>
-
-    <div id="testResult" class="test-result"></div>
-</div>
-
-<script>
-function testConnection() {
-    const form = document.getElementById('dbForm');
-    const formData = new FormData(form);
-    const resultDiv = document.getElementById('testResult');
-
-    resultDiv.innerHTML = '<p class="testing">⏳ 正在测试数据库连接...</p>';
-
-    fetch('test_db.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            resultDiv.innerHTML = '<p class="success">✓ 数据库连接成功！</p>';
-            document.getElementById('nextBtn').style.display = 'inline-block';
-        } else {
-            resultDiv.innerHTML = '<p class="error">✗ 连接失败: ' + data.message + '</p>';
-            document.getElementById('nextBtn').style.display = 'none';
-        }
-    })
-    .catch(err => {
-        resultDiv.innerHTML = '<p class="error">✗ 测试失败: ' + err.message + '</p>';
-    });
+// Check if already installed
+if (file_exists(__DIR__ . '/../config/installed.lock')) {
+    header('Location: /public/index.php');
+    exit;
 }
-
-document.getElementById('dbForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(this);
-
-    fetch('save_db.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            location.href = '?step=3';
-        } else {
-            alert('保存失败: ' + data.message);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Family Task Manager Setup - Database Configuration</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/install/style.css"/>
+    <script src="/install/install.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
         }
-    })
-    .catch(err => {
-        alert('保存失败: ' + err.message);
-    });
-});
-</script>
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex min-h-screen w-full flex-col">
+    <div class="flex h-full grow flex-col">
+        <header class="flex items-center justify-between whitespace-nowrap border-b border-black/10 dark:border-white/10 px-10 py-3">
+            <div class="flex items-center gap-4 text-black dark:text-white">
+                <div class="size-6 text-primary">
+                    <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Family Task Manager Setup</h2>
+            </div>
+        </header>
+        <main class="flex-1 px-4 py-8 sm:px-6 lg:px-8">
+            <div class="mx-auto w-full max-w-2xl">
+                <div class="text-center">
+                    <h1 class="text-3xl font-bold tracking-tight text-black dark:text-white sm:text-4xl">Database Configuration</h1>
+                    <p class="mt-3 text-base leading-7 text-black/60 dark:text-white/60">Enter your database connection details below.</p>
+                </div>
+                <div class="mt-8 bg-white dark:bg-background-dark/50 rounded-lg p-6 shadow-sm">
+                    <form id="db-form" class="space-y-6">
+                        <div>
+                            <label for="db_host" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Database Host</label>
+                            <input type="text" name="db_host" id="db_host" value="localhost" required
+                                   class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Use 'db' for Docker environment, 'localhost' for local development</p>
+                        </div>
+
+                        <div>
+                            <label for="db_port" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Port</label>
+                            <input type="text" name="db_port" id="db_port" value="3306" required
+                                   class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                        </div>
+
+                        <div>
+                            <label for="db_name" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Database Name</label>
+                            <input type="text" name="db_name" id="db_name" value="family_tasks" required
+                                   class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                        </div>
+
+                        <div>
+                            <label for="db_user" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                            <input type="text" name="db_user" id="db_user" value="root" required
+                                   class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                        </div>
+
+                        <div>
+                            <label for="db_pass" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                            <input type="password" name="db_pass" id="db_pass" value=""
+                                   class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                        </div>
+
+                        <div class="flex gap-3">
+                            <button type="button" id="test-connection" onclick="testDatabaseConnection()"
+                                    class="flex-1 inline-flex items-center justify-center rounded-lg bg-gray-200 dark:bg-gray-700 px-5 py-2.5 text-sm font-semibold text-gray-900 dark:text-white shadow-sm hover:bg-gray-300 dark:hover:bg-gray-600">
+                                Test Connection
+                            </button>
+                        </div>
+                    </form>
+
+                    <div id="test-result" class="mt-4"></div>
+                </div>
+
+                <div class="mt-8 flex justify-between">
+                    <a href="/install/step1.php"
+                       class="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-700 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                        Back
+                    </a>
+                    <button type="button" id="next-btn" onclick="saveDatabaseConfig()" disabled
+                            class="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+</body>
+</html>

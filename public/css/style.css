@@ -1,280 +1,119 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* Family Task Manager Styles */
+
+.material-symbols-outlined {
+    font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24
 }
 
-body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background: #f5f5f5;
-    color: #333;
+/* Tab styles */
+.tab-active {
+    border-color: #137fec;
+    color: #137fec;
 }
 
-/* 认证页面 */
-#auth-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.tab-inactive {
+    border-color: transparent;
 }
 
-.auth-box {
-    background: white;
-    padding: 40px;
-    border-radius: 10px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 400px;
+/* Task card styles */
+.task-card {
+    @apply p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer;
 }
 
-.auth-box h1 {
-    text-align: center;
-    color: #667eea;
-    margin-bottom: 30px;
+.task-card:hover {
+    @apply border-primary/50;
 }
 
-.form-container h2 {
-    margin-bottom: 20px;
-    color: #333;
+/* Priority badges */
+.priority-low {
+    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
 }
 
-.form-container input {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 14px;
+.priority-medium {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300;
 }
 
-.form-container button {
-    width: 100%;
-    padding: 12px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    font-size: 16px;
-    cursor: pointer;
-    transition: background 0.3s;
+.priority-high {
+    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
 }
 
-.form-container button:hover {
-    background: #5568d3;
+/* Status badges */
+.status-pending {
+    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300;
 }
 
-.form-container p {
-    text-align: center;
-    margin-top: 15px;
-    color: #666;
+.status-in_progress {
+    @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300;
 }
 
-.form-container a {
-    color: #667eea;
-    text-decoration: none;
+.status-completed {
+    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
 }
 
-/* 导航栏 */
-.navbar {
-    background: white;
-    padding: 15px 30px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+.status-cancelled {
+    @apply bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300;
 }
 
-.navbar h1 {
-    color: #667eea;
-    font-size: 24px;
+/* Modal animation */
+#task-modal {
+    animation: fadeIn 0.2s ease-in-out;
 }
 
-.user-info {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
-#logoutBtn {
-    padding: 8px 16px;
-    background: #ff4757;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
+/* Loading spinner */
+.spinner {
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid #137fec;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
 }
 
-/* 容器 */
-.container {
-    max-width: 1200px;
-    margin: 30px auto;
-    padding: 0 20px;
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
-/* 任务控制 */
-.task-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 15px;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
 }
 
-.btn-primary {
-    padding: 10px 20px;
-    background: #667eea;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
 }
 
-.filter-tabs {
-    display: flex;
-    gap: 10px;
+.dark ::-webkit-scrollbar-track {
+    background: #2d3748;
 }
 
-.tab {
-    padding: 8px 16px;
-    background: white;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s;
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
 }
 
-.tab.active {
-    background: #667eea;
-    color: white;
-    border-color: #667eea;
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 
-/* 任务列表 */
-.task-list {
-    display: grid;
-    gap: 15px;
+.dark ::-webkit-scrollbar-thumb {
+    background: #4a5568;
 }
 
-.task-item {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    border-left: 4px solid #ddd;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.task-item:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-}
-
-.task-item.priority-high {
-    border-left-color: #ff4757;
-}
-
-.task-item.priority-medium {
-    border-left-color: #ffa502;
-}
-
-.task-item.priority-low {
-    border-left-color: #26de81;
-}
-
-.task-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 10px;
-}
-
-.task-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #333;
-    margin-bottom: 5px;
-}
-
-.task-status {
-    padding: 4px 12px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: 500;
-}
-
-.task-status.pending {
-    background: #ffeaa7;
-    color: #d63031;
-}
-
-.task-status.in_progress {
-    background: #74b9ff;
-    color: #0984e3;
-}
-
-.task-status.completed {
-    background: #55efc4;
-    color: #00b894;
-}
-
-.task-description {
-    color: #666;
-    margin-bottom: 10px;
-}
-
-.task-meta {
-    display: flex;
-    gap: 15px;
-    font-size: 14px;
-    color: #999;
-}
-
-/* 模态框 */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-}
-
-.modal-content {
-    background: white;
-    max-width: 600px;
-    margin: 50px auto;
-    padding: 30px;
-    border-radius: 10px;
-    position: relative;
-}
-
-.close {
-    position: absolute;
-    right: 20px;
-    top: 20px;
-    font-size: 28px;
-    cursor: pointer;
-    color: #999;
-}
-
-#taskForm input,
-#taskForm textarea,
-#taskForm select {
-    width: 100%;
-    padding: 12px;
-    margin-bottom: 15px;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    font-size: 14px;
-}
-
-#taskForm textarea {
-    resize: vertical;
-    font-family: inherit;
+.dark ::-webkit-scrollbar-thumb:hover {
+    background: #718096;
 }

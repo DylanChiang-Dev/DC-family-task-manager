@@ -1,13 +1,18 @@
-# 配置文件
+# Environment files
+.env
+
+# Configuration files (generated during installation)
 config/database.php
 config/config.php
 config/installed.lock
-.env
 
-# 日志和缓存
-*.log
-cache/
-logs/
+# Composer
+vendor/
+composer.lock
+
+# Node modules (if any)
+node_modules/
+package-lock.json
 
 # IDE
 .vscode/
@@ -16,14 +21,18 @@ logs/
 *.swo
 *~
 
-# 系统文件
+# OS
 .DS_Store
 Thumbs.db
+Desktop.ini
 
-# 依赖
-vendor/
-node_modules/
+# Logs
+*.log
+logs/
 
-# 上传文件
-uploads/*
-!uploads/.gitkeep
+# Temporary files
+tmp/
+temp/
+
+# PHP
+.phpunit.result.cache

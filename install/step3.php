@@ -1,106 +1,134 @@
-<div class="step-content">
-    <h2>创建管理员账户</h2>
-    <p>设置系统管理员账号和密码</p>
+<?php
+/**
+ * Installation Step 3: Admin Account Creation
+ */
 
-    <form id="adminForm" class="install-form">
-        <div class="form-group">
-            <label>管理员用户名</label>
-            <input type="text" name="admin_user" required minlength="4" maxlength="50">
-            <small>4-50个字符，建议使用字母和数字</small>
-        </div>
+// Check if already installed
+if (file_exists(__DIR__ . '/../config/installed.lock')) {
+    header('Location: /public/index.php');
+    exit;
+}
 
-        <div class="form-group">
-            <label>管理员密码</label>
-            <input type="password" name="admin_pass" required minlength="6" id="password">
-            <small>至少6个字符，建议使用字母、数字和符号组合</small>
-        </div>
+// Check if database is configured
+if (!file_exists(__DIR__ . '/../config/database.php')) {
+    header('Location: /install/step2.php');
+    exit;
+}
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Family Task Manager Setup - Admin Account</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="/install/style.css"/>
+    <script src="/install/install.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex min-h-screen w-full flex-col">
+    <div class="flex h-full grow flex-col">
+        <header class="flex items-center justify-between whitespace-nowrap border-b border-black/10 dark:border-white/10 px-10 py-3">
+            <div class="flex items-center gap-4 text-black dark:text-white">
+                <div class="size-6 text-primary">
+                    <svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M24 45.8096C19.6865 45.8096 15.4698 44.5305 11.8832 42.134C8.29667 39.7376 5.50128 36.3314 3.85056 32.3462C2.19985 28.361 1.76794 23.9758 2.60947 19.7452C3.451 15.5145 5.52816 11.6284 8.57829 8.5783C11.6284 5.52817 15.5145 3.45101 19.7452 2.60948C23.9758 1.76795 28.361 2.19986 32.3462 3.85057C36.3314 5.50129 39.7376 8.29668 42.134 11.8833C44.5305 15.4698 45.8096 19.6865 45.8096 24L24 24L24 45.8096Z" fill="currentColor"></path>
+                    </svg>
+                </div>
+                <h2 class="text-lg font-bold leading-tight tracking-[-0.015em]">Family Task Manager Setup</h2>
+            </div>
+        </header>
+        <main class="flex-1 px-4 py-8 sm:px-6 lg:px-8">
+            <div class="mx-auto w-full max-w-2xl">
+                <div class="text-center">
+                    <h1 class="text-3xl font-bold tracking-tight text-black dark:text-white sm:text-4xl">Create Admin Account</h1>
+                    <p class="mt-3 text-base leading-7 text-black/60 dark:text-white/60">Set up your administrator account to manage the system.</p>
+                </div>
+                <div class="mt-8 bg-white dark:bg-background-dark/50 rounded-lg p-6 shadow-sm">
+                    <form id="admin-form" onsubmit="return handleSubmit(event)" class="space-y-6">
+                        <div>
+                            <label for="username" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Username</label>
+                            <input type="text" name="username" id="username" required minlength="3" maxlength="50"
+                                   class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">3-50 characters, letters and numbers only</p>
+                        </div>
 
-        <div class="form-group">
-            <label>确认密码</label>
-            <input type="password" name="admin_pass_confirm" required minlength="6" id="passwordConfirm">
-        </div>
+                        <div>
+                            <label for="nickname" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Nickname</label>
+                            <input type="text" name="nickname" id="nickname" required maxlength="50"
+                                   class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                        </div>
 
-        <div class="form-group">
-            <label>管理员昵称</label>
-            <input type="text" name="admin_nickname" required maxlength="50">
-            <small>显示名称，例如"爸爸"、"妈妈"等</small>
-        </div>
+                        <div>
+                            <label for="password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Password</label>
+                            <input type="password" name="password" id="password" required minlength="8" oninput="validatePassword()"
+                                   class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">At least 8 characters</p>
+                        </div>
 
-        <div class="form-group">
-            <label>网站名称</label>
-            <input type="text" name="site_name" value="家庭任务管理" required maxlength="100">
-        </div>
+                        <div>
+                            <label for="confirm_password" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Confirm Password</label>
+                            <input type="password" name="confirm_password" id="confirm_password" required minlength="8" oninput="validatePassword()"
+                                   class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                            <p id="password-error" class="mt-1 text-xs text-red-600 dark:text-red-400"></p>
+                        </div>
+                    </form>
+                </div>
 
-        <div class="button-group">
-            <button type="button" class="btn-secondary" onclick="location.href='?step=2'">上一步</button>
-            <button type="submit" class="btn-primary">开始安装</button>
-        </div>
-    </form>
-
-    <div id="installProgress" class="install-progress" style="display: none;">
-        <h3>正在安装...</h3>
-        <div class="progress-bar">
-            <div class="progress-fill" id="progressFill"></div>
-        </div>
-        <p id="progressText">准备中...</p>
+                <div class="mt-8 flex justify-between">
+                    <a href="/install/step2.php"
+                       class="inline-flex items-center justify-center rounded-lg border border-gray-300 dark:border-gray-700 px-5 py-2.5 text-sm font-semibold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">
+                        Back
+                    </a>
+                    <button type="button" id="install-btn" onclick="handleInstall()" disabled
+                            class="inline-flex items-center justify-center rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary/80 disabled:cursor-not-allowed disabled:opacity-50">
+                        Install
+                    </button>
+                </div>
+            </div>
+        </main>
     </div>
 </div>
 
 <script>
-document.getElementById('adminForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
+async function handleInstall() {
+    const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    const passwordConfirm = document.getElementById('passwordConfirm').value;
+    const nickname = document.getElementById('nickname').value;
+    const btn = document.getElementById('install-btn');
 
-    if (password !== passwordConfirm) {
-        alert('两次输入的密码不一致！');
-        return;
+    btn.disabled = true;
+    btn.innerHTML = '<div class="spinner mr-2"></div>Installing...';
+
+    try {
+        await executeInstallation(username, password, nickname);
+    } catch (error) {
+        alert('Installation failed: ' + error.message);
+        btn.disabled = false;
+        btn.textContent = 'Install';
     }
-
-    const formData = new FormData(this);
-    const progressDiv = document.getElementById('installProgress');
-    const progressFill = document.getElementById('progressFill');
-    const progressText = document.getElementById('progressText');
-
-    this.style.display = 'none';
-    progressDiv.style.display = 'block';
-
-    // 模拟进度
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-        progress += 5;
-        if (progress <= 90) {
-            progressFill.style.width = progress + '%';
-        }
-    }, 100);
-
-    fetch('install.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-        clearInterval(progressInterval);
-        progressFill.style.width = '100%';
-
-        if (data.success) {
-            progressText.textContent = '安装完成！';
-            setTimeout(() => {
-                location.href = '?step=4';
-            }, 1000);
-        } else {
-            progressText.textContent = '安装失败: ' + data.message;
-            alert('安装失败: ' + data.message);
-            document.getElementById('adminForm').style.display = 'block';
-            progressDiv.style.display = 'none';
-        }
-    })
-    .catch(err => {
-        clearInterval(progressInterval);
-        alert('安装失败: ' + err.message);
-        document.getElementById('adminForm').style.display = 'block';
-        progressDiv.style.display = 'none';
-    });
-});
+}
 </script>
+</body>
+</html>

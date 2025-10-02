@@ -1,20 +1,24 @@
-FROM php:8.1-fpm-alpine
+FROM php:8.1-fpm
 
-# 安装依赖
-RUN apk add --no-cache \
-    mysql-client \
-    && docker-php-ext-install pdo pdo_mysql
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    zip \
+    unzip
 
-# 设置工作目录
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install PHP extensions
+RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+
+# Set working directory
 WORKDIR /var/www/html
 
-# 复制项目文件
-COPY . /var/www/html
-
-# 设置权限
-RUN chmod -R 755 /var/www/html \
-    && chmod -R 777 /var/www/html/config
-
+# Expose port 9000 and start php-fpm server
 EXPOSE 9000
-
 CMD ["php-fpm"]

@@ -1,211 +1,250 @@
 <?php
+/**
+ * Tasks API
+ *
+ * Endpoints:
+ * - GET /api/tasks.php - Get all tasks (with optional status filter)
+ * - POST /api/tasks.php - Create new task
+ * - PUT /api/tasks.php?id=X - Update task
+ * - DELETE /api/tasks.php?id=X - Delete task
+ */
+
 session_start();
-require_once '../config/Database.php';
-require_once '../config/config.php';
+
+// Load configuration
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/Database.php';
 
 header('Content-Type: application/json');
 
-// 检查登录
+// Check authentication
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
-    echo json_encode(['error' => '未授权']);
+    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
-$db = Database::getInstance()->getConnection();
-$method = $_SERVER['REQUEST_METHOD'];
 $userId = $_SESSION['user_id'];
+$method = $_SERVER['REQUEST_METHOD'];
 
-switch ($method) {
-    case 'GET':
-        $id = $_GET['id'] ?? null;
-        $status = $_GET['status'] ?? null;
+try {
+    $db = Database::getInstance()->getConnection();
 
-        if ($id) {
-            // 获取单个任务
-            $stmt = $db->prepare("
-                SELECT t.*,
-                       u1.nickname as creator_name,
-                       u2.nickname as assignee_name
-                FROM tasks t
-                LEFT JOIN users u1 ON t.creator_id = u1.id
-                LEFT JOIN users u2 ON t.assignee_id = u2.id
-                WHERE t.id = ?
-            ");
-            $stmt->execute([$id]);
-            $task = $stmt->fetch();
+    switch ($method) {
+        case 'GET':
+            handleGetTasks($db, $userId);
+            break;
 
-            if (!$task) {
-                http_response_code(404);
-                echo json_encode(['error' => '任务不存在']);
-                exit;
-            }
+        case 'POST':
+            handleCreateTask($db, $userId);
+            break;
 
-            // 获取评论
-            $stmt = $db->prepare("
-                SELECT c.*, u.nickname as user_name
-                FROM task_comments c
-                JOIN users u ON c.user_id = u.id
-                WHERE c.task_id = ?
-                ORDER BY c.created_at ASC
-            ");
-            $stmt->execute([$id]);
-            $task['comments'] = $stmt->fetchAll();
+        case 'PUT':
+            handleUpdateTask($db, $userId);
+            break;
 
-            echo json_encode($task);
-        } else {
-            // 获取任务列表
-            $sql = "
-                SELECT t.*,
-                       u1.nickname as creator_name,
-                       u2.nickname as assignee_name
-                FROM tasks t
-                LEFT JOIN users u1 ON t.creator_id = u1.id
-                LEFT JOIN users u2 ON t.assignee_id = u2.id
-                WHERE 1=1
-            ";
+        case 'DELETE':
+            handleDeleteTask($db, $userId);
+            break;
 
-            $params = [];
-            if ($status) {
-                $sql .= " AND t.status = ?";
-                $params[] = $status;
-            }
+        default:
+            http_response_code(405);
+            echo json_encode(['success' => false, 'message' => 'Method not allowed']);
+    }
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}
 
-            $sql .= " ORDER BY
-                CASE t.priority
-                    WHEN 'high' THEN 1
-                    WHEN 'medium' THEN 2
-                    WHEN 'low' THEN 3
-                END,
-                t.created_at DESC
-            ";
+/**
+ * Get all tasks
+ */
+function handleGetTasks($db, $userId)
+{
+    $status = $_GET['status'] ?? 'all';
 
-            $stmt = $db->prepare($sql);
-            $stmt->execute($params);
-            $tasks = $stmt->fetchAll();
+    $sql = "SELECT t.*,
+                   u1.username as creator_username, u1.nickname as creator_nickname,
+                   u2.username as assignee_username, u2.nickname as assignee_nickname
+            FROM tasks t
+            LEFT JOIN users u1 ON t.creator_id = u1.id
+            LEFT JOIN users u2 ON t.assignee_id = u2.id";
 
-            echo json_encode($tasks);
-        }
-        break;
+    if ($status !== 'all') {
+        $sql .= " WHERE t.status = ?";
+    }
 
-    case 'POST':
-        $data = json_decode(file_get_contents('php://input'), true);
-        $title = trim($data['title'] ?? '');
-        $description = trim($data['description'] ?? '');
-        $assigneeId = $data['assignee_id'] ?? null;
-        $priority = $data['priority'] ?? 'medium';
-        $dueDate = $data['due_date'] ?? null;
+    $sql .= " ORDER BY t.created_at DESC";
 
-        if (empty($title)) {
-            http_response_code(400);
-            echo json_encode(['error' => '任务标题不能为空']);
-            exit;
-        }
+    $stmt = $db->prepare($sql);
 
-        $stmt = $db->prepare("
-            INSERT INTO tasks (title, description, creator_id, assignee_id, priority, due_date)
-            VALUES (?, ?, ?, ?, ?, ?)
-        ");
+    if ($status !== 'all') {
+        $stmt->execute([$status]);
+    } else {
+        $stmt->execute();
+    }
 
-        if ($stmt->execute([$title, $description, $userId, $assigneeId, $priority, $dueDate])) {
-            $taskId = $db->lastInsertId();
-            echo json_encode(['success' => true, 'id' => $taskId]);
-        } else {
-            http_response_code(500);
-            echo json_encode(['error' => '创建任务失败']);
-        }
-        break;
+    $tasks = $stmt->fetchAll();
 
-    case 'PUT':
-        $data = json_decode(file_get_contents('php://input'), true);
-        $id = $data['id'] ?? null;
+    echo json_encode([
+        'success' => true,
+        'tasks' => $tasks
+    ]);
+}
 
-        if (!$id) {
-            http_response_code(400);
-            echo json_encode(['error' => '任务ID不能为空']);
-            exit;
-        }
+/**
+ * Create new task
+ */
+function handleCreateTask($db, $userId)
+{
+    // Get JSON input or POST data
+    $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
-        // 检查任务是否存在
-        $stmt = $db->prepare("SELECT * FROM tasks WHERE id = ?");
-        $stmt->execute([$id]);
-        $task = $stmt->fetch();
+    $title = trim($input['title'] ?? '');
+    $description = trim($input['description'] ?? '');
+    $assigneeId = $input['assignee_id'] ?? null;
+    $priority = $input['priority'] ?? 'medium';
+    $status = $input['status'] ?? 'pending';
+    $dueDate = $input['due_date'] ?? null;
 
-        if (!$task) {
-            http_response_code(404);
-            echo json_encode(['error' => '任务不存在']);
-            exit;
-        }
+    // Validate
+    if (empty($title)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Title is required']);
+        return;
+    }
 
-        $fields = [];
-        $params = [];
+    if (!in_array($priority, ['low', 'medium', 'high'])) {
+        $priority = 'medium';
+    }
 
-        if (isset($data['title'])) {
-            $fields[] = 'title = ?';
-            $params[] = trim($data['title']);
-        }
-        if (isset($data['description'])) {
-            $fields[] = 'description = ?';
-            $params[] = trim($data['description']);
-        }
-        if (isset($data['assignee_id'])) {
-            $fields[] = 'assignee_id = ?';
-            $params[] = $data['assignee_id'];
-        }
-        if (isset($data['priority'])) {
-            $fields[] = 'priority = ?';
-            $params[] = $data['priority'];
-        }
-        if (isset($data['status'])) {
-            $fields[] = 'status = ?';
-            $params[] = $data['status'];
-            if ($data['status'] === 'completed') {
-                $fields[] = 'completed_at = NOW()';
-            }
-        }
-        if (isset($data['due_date'])) {
-            $fields[] = 'due_date = ?';
-            $params[] = $data['due_date'];
-        }
+    if (!in_array($status, ['pending', 'in_progress', 'completed', 'cancelled'])) {
+        $status = 'pending';
+    }
 
-        if (empty($fields)) {
-            http_response_code(400);
-            echo json_encode(['error' => '没有需要更新的字段']);
-            exit;
-        }
+    // Convert empty assignee to null
+    if ($assigneeId === '' || $assigneeId === '0') {
+        $assigneeId = null;
+    }
 
-        $params[] = $id;
-        $sql = "UPDATE tasks SET " . implode(', ', $fields) . " WHERE id = ?";
-        $stmt = $db->prepare($sql);
+    // Insert task
+    $stmt = $db->prepare("INSERT INTO tasks (title, description, creator_id, assignee_id, priority, status, due_date)
+                          VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$title, $description, $userId, $assigneeId, $priority, $status, $dueDate]);
 
-        if ($stmt->execute($params)) {
-            echo json_encode(['success' => true]);
-        } else {
-            http_response_code(500);
-            echo json_encode(['error' => '更新任务失败']);
-        }
-        break;
+    $taskId = $db->lastInsertId();
 
-    case 'DELETE':
-        $id = $_GET['id'] ?? null;
+    echo json_encode([
+        'success' => true,
+        'message' => 'Task created successfully',
+        'task_id' => $taskId
+    ]);
+}
 
-        if (!$id) {
-            http_response_code(400);
-            echo json_encode(['error' => '任务ID不能为空']);
-            exit;
-        }
+/**
+ * Update task
+ */
+function handleUpdateTask($db, $userId)
+{
+    $taskId = $_GET['id'] ?? 0;
 
-        $stmt = $db->prepare("DELETE FROM tasks WHERE id = ?");
+    if (empty($taskId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Task ID is required']);
+        return;
+    }
 
-        if ($stmt->execute([$id])) {
-            echo json_encode(['success' => true]);
-        } else {
-            http_response_code(500);
-            echo json_encode(['error' => '删除任务失败']);
-        }
-        break;
+    // Get JSON input
+    $input = json_decode(file_get_contents('php://input'), true);
 
-    default:
-        http_response_code(405);
-        echo json_encode(['error' => '方法不允许']);
+    // Check if task exists
+    $stmt = $db->prepare("SELECT id FROM tasks WHERE id = ?");
+    $stmt->execute([$taskId]);
+
+    if (!$stmt->fetch()) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Task not found']);
+        return;
+    }
+
+    // Build update query dynamically
+    $fields = [];
+    $values = [];
+
+    if (isset($input['title'])) {
+        $fields[] = "title = ?";
+        $values[] = trim($input['title']);
+    }
+
+    if (isset($input['description'])) {
+        $fields[] = "description = ?";
+        $values[] = trim($input['description']);
+    }
+
+    if (isset($input['assignee_id'])) {
+        $fields[] = "assignee_id = ?";
+        $values[] = $input['assignee_id'] === '' ? null : $input['assignee_id'];
+    }
+
+    if (isset($input['priority'])) {
+        $fields[] = "priority = ?";
+        $values[] = $input['priority'];
+    }
+
+    if (isset($input['status'])) {
+        $fields[] = "status = ?";
+        $values[] = $input['status'];
+    }
+
+    if (isset($input['due_date'])) {
+        $fields[] = "due_date = ?";
+        $values[] = $input['due_date'];
+    }
+
+    if (empty($fields)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'No fields to update']);
+        return;
+    }
+
+    $values[] = $taskId;
+    $sql = "UPDATE tasks SET " . implode(', ', $fields) . " WHERE id = ?";
+
+    $stmt = $db->prepare($sql);
+    $stmt->execute($values);
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Task updated successfully'
+    ]);
+}
+
+/**
+ * Delete task
+ */
+function handleDeleteTask($db, $userId)
+{
+    $taskId = $_GET['id'] ?? 0;
+
+    if (empty($taskId)) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Task ID is required']);
+        return;
+    }
+
+    // Delete task
+    $stmt = $db->prepare("DELETE FROM tasks WHERE id = ?");
+    $stmt->execute([$taskId]);
+
+    if ($stmt->rowCount() === 0) {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => 'Task not found']);
+        return;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Task deleted successfully'
+    ]);
 }

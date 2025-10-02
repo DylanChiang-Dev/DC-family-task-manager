@@ -1,99 +1,201 @@
 <?php
-// 检查是否已安装
-if (!file_exists('../config/installed.lock')) {
-    header('Location: ../install/index.php');
+/**
+ * Main Application Entry Point
+ */
+
+// Check if installation is complete
+if (!file_exists(__DIR__ . '/../config/installed.lock')) {
+    header('Location: /install/index.php');
     exit;
 }
 
 session_start();
-require_once '../config/config.php';
 
-// 检查登录状态
+// Load configuration
+require_once __DIR__ . '/../config/database.php';
+require_once __DIR__ . '/../config/config.php';
+
 $isLoggedIn = isset($_SESSION['user_id']);
 ?>
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?php echo APP_NAME; ?></title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Family Task Manager</title>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link rel="stylesheet" href="/public/css/style.css"/>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#137fec",
+                        "background-light": "#f6f7f8",
+                        "background-dark": "#101922",
+                    },
+                    fontFamily: {
+                        "display": ["Public Sans"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
 </head>
-<body>
-    <div id="app">
-        <?php if (!$isLoggedIn): ?>
-            <div id="auth-container">
-                <div class="auth-box">
-                    <h1><?php echo APP_NAME; ?></h1>
-                    <div id="login-form" class="form-container">
-                        <h2>登录</h2>
-                        <form id="loginForm">
-                            <input type="text" name="username" placeholder="用户名" required>
-                            <input type="password" name="password" placeholder="密码" required>
-                            <button type="submit">登录</button>
-                        </form>
-                        <p>还没有账号？<a href="#" id="showRegister">立即注册</a></p>
-                    </div>
-                    <div id="register-form" class="form-container" style="display: none;">
-                        <h2>注册</h2>
-                        <form id="registerForm">
-                            <input type="text" name="username" placeholder="用户名" required>
-                            <input type="password" name="password" placeholder="密码" required>
-                            <input type="text" name="nickname" placeholder="昵称" required>
-                            <button type="submit">注册</button>
-                        </form>
-                        <p>已有账号？<a href="#" id="showLogin">返回登录</a></p>
+<body class="bg-background-light dark:bg-background-dark font-display">
+
+<?php if (!$isLoggedIn): ?>
+    <!-- Login/Register Screen -->
+    <div id="auth-screen" class="flex flex-col min-h-screen">
+        <header class="border-b border-slate-200 dark:border-slate-800">
+            <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center gap-3">
+                        <div class="text-primary">
+                            <svg class="h-8 w-8" fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z" fill="currentColor"></path>
+                                <path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path>
+                            </svg>
+                        </div>
+                        <h1 class="text-xl font-bold text-slate-900 dark:text-white">Family Task Manager</h1>
                     </div>
                 </div>
             </div>
-        <?php else: ?>
-            <nav class="navbar">
-                <h1><?php echo APP_NAME; ?></h1>
-                <div class="user-info">
-                    <span>欢迎，<?php echo htmlspecialchars($_SESSION['nickname']); ?></span>
-                    <button id="logoutBtn">退出</button>
-                </div>
-            </nav>
+        </header>
 
-            <div class="container">
-                <div class="task-controls">
-                    <button id="newTaskBtn" class="btn-primary">+ 新建任务</button>
-                    <div class="filter-tabs">
-                        <button class="tab active" data-status="all">全部</button>
-                        <button class="tab" data-status="pending">待处理</button>
-                        <button class="tab" data-status="in_progress">进行中</button>
-                        <button class="tab" data-status="completed">已完成</button>
+        <main class="flex-grow flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div class="w-full max-w-md space-y-8">
+                <div>
+                    <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-slate-900 dark:text-white">Welcome</h2>
+                    <p class="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">Sign in to manage your family's tasks</p>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900/50 p-8 shadow-sm rounded-lg">
+                    <div class="border-b border-slate-200 dark:border-slate-700">
+                        <nav aria-label="Tabs" class="-mb-px flex space-x-8">
+                            <button onclick="switchTab('login')" id="login-tab" class="tab-active border-primary text-primary whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Login</button>
+                            <button onclick="switchTab('register')" id="register-tab" class="tab-inactive border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 hover:border-slate-300 dark:hover:border-slate-600 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm">Register</button>
+                        </nav>
                     </div>
-                </div>
 
-                <div id="taskList" class="task-list"></div>
-            </div>
+                    <!-- Login Form -->
+                    <form id="login-form" class="mt-8 space-y-6">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="login-username">Username</label>
+                                <input autocomplete="username" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="login-username" name="username" required type="text"/>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="login-password">Password</label>
+                                <input autocomplete="current-password" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="login-password" name="password" required type="password"/>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" type="submit">Login</button>
+                        </div>
+                        <div id="login-error" class="hidden text-sm text-red-600 dark:text-red-400 text-center"></div>
+                    </form>
 
-            <!-- 新建/编辑任务模态框 -->
-            <div id="taskModal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2 id="modalTitle">新建任务</h2>
-                    <form id="taskForm">
-                        <input type="hidden" name="id">
-                        <input type="text" name="title" placeholder="任务标题" required>
-                        <textarea name="description" placeholder="任务描述" rows="4"></textarea>
-                        <select name="assignee_id">
-                            <option value="">未分配</option>
-                        </select>
-                        <select name="priority">
-                            <option value="low">低优先级</option>
-                            <option value="medium" selected>中优先级</option>
-                            <option value="high">高优先级</option>
-                        </select>
-                        <input type="datetime-local" name="due_date" placeholder="截止时间">
-                        <button type="submit" class="btn-primary">保存</button>
+                    <!-- Register Form -->
+                    <form id="register-form" class="mt-8 space-y-6 hidden">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="reg-username">Username</label>
+                                <input class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="reg-username" name="username" required type="text"/>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="reg-nickname">Nickname</label>
+                                <input class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="reg-nickname" name="nickname" required type="text"/>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="reg-password">Password</label>
+                                <input class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="reg-password" name="password" required type="password" minlength="6"/>
+                            </div>
+                        </div>
+                        <div>
+                            <button class="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary" type="submit">Register</button>
+                        </div>
+                        <div id="register-error" class="hidden text-sm text-red-600 dark:text-red-400 text-center"></div>
                     </form>
                 </div>
             </div>
-        <?php endif; ?>
+        </main>
+    </div>
+<?php else: ?>
+    <!-- Task Manager Dashboard -->
+    <div id="app-screen" class="flex flex-col min-h-screen">
+        <!-- Header will be injected by JavaScript -->
+        <div id="app-header"></div>
+
+        <!-- Main Content -->
+        <main id="app-main" class="flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Content will be injected by JavaScript -->
+        </main>
     </div>
 
-    <script src="js/app.js"></script>
+    <!-- Task Modal (for create/edit) -->
+    <div id="task-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-6 w-full max-w-md mx-4">
+            <h3 id="modal-title" class="text-xl font-bold text-gray-900 dark:text-white mb-4">Create Task</h3>
+            <form id="task-form" class="space-y-4">
+                <input type="hidden" id="task-id" name="id"/>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Title</label>
+                    <input type="text" id="task-title" required class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Description</label>
+                    <textarea id="task-description" rows="3" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Assign to</label>
+                    <select id="task-assignee" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100">
+                        <option value="">Unassigned</option>
+                    </select>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Priority</label>
+                        <select id="task-priority" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Status</label>
+                        <select id="task-status" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100">
+                            <option value="pending">Pending</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Due Date</label>
+                    <input type="date" id="task-due-date" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="closeTaskModal()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">Cancel</button>
+                    <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+<?php endif; ?>
+
+<script src="/public/js/app.js"></script>
 </body>
 </html>

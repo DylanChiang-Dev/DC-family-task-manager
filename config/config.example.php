@@ -1,17 +1,28 @@
 <?php
-// 应用配置示例
-// 复制此文件为 config.php
+/**
+ * Application Configuration Template
+ *
+ * Copy this file to config.php and customize the values
+ */
 
-define('APP_NAME', '家庭任务管理');
-define('APP_VERSION', '1.0.0');
-define('BASE_URL', 'http://localhost');
+// Application settings
+define('APP_NAME', 'Family Task Manager');
+define('APP_ENV', 'development'); // development or production
+define('APP_DEBUG', true);
 
-// 会话配置
-define('SESSION_LIFETIME', 7200); // 2小时
-
-// 密码加密配置
-define('PASSWORD_ALGO', PASSWORD_BCRYPT);
-define('PASSWORD_COST', 10);
-
-// 时区
+// Timezone
 date_default_timezone_set('Asia/Shanghai');
+
+// Session configuration
+ini_set('session.cookie_httponly', 1);
+ini_set('session.use_only_cookies', 1);
+ini_set('session.cookie_secure', 0); // Set to 1 if using HTTPS
+
+// Error reporting
+if (APP_DEBUG) {
+    error_reporting(E_ALL);
+    ini_set('display_errors', 1);
+} else {
+    error_reporting(0);
+    ini_set('display_errors', 0);
+}
