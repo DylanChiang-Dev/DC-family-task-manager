@@ -192,6 +192,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
     </div>
 <?php endif; ?>
 
-<script src="/js/app.js"></script>
+<script src="/js/app.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
