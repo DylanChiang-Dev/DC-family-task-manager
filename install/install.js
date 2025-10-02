@@ -8,7 +8,7 @@ async function testDatabaseConnection() {
     const resultDiv = document.getElementById('test-result');
 
     testBtn.disabled = true;
-    testBtn.innerHTML = '<div class="spinner mr-2"></div>Testing...';
+    testBtn.innerHTML = '<div class="spinner mr-2"></div>測試中...';
 
     try {
         const response = await fetch('/install/test_db.php', {
@@ -28,7 +28,7 @@ async function testDatabaseConnection() {
                             </svg>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm font-medium text-green-800 dark:text-green-300">Connection successful!</p>
+                            <p class="text-sm font-medium text-green-800 dark:text-green-300">連線成功！</p>
                         </div>
                     </div>
                 </div>
@@ -44,7 +44,7 @@ async function testDatabaseConnection() {
                             </svg>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm font-medium text-red-800 dark:text-red-300">Connection failed: ${result.message}</p>
+                            <p class="text-sm font-medium text-red-800 dark:text-red-300">連線失敗：${result.message}</p>
                         </div>
                     </div>
                 </div>
@@ -55,14 +55,14 @@ async function testDatabaseConnection() {
             <div class="rounded-lg bg-red-500/10 p-4">
                 <div class="flex">
                     <div class="ml-3">
-                        <p class="text-sm font-medium text-red-800 dark:text-red-300">Error: ${error.message}</p>
+                        <p class="text-sm font-medium text-red-800 dark:text-red-300">錯誤：${error.message}</p>
                     </div>
                 </div>
             </div>
         `;
     } finally {
         testBtn.disabled = false;
-        testBtn.textContent = 'Test Connection';
+        testBtn.textContent = '測試連線';
     }
 }
 
@@ -73,7 +73,7 @@ async function saveDatabaseConfig() {
     const submitBtn = document.getElementById('next-btn');
 
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<div class="spinner mr-2"></div>Saving...';
+    submitBtn.innerHTML = '<div class="spinner mr-2"></div>儲存中...';
 
     try {
         const response = await fetch('/install/save_db.php', {
@@ -86,14 +86,14 @@ async function saveDatabaseConfig() {
         if (result.success) {
             window.location.href = '/install/step3.php';
         } else {
-            alert('Failed to save configuration: ' + result.message);
+            alert('儲存配置失敗：' + result.message);
             submitBtn.disabled = false;
-            submitBtn.textContent = 'Next';
+            submitBtn.textContent = '下一步';
         }
     } catch (error) {
-        alert('Error: ' + error.message);
+        alert('錯誤：' + error.message);
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Next';
+        submitBtn.textContent = '下一步';
     }
 }
 
@@ -127,13 +127,13 @@ function validatePassword() {
     const submitBtn = document.getElementById('install-btn');
 
     if (password.length < 8) {
-        document.getElementById('password-error').textContent = 'Password must be at least 8 characters';
+        document.getElementById('password-error').textContent = '密碼必須至少 8 個字元';
         submitBtn.disabled = true;
         return false;
     }
 
     if (password !== confirmPassword) {
-        document.getElementById('password-error').textContent = 'Passwords do not match';
+        document.getElementById('password-error').textContent = '密碼不一致';
         submitBtn.disabled = true;
         return false;
     }

@@ -48,16 +48,16 @@ try {
         throw new Exception('Failed to read schema.sql');
     }
 
-    // Split SQL file into individual statements
-    $statements = array_filter(
-        array_map('trim', explode(';', $schemaSQL)),
-        function ($stmt) {
-            return !empty($stmt) && !preg_match('/^--/', $stmt);
-        }
-    );
+    // Remove comments and split by semicolons (handling multi-line statements correctly)
+    $schemaSQL = preg_replace('/--.*$/m', '', $schemaSQL); // Remove single-line comments
+    $schemaSQL = preg_replace('/\/\*.*?\*\//s', '', $schemaSQL); // Remove multi-line comments
+
+    // Split by semicolons, but keep complete statements together
+    $statements = preg_split('/;[\s]*$/m', $schemaSQL);
 
     // Execute each statement
     foreach ($statements as $statement) {
+        $statement = trim($statement);
         if (!empty($statement)) {
             try {
                 $db->exec($statement);
