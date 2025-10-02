@@ -7,17 +7,11 @@ let currentFilter = 'all';
 let selectedDate = new Date();
 let currentMonth = new Date();
 
-// Lunar calendar conversion using lunar-javascript library
+// Lunar calendar conversion using local LunarCalendar library
 function solarToLunar(year, month, day) {
     try {
-        if (typeof Lunar !== 'undefined') {
-            const solar = Lunar.Solar.fromYmd(year, month, day);
-            const lunar = solar.getLunar();
-            return {
-                month: lunar.getMonthInChinese(),
-                day: lunar.getDayInChinese(),
-                fullDate: `${lunar.getMonthInChinese()}${lunar.getDayInChinese()}`
-            };
+        if (typeof LunarCalendar !== 'undefined') {
+            return LunarCalendar.solarToLunar(year, month, day);
         }
     } catch (e) {
         console.error('Lunar conversion error:', e);

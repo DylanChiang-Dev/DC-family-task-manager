@@ -24,7 +24,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.6.12/lunar.min.js"></script>
     <link rel="stylesheet" href="/css/style.css"/>
     <script>
         tailwind.config = {
@@ -278,6 +277,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     </div>
 <?php endif; ?>
 
+<script src="/js/lunar.js?v=<?php echo time(); ?>"></script>
 <script src="/js/app.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>
