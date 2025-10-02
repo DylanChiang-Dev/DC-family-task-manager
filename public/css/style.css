@@ -117,3 +117,24 @@
 .dark ::-webkit-scrollbar-thumb:hover {
     background: #718096;
 }
+
+/* Calendar enhancements */
+.calendar button:hover {
+    transform: translateY(-1px);
+}
+
+.calendar button:active {
+    transform: translateY(0);
+}
+
+/* Task card hover effect */
+.group:hover {
+    transform: translateY(-2px);
+}
+
+/* Smooth animations */
+* {
+    transition-property: transform, box-shadow, background-color, border-color;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 150ms;
+}

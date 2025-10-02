@@ -212,10 +212,10 @@ function renderMainLayout() {
 
                     <!-- Filter buttons -->
                     <div class="flex flex-col gap-2 mb-6">
-                        <button onclick="filterTasks('all')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-primary text-white text-left" data-filter="all">全部</button>
-                        <button onclick="filterTasks('pending')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left" data-filter="pending">待處理</button>
-                        <button onclick="filterTasks('in_progress')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left" data-filter="in_progress">進行中</button>
-                        <button onclick="filterTasks('completed')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left" data-filter="completed">已完成</button>
+                        <button onclick="filterTasks('all')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-primary text-white text-center" data-filter="all">全部</button>
+                        <button onclick="filterTasks('pending')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-center" data-filter="pending">待處理</button>
+                        <button onclick="filterTasks('in_progress')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-center" data-filter="in_progress">進行中</button>
+                        <button onclick="filterTasks('completed')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-center" data-filter="completed">已完成</button>
                     </div>
 
                     <!-- Task list -->
@@ -250,32 +250,32 @@ function renderCalendar() {
     let html = `
         <div class="calendar">
             <!-- Calendar Header -->
-            <div class="flex items-center justify-between mb-4">
-                <button onclick="previousMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-                    <svg class="h-5 w-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+            <div class="flex items-center justify-between mb-6 bg-gradient-to-r from-primary/10 to-blue-500/10 dark:from-primary/20 dark:to-blue-500/20 p-4 rounded-xl">
+                <button onclick="previousMonth()" class="p-2.5 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-lg transition-all hover:scale-110">
+                    <svg class="h-6 w-6 text-primary dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path>
                     </svg>
                 </button>
-                <h3 class="text-lg font-bold text-gray-900 dark:text-white">${year}年 ${monthNames[month]}</h3>
-                <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-                    <svg class="h-5 w-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                <h3 class="text-2xl font-bold text-gray-900 dark:text-white tracking-wide">${year}年 ${monthNames[month]}</h3>
+                <button onclick="nextMonth()" class="p-2.5 hover:bg-white/50 dark:hover:bg-gray-800/50 rounded-lg transition-all hover:scale-110">
+                    <svg class="h-6 w-6 text-primary dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path>
                     </svg>
                 </button>
             </div>
 
             <!-- Week days -->
-            <div class="grid grid-cols-7 gap-1 mb-2">
-                ${weekDays.map(day => `<div class="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-2">${day}</div>`).join('')}
+            <div class="grid grid-cols-7 gap-2 mb-3">
+                ${weekDays.map(day => `<div class="text-center text-sm font-semibold text-gray-600 dark:text-gray-400 py-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg">${day}</div>`).join('')}
             </div>
 
             <!-- Calendar days -->
-            <div class="grid grid-cols-7 gap-1">
+            <div class="grid grid-cols-7 gap-2">
     `;
 
     // Empty cells before first day
     for (let i = 0; i < startDay; i++) {
-        html += '<div class="aspect-square"></div>';
+        html += '<div class="aspect-square min-h-32"></div>';
     }
 
     // Days in month
@@ -293,35 +293,42 @@ function renderCalendar() {
     };
 
     for (let day = 1; day <= daysInMonth; day++) {
-        const todayClass = isToday(day) ? 'ring-2 ring-primary ring-offset-1' : '';
-        const selectedClass = isSelected(day) ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800';
+        const todayClass = isToday(day) ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900 shadow-lg' : '';
+        const selectedClass = isSelected(day) ? 'bg-gradient-to-br from-primary to-blue-600 text-white shadow-xl scale-105' : 'bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:shadow-md';
 
         // Get tasks for this day (including recurring instances)
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dayTasks = tasksWithInstances.filter(task => task.due_date === dateStr);
 
-        // Build task list HTML
+        // Build task list HTML with colored dots
         let tasksHtml = '';
         if (dayTasks.length > 0) {
             const visibleTasks = dayTasks.slice(0, 5);
-            tasksHtml = visibleTasks.map(task => {
+            tasksHtml = '<div class="w-full space-y-1 mt-1">';
+            tasksHtml += visibleTasks.map(task => {
                 const priorityColor = task.priority === 'high' ? 'bg-red-500' :
                                      task.priority === 'medium' ? 'bg-blue-500' : 'bg-green-500';
-                return `<div class="w-full text-left px-1 py-0.5 text-xs truncate ${priorityColor} text-white rounded mb-0.5" title="${task.title}">${task.title}</div>`;
+                const textColor = isSelected(day) ? 'text-white/90' : 'text-gray-700 dark:text-gray-300';
+                return `<div class="flex items-center gap-1.5 w-full">
+                    <div class="w-1.5 h-1.5 rounded-full ${priorityColor} flex-shrink-0"></div>
+                    <span class="text-xs truncate ${textColor}" title="${task.title}">${task.title}</span>
+                </div>`;
             }).join('');
+            tasksHtml += '</div>';
 
             if (dayTasks.length > 5) {
-                tasksHtml += `<div class="text-xs text-gray-500 dark:text-gray-400 px-1">+${dayTasks.length - 5} 更多</div>`;
+                const moreTextColor = isSelected(day) ? 'text-white/80' : 'text-gray-500 dark:text-gray-400';
+                tasksHtml += `<div class="text-xs ${moreTextColor} mt-1 font-medium">+${dayTasks.length - 5} 更多</div>`;
             }
         }
 
+        const dateNumColor = isSelected(day) ? 'text-white' : isToday(day) ? 'text-primary dark:text-blue-400' : 'text-gray-900 dark:text-gray-100';
+
         html += `
             <button onclick="selectDate(${year}, ${month}, ${day})"
-                    class="relative min-h-24 p-1 flex flex-col items-start rounded-lg text-sm transition-colors ${selectedClass} ${todayClass}">
-                <span class="font-medium text-gray-900 dark:text-gray-100 mb-1">${day}</span>
-                <div class="w-full space-y-0.5">
-                    ${tasksHtml}
-                </div>
+                    class="relative min-h-32 p-3 flex flex-col items-start rounded-xl text-sm transition-all duration-200 border border-gray-200 dark:border-gray-700 ${selectedClass} ${todayClass}">
+                <span class="font-bold text-base ${dateNumColor} mb-1">${day}</span>
+                ${tasksHtml}
             </button>
         `;
     }
@@ -473,7 +480,6 @@ function renderTasks(tasksToRender = null) {
 
 // Render single task card
 function renderTaskCard(task) {
-    const priorityClass = `priority-${task.priority}`;
     const statusClass = `status-${task.status}`;
 
     // Map status to Chinese text
@@ -485,13 +491,9 @@ function renderTaskCard(task) {
     };
     const statusText = statusMap[task.status] || task.status;
 
-    // Map priority to Chinese text
-    const priorityMap = {
-        'low': '低',
-        'medium': '中',
-        'high': '高'
-    };
-    const priorityText = priorityMap[task.priority] || task.priority;
+    // Priority dot color
+    const priorityDotColor = task.priority === 'high' ? 'bg-red-500' :
+                             task.priority === 'medium' ? 'bg-blue-500' : 'bg-green-500';
 
     const assigneeName = task.assignee_name || '未指派';
     const dueDate = task.due_date ? new Date(task.due_date).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }) : '';
@@ -501,25 +503,27 @@ function renderTaskCard(task) {
                          task.task_type === 'repeatable' ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">📋 重複</span>' : '';
 
     return `
-        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:border-primary transition-all cursor-pointer bg-white dark:bg-slate-800/50" onclick="editTask(${task.id})">
+        <div class="group border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:border-primary hover:shadow-md transition-all cursor-pointer bg-white dark:bg-slate-800/50" onclick="editTask(${task.id})">
             <div class="flex items-start justify-between mb-2">
-                <h3 class="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1 flex-1">${task.title}</h3>
-                <button onclick="event.stopPropagation(); deleteTask(${task.id})" class="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0">
+                <div class="flex items-center gap-2 flex-1 min-w-0">
+                    <div class="w-2.5 h-2.5 rounded-full ${priorityDotColor} flex-shrink-0 shadow-sm"></div>
+                    <h3 class="font-semibold text-sm text-gray-900 dark:text-white line-clamp-1">${task.title}</h3>
+                </div>
+                <button onclick="event.stopPropagation(); deleteTask(${task.id})" class="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 opacity-0 group-hover:opacity-100">
                     <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
                     </svg>
                 </button>
             </div>
 
-            ${task.description ? `<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2">${task.description}</p>` : ''}
+            ${task.description ? `<p class="text-xs text-gray-600 dark:text-gray-400 line-clamp-2 mb-2 ml-5">${task.description}</p>` : ''}
 
-            <div class="flex items-center gap-1 flex-wrap mb-2">
-                <span class="px-2 py-0.5 text-xs font-medium rounded-full ${priorityClass}">${priorityText}</span>
+            <div class="flex items-center gap-1 flex-wrap mb-2 ml-5">
                 <span class="px-2 py-0.5 text-xs font-medium rounded-full ${statusClass}">${statusText}</span>
                 ${taskTypeBadge}
             </div>
 
-            <div class="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400">
+            <div class="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400 ml-5">
                 ${task.assignee_name ? `
                     <div class="flex items-center">
                         <svg class="h-3 w-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
