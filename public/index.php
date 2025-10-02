@@ -11,10 +11,6 @@ if (!file_exists(__DIR__ . '/../config/installed.lock')) {
 
 session_start();
 
-// Load configuration
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/config.php';
-
 $isLoggedIn = isset($_SESSION['user_id']);
 ?>
 <!DOCTYPE html>
