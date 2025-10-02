@@ -4,6 +4,8 @@ let currentUser = null;
 let allTasks = [];
 let allUsers = [];
 let currentFilter = 'all';
+let selectedDate = new Date();
+let currentMonth = new Date();
 
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
@@ -128,8 +130,160 @@ async function handleRegister(e) {
 // Initialize main app
 async function initializeApp() {
     renderHeader();
+    renderMainLayout();
     await loadUsers();
     await loadTasks();
+}
+
+// Render main layout with calendar and task list
+function renderMainLayout() {
+    const main = document.getElementById('app-main');
+    main.className = 'flex-grow container mx-auto px-4 sm:px-6 lg:px-8 py-8';
+    main.innerHTML = `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
+            <!-- Left: Calendar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white dark:bg-slate-900/50 rounded-lg shadow-sm p-6 sticky top-6">
+                    <div id="calendar-container"></div>
+                </div>
+            </div>
+
+            <!-- Right: Task List -->
+            <div class="lg:col-span-2">
+                <div class="bg-white dark:bg-slate-900/50 rounded-lg shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-bold text-gray-900 dark:text-white">任務列表</h2>
+                        <button onclick="openTaskModal()" class="inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            新增任務
+                        </button>
+                    </div>
+
+                    <!-- Filter buttons -->
+                    <div class="flex gap-2 mb-6 overflow-x-auto pb-2">
+                        <button onclick="filterTasks('all')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-primary text-white" data-filter="all">全部</button>
+                        <button onclick="filterTasks('pending')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300" data-filter="pending">待處理</button>
+                        <button onclick="filterTasks('in_progress')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300" data-filter="in_progress">進行中</button>
+                        <button onclick="filterTasks('completed')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300" data-filter="completed">已完成</button>
+                    </div>
+
+                    <!-- Task list -->
+                    <div id="task-list" class="space-y-4"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    renderCalendar();
+}
+
+// Render calendar
+function renderCalendar() {
+    const container = document.getElementById('calendar-container');
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+
+    const firstDay = new Date(year, month, 1);
+    const lastDay = new Date(year, month + 1, 0);
+    const daysInMonth = lastDay.getDate();
+    const startDay = firstDay.getDay();
+
+    const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
+    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+
+    let html = `
+        <div class="calendar">
+            <!-- Calendar Header -->
+            <div class="flex items-center justify-between mb-4">
+                <button onclick="previousMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                    <svg class="h-5 w-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                </button>
+                <h3 class="text-lg font-bold text-gray-900 dark:text-white">${year}年 ${monthNames[month]}</h3>
+                <button onclick="nextMonth()" class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
+                    <svg class="h-5 w-5 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Week days -->
+            <div class="grid grid-cols-7 gap-1 mb-2">
+                ${weekDays.map(day => `<div class="text-center text-xs font-medium text-gray-500 dark:text-gray-400 py-2">${day}</div>`).join('')}
+            </div>
+
+            <!-- Calendar days -->
+            <div class="grid grid-cols-7 gap-1">
+    `;
+
+    // Empty cells before first day
+    for (let i = 0; i < startDay; i++) {
+        html += '<div class="aspect-square"></div>';
+    }
+
+    // Days in month
+    const today = new Date();
+    const isToday = (day) => {
+        return today.getDate() === day &&
+               today.getMonth() === month &&
+               today.getFullYear() === year;
+    };
+
+    const isSelected = (day) => {
+        return selectedDate.getDate() === day &&
+               selectedDate.getMonth() === month &&
+               selectedDate.getFullYear() === year;
+    };
+
+    for (let day = 1; day <= daysInMonth; day++) {
+        const todayClass = isToday(day) ? 'ring-2 ring-primary ring-offset-1' : '';
+        const selectedClass = isSelected(day) ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800';
+
+        html += `
+            <button onclick="selectDate(${year}, ${month}, ${day})"
+                    class="aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${selectedClass} ${todayClass} text-gray-900 dark:text-gray-100">
+                ${day}
+            </button>
+        `;
+    }
+
+    html += `
+            </div>
+        </div>
+    `;
+
+    container.innerHTML = html;
+}
+
+// Calendar navigation
+function previousMonth() {
+    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
+    renderCalendar();
+}
+
+function nextMonth() {
+    currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+    renderCalendar();
+}
+
+function selectDate(year, month, day) {
+    selectedDate = new Date(year, month, day);
+    renderCalendar();
+    filterTasksByDate();
+}
+
+// Filter tasks by selected date
+function filterTasksByDate() {
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    const filtered = allTasks.filter(task => {
+        if (!task.due_date) return false;
+        return task.due_date === dateStr;
+    });
+
+    renderTasks(filtered.length > 0 ? filtered : allTasks);
 }
 
 // Render header
@@ -202,36 +356,43 @@ async function loadTasks(status = 'all') {
     }
 }
 
-// Render tasks
-function renderTasks() {
-    const main = document.getElementById('app-main');
+// Filter tasks by status
+function filterTasks(status) {
+    currentFilter = status;
 
-    const filterButtons = `
-        <div class="flex justify-between items-center mb-6">
-            <div class="flex gap-2">
-                <button onclick="loadTasks('all')" class="px-4 py-2 rounded-lg ${currentFilter === 'all' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}">全部</button>
-                <button onclick="loadTasks('pending')" class="px-4 py-2 rounded-lg ${currentFilter === 'pending' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}">待處理</button>
-                <button onclick="loadTasks('in_progress')" class="px-4 py-2 rounded-lg ${currentFilter === 'in_progress' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}">進行中</button>
-                <button onclick="loadTasks('completed')" class="px-4 py-2 rounded-lg ${currentFilter === 'completed' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}">已完成</button>
+    // Update filter button styles
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.filter === status) {
+            btn.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-primary text-white';
+        } else {
+            btn.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300';
+        }
+    });
+
+    // Filter and render tasks
+    if (status === 'all') {
+        renderTasks(allTasks);
+    } else {
+        const filtered = allTasks.filter(task => task.status === status);
+        renderTasks(filtered);
+    }
+}
+
+// Render tasks - updated to work with new layout
+function renderTasks(tasksToRender = null) {
+    const taskList = document.getElementById('task-list');
+    const tasks = tasksToRender || allTasks;
+
+    if (tasks.length === 0) {
+        taskList.innerHTML = `
+            <div class="text-center py-12 text-gray-500 dark:text-gray-400">
+                沒有找到任務。建立一個開始吧！
             </div>
-            <button onclick="openTaskModal()" class="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/90">
-                <span class="material-symbols-outlined">add</span>
-新增任務
-            </button>
-        </div>
-    `;
+        `;
+        return;
+    }
 
-    const tasksList = allTasks.length === 0 ? `
-        <div class="text-center py-12 text-gray-500 dark:text-gray-400">
-沒有找到任務。建立一個開始吧！
-        </div>
-    ` : `
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            ${allTasks.map(task => renderTaskCard(task)).join('')}
-        </div>
-    `;
-
-    main.innerHTML = filterButtons + tasksList;
+    taskList.innerHTML = tasks.map(task => renderTaskCard(task)).join('');
 }
 
 // Render single task card
@@ -256,20 +417,44 @@ function renderTaskCard(task) {
     };
     const priorityText = priorityMap[task.priority] || task.priority;
 
+    const assigneeName = task.assignee_name || '未指派';
+    const dueDate = task.due_date ? new Date(task.due_date).toLocaleDateString('zh-TW') : '';
+
     return `
-        <div class="task-card" onclick="editTask(${task.id})">
-            <div class="flex items-start justify-between mb-2">
-                <h3 class="font-semibold text-gray-900 dark:text-white">${task.title}</h3>
-                <span class="px-2 py-1 text-xs font-medium rounded-full ${priorityClass}">${priorityText}</span>
-            </div>
-            ${task.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 mb-3">${task.description}</p>` : ''}
-            <div class="flex items-center justify-between">
-                <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">${statusText}</span>
-                <div class="flex gap-2">
-                    <button onclick="event.stopPropagation(); deleteTask(${task.id})" class="p-1 text-red-500 hover:text-red-700">
-                        <span class="material-symbols-outlined text-base">delete</span>
-                    </button>
+        <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:shadow-md transition-shadow cursor-pointer bg-white dark:bg-slate-800/50" onclick="editTask(${task.id})">
+            <div class="flex items-start justify-between mb-3">
+                <div class="flex-1">
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-1">${task.title}</h3>
+                    ${task.description ? `<p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">${task.description}</p>` : ''}
                 </div>
+                <span class="ml-3 px-2.5 py-1 text-xs font-medium rounded-full ${priorityClass}">${priorityText}</span>
+            </div>
+
+            <div class="flex items-center justify-between text-sm">
+                <div class="flex items-center gap-3">
+                    <span class="px-2.5 py-1 text-xs font-medium rounded-full ${statusClass}">${statusText}</span>
+                    ${task.assignee_name ? `
+                        <span class="text-gray-600 dark:text-gray-400">
+                            <svg class="inline h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            ${assigneeName}
+                        </span>
+                    ` : ''}
+                    ${dueDate ? `
+                        <span class="text-gray-600 dark:text-gray-400">
+                            <svg class="inline h-4 w-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            ${dueDate}
+                        </span>
+                    ` : ''}
+                </div>
+                <button onclick="event.stopPropagation(); deleteTask(${task.id})" class="p-1.5 text-gray-400 hover:text-red-500 transition-colors">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                </button>
             </div>
             ${task.assignee_nickname ? `<p class="text-xs text-gray-500 dark:text-gray-400 mt-2">指派給：${task.assignee_nickname}</p>` : ''}
             ${task.due_date ? `<p class="text-xs text-gray-500 dark:text-gray-400">截止：${task.due_date}</p>` : ''}
