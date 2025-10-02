@@ -315,7 +315,8 @@ function renderCalendar() {
 
         // Get lunar date
         const lunar = solarToLunar(year, month + 1, day);
-        const lunarText = lunar ? lunar.day : '';
+        // Show month name on the first day of lunar month, otherwise just show day
+        const lunarText = lunar ? (lunar.day === '初一' ? lunar.month : lunar.day) : '';
 
         // Build task list HTML with colored dots
         let tasksHtml = '';
@@ -452,6 +453,8 @@ async function loadTasks(status = 'all') {
         if (data.success) {
             allTasks = data.tasks;
             renderTasks();
+            // Re-render calendar to show tasks
+            renderCalendar();
         }
     } catch (error) {
         console.error('Error loading tasks:', error);
