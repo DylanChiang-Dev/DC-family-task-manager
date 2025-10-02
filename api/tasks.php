@@ -107,6 +107,9 @@ function handleCreateTask($db, $userId)
     $priority = $input['priority'] ?? 'medium';
     $status = $input['status'] ?? 'pending';
     $dueDate = $input['due_date'] ?? null;
+    $taskType = $input['task_type'] ?? 'normal';
+    $recurrenceConfig = $input['recurrence_config'] ?? null;
+    $parentTaskId = $input['parent_task_id'] ?? null;
 
     // Validate
     if (empty($title)) {
@@ -123,15 +126,24 @@ function handleCreateTask($db, $userId)
         $status = 'pending';
     }
 
+    if (!in_array($taskType, ['normal', 'recurring', 'repeatable'])) {
+        $taskType = 'normal';
+    }
+
     // Convert empty assignee to null
     if ($assigneeId === '' || $assigneeId === '0') {
         $assigneeId = null;
     }
 
+    // Convert recurrence config to JSON string
+    if ($recurrenceConfig && is_array($recurrenceConfig)) {
+        $recurrenceConfig = json_encode($recurrenceConfig);
+    }
+
     // Insert task
-    $stmt = $db->prepare("INSERT INTO tasks (title, description, creator_id, assignee_id, priority, status, due_date)
-                          VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$title, $description, $userId, $assigneeId, $priority, $status, $dueDate]);
+    $stmt = $db->prepare("INSERT INTO tasks (title, description, creator_id, assignee_id, priority, status, due_date, task_type, recurrence_config, parent_task_id)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$title, $description, $userId, $assigneeId, $priority, $status, $dueDate, $taskType, $recurrenceConfig, $parentTaskId]);
 
     $taskId = $db->lastInsertId();
 
@@ -200,6 +212,25 @@ function handleUpdateTask($db, $userId)
     if (isset($input['due_date'])) {
         $fields[] = "due_date = ?";
         $values[] = $input['due_date'];
+    }
+
+    if (isset($input['task_type'])) {
+        $fields[] = "task_type = ?";
+        $values[] = $input['task_type'];
+    }
+
+    if (isset($input['recurrence_config'])) {
+        $fields[] = "recurrence_config = ?";
+        $recurrenceConfig = $input['recurrence_config'];
+        if (is_array($recurrenceConfig)) {
+            $recurrenceConfig = json_encode($recurrenceConfig);
+        }
+        $values[] = $recurrenceConfig;
+    }
+
+    if (isset($input['parent_task_id'])) {
+        $fields[] = "parent_task_id = ?";
+        $values[] = $input['parent_task_id'];
     }
 
     if (empty($fields)) {

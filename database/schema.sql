@@ -25,15 +25,21 @@ CREATE TABLE IF NOT EXISTS `tasks` (
     `priority` ENUM('low', 'medium', 'high') DEFAULT 'medium',
     `status` ENUM('pending', 'in_progress', 'completed', 'cancelled') DEFAULT 'pending',
     `due_date` DATE COMMENT 'Task deadline',
+    `task_type` ENUM('normal', 'recurring', 'repeatable') DEFAULT 'normal' COMMENT 'Task type: normal, recurring (periodic), or repeatable (copy)',
+    `recurrence_config` JSON COMMENT 'Recurrence configuration for recurring tasks',
+    `parent_task_id` INT UNSIGNED COMMENT 'Parent task ID for repeatable tasks',
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`creator_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
     FOREIGN KEY (`assignee_id`) REFERENCES `users`(`id`) ON DELETE SET NULL,
+    FOREIGN KEY (`parent_task_id`) REFERENCES `tasks`(`id`) ON DELETE CASCADE,
     INDEX `idx_status` (`status`),
     INDEX `idx_priority` (`priority`),
     INDEX `idx_creator` (`creator_id`),
     INDEX `idx_assignee` (`assignee_id`),
-    INDEX `idx_due_date` (`due_date`)
+    INDEX `idx_due_date` (`due_date`),
+    INDEX `idx_task_type` (`task_type`),
+    INDEX `idx_parent_task` (`parent_task_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='Task records';
 
 -- Task comments table

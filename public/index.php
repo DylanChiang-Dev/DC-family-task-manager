@@ -183,6 +183,91 @@ $isLoggedIn = isset($_SESSION['user_id']);
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">截止日期</label>
                     <input type="date" id="task-due-date" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">任務類型</label>
+                    <select id="task-type" onchange="toggleRecurrenceOptions()" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100">
+                        <option value="normal">一般任務</option>
+                        <option value="recurring">週期任務</option>
+                        <option value="repeatable">重複任務</option>
+                    </select>
+                </div>
+                <!-- Recurrence configuration (shown only for recurring tasks) -->
+                <div id="recurrence-options" class="hidden space-y-3">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">重複頻率</label>
+                        <select id="recurrence-frequency" onchange="updateRecurrenceFields()" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100">
+                            <option value="daily">每天</option>
+                            <option value="weekly">每週</option>
+                            <option value="monthly">每月</option>
+                            <option value="yearly">每年</option>
+                        </select>
+                    </div>
+                    <!-- Weekly options -->
+                    <div id="weekly-options" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">選擇星期幾</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="0" class="recurrence-weekday rounded text-primary focus:ring-primary"/>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">日</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="1" class="recurrence-weekday rounded text-primary focus:ring-primary"/>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">一</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="2" class="recurrence-weekday rounded text-primary focus:ring-primary"/>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">二</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="3" class="recurrence-weekday rounded text-primary focus:ring-primary"/>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">三</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="4" class="recurrence-weekday rounded text-primary focus:ring-primary"/>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">四</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="5" class="recurrence-weekday rounded text-primary focus:ring-primary"/>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">五</span>
+                            </label>
+                            <label class="flex items-center space-x-2">
+                                <input type="checkbox" value="6" class="recurrence-weekday rounded text-primary focus:ring-primary"/>
+                                <span class="text-sm text-gray-700 dark:text-gray-300">六</span>
+                            </label>
+                        </div>
+                    </div>
+                    <!-- Monthly options -->
+                    <div id="monthly-options" class="hidden">
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">每月第幾天（多選，用逗號分隔，例如：1,15）</label>
+                        <input type="text" id="recurrence-monthly-dates" placeholder="例如：1,15,30" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                    </div>
+                    <!-- Yearly options -->
+                    <div id="yearly-options" class="hidden">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">月份</label>
+                                <select id="recurrence-yearly-month" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100">
+                                    <option value="1">一月</option>
+                                    <option value="2">二月</option>
+                                    <option value="3">三月</option>
+                                    <option value="4">四月</option>
+                                    <option value="5">五月</option>
+                                    <option value="6">六月</option>
+                                    <option value="7">七月</option>
+                                    <option value="8">八月</option>
+                                    <option value="9">九月</option>
+                                    <option value="10">十月</option>
+                                    <option value="11">十一月</option>
+                                    <option value="12">十二月</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">日期</label>
+                                <input type="number" id="recurrence-yearly-date" min="1" max="31" value="1" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <div class="flex gap-3 mt-6">
                     <button type="button" onclick="closeTaskModal()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">取消</button>
                     <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">儲存</button>

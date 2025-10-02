@@ -13,6 +13,56 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
+// Generate recurring task instances for calendar view
+function generateRecurringTaskInstances(tasks, startDate, endDate) {
+    const instances = [];
+
+    tasks.forEach(task => {
+        if (task.task_type === 'recurring' && task.recurrence_config) {
+            const config = typeof task.recurrence_config === 'string'
+                ? JSON.parse(task.recurrence_config)
+                : task.recurrence_config;
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            // Generate instances based on frequency
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                if (shouldShowRecurringTask(d, config)) {
+                    // Create a virtual task instance for this date
+                    instances.push({
+                        ...task,
+                        due_date: d.toISOString().split('T')[0],
+                        isRecurringInstance: true
+                    });
+                }
+            }
+        } else {
+            // Regular tasks or repeatable tasks - add as-is
+            instances.push(task);
+        }
+    });
+
+    return instances;
+}
+
+// Check if a recurring task should show on a specific date
+function shouldShowRecurringTask(date, config) {
+    const { frequency } = config;
+
+    if (frequency === 'daily') {
+        return true;
+    } else if (frequency === 'weekly' && config.days) {
+        return config.days.includes(date.getDay());
+    } else if (frequency === 'monthly' && config.dates) {
+        return config.dates.includes(date.getDate());
+    } else if (frequency === 'yearly' && config.month && config.date) {
+        return date.getMonth() + 1 === config.month && date.getDate() === config.date;
+    }
+
+    return false;
+}
+
 // Check if user is logged in
 async function checkLoginStatus() {
     try {
@@ -189,6 +239,11 @@ function renderCalendar() {
     const daysInMonth = lastDay.getDate();
     const startDay = firstDay.getDay();
 
+    // Generate recurring task instances for current month
+    const monthStart = new Date(year, month, 1);
+    const monthEnd = new Date(year, month + 1, 0);
+    const tasksWithInstances = generateRecurringTaskInstances(allTasks, monthStart, monthEnd);
+
     const monthNames = ['一月', '二月', '三月', '四月', '五月', '六月', '七月', '八月', '九月', '十月', '十一月', '十二月'];
     const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
 
@@ -241,10 +296,32 @@ function renderCalendar() {
         const todayClass = isToday(day) ? 'ring-2 ring-primary ring-offset-1' : '';
         const selectedClass = isSelected(day) ? 'bg-primary text-white' : 'hover:bg-gray-100 dark:hover:bg-gray-800';
 
+        // Get tasks for this day (including recurring instances)
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayTasks = tasksWithInstances.filter(task => task.due_date === dateStr);
+
+        // Build task list HTML
+        let tasksHtml = '';
+        if (dayTasks.length > 0) {
+            const visibleTasks = dayTasks.slice(0, 5);
+            tasksHtml = visibleTasks.map(task => {
+                const priorityColor = task.priority === 'high' ? 'bg-red-500' :
+                                     task.priority === 'medium' ? 'bg-blue-500' : 'bg-green-500';
+                return `<div class="w-full text-left px-1 py-0.5 text-xs truncate ${priorityColor} text-white rounded mb-0.5" title="${task.title}">${task.title}</div>`;
+            }).join('');
+
+            if (dayTasks.length > 5) {
+                tasksHtml += `<div class="text-xs text-gray-500 dark:text-gray-400 px-1">+${dayTasks.length - 5} 更多</div>`;
+            }
+        }
+
         html += `
             <button onclick="selectDate(${year}, ${month}, ${day})"
-                    class="aspect-square flex items-center justify-center rounded-lg text-sm font-medium transition-colors ${selectedClass} ${todayClass} text-gray-900 dark:text-gray-100">
-                ${day}
+                    class="relative min-h-24 p-1 flex flex-col items-start rounded-lg text-sm transition-colors ${selectedClass} ${todayClass}">
+                <span class="font-medium text-gray-900 dark:text-gray-100 mb-1">${day}</span>
+                <div class="w-full space-y-0.5">
+                    ${tasksHtml}
+                </div>
             </button>
         `;
     }
@@ -419,6 +496,10 @@ function renderTaskCard(task) {
     const assigneeName = task.assignee_name || '未指派';
     const dueDate = task.due_date ? new Date(task.due_date).toLocaleDateString('zh-TW', { month: 'short', day: 'numeric' }) : '';
 
+    // Task type badge
+    const taskTypeBadge = task.task_type === 'recurring' ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300">🔄 週期</span>' :
+                         task.task_type === 'repeatable' ? '<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300">📋 重複</span>' : '';
+
     return `
         <div class="border border-gray-200 dark:border-gray-700 rounded-lg p-3 hover:border-primary transition-all cursor-pointer bg-white dark:bg-slate-800/50" onclick="editTask(${task.id})">
             <div class="flex items-start justify-between mb-2">
@@ -435,6 +516,7 @@ function renderTaskCard(task) {
             <div class="flex items-center gap-1 flex-wrap mb-2">
                 <span class="px-2 py-0.5 text-xs font-medium rounded-full ${priorityClass}">${priorityText}</span>
                 <span class="px-2 py-0.5 text-xs font-medium rounded-full ${statusClass}">${statusText}</span>
+                ${taskTypeBadge}
             </div>
 
             <div class="flex flex-col gap-1 text-xs text-gray-600 dark:text-gray-400">
@@ -459,6 +541,60 @@ function renderTaskCard(task) {
     `;
 }
 
+// Toggle recurrence options visibility
+function toggleRecurrenceOptions() {
+    const taskType = document.getElementById('task-type').value;
+    const recurrenceOptions = document.getElementById('recurrence-options');
+
+    if (taskType === 'recurring') {
+        recurrenceOptions.classList.remove('hidden');
+        updateRecurrenceFields();
+    } else {
+        recurrenceOptions.classList.add('hidden');
+    }
+}
+
+// Update recurrence fields based on frequency
+function updateRecurrenceFields() {
+    const frequency = document.getElementById('recurrence-frequency').value;
+    document.getElementById('weekly-options').classList.add('hidden');
+    document.getElementById('monthly-options').classList.add('hidden');
+    document.getElementById('yearly-options').classList.add('hidden');
+
+    if (frequency === 'weekly') {
+        document.getElementById('weekly-options').classList.remove('hidden');
+    } else if (frequency === 'monthly') {
+        document.getElementById('monthly-options').classList.remove('hidden');
+    } else if (frequency === 'yearly') {
+        document.getElementById('yearly-options').classList.remove('hidden');
+    }
+}
+
+// Build recurrence config object from form
+function buildRecurrenceConfig() {
+    const taskType = document.getElementById('task-type').value;
+    if (taskType !== 'recurring') {
+        return null;
+    }
+
+    const frequency = document.getElementById('recurrence-frequency').value;
+    const config = { frequency };
+
+    if (frequency === 'weekly') {
+        const days = Array.from(document.querySelectorAll('.recurrence-weekday:checked'))
+            .map(cb => parseInt(cb.value));
+        config.days = days;
+    } else if (frequency === 'monthly') {
+        const datesInput = document.getElementById('recurrence-monthly-dates').value;
+        config.dates = datesInput.split(',').map(d => parseInt(d.trim())).filter(d => !isNaN(d));
+    } else if (frequency === 'yearly') {
+        config.month = parseInt(document.getElementById('recurrence-yearly-month').value);
+        config.date = parseInt(document.getElementById('recurrence-yearly-date').value);
+    }
+
+    return config;
+}
+
 // Open task modal
 function openTaskModal(task = null) {
     const modal = document.getElementById('task-modal');
@@ -474,10 +610,38 @@ function openTaskModal(task = null) {
         document.getElementById('task-priority').value = task.priority;
         document.getElementById('task-status').value = task.status;
         document.getElementById('task-due-date').value = task.due_date || '';
+        document.getElementById('task-type').value = task.task_type || 'normal';
+
+        // Load recurrence config if exists
+        if (task.task_type === 'recurring' && task.recurrence_config) {
+            const config = typeof task.recurrence_config === 'string'
+                ? JSON.parse(task.recurrence_config)
+                : task.recurrence_config;
+
+            document.getElementById('recurrence-frequency').value = config.frequency;
+            toggleRecurrenceOptions();
+            updateRecurrenceFields();
+
+            if (config.frequency === 'weekly' && config.days) {
+                config.days.forEach(day => {
+                    const checkbox = document.querySelector(`.recurrence-weekday[value="${day}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            } else if (config.frequency === 'monthly' && config.dates) {
+                document.getElementById('recurrence-monthly-dates').value = config.dates.join(',');
+            } else if (config.frequency === 'yearly') {
+                document.getElementById('recurrence-yearly-month').value = config.month;
+                document.getElementById('recurrence-yearly-date').value = config.date;
+            }
+        } else {
+            toggleRecurrenceOptions();
+        }
     } else {
         title.textContent = '建立任務';
         form.reset();
         document.getElementById('task-id').value = '';
+        document.getElementById('task-type').value = 'normal';
+        toggleRecurrenceOptions();
     }
 
     modal.classList.remove('hidden');
@@ -508,8 +672,15 @@ async function handleTaskSubmit(e) {
         assignee_id: document.getElementById('task-assignee').value,
         priority: document.getElementById('task-priority').value,
         status: document.getElementById('task-status').value,
-        due_date: document.getElementById('task-due-date').value
+        due_date: document.getElementById('task-due-date').value,
+        task_type: document.getElementById('task-type').value
     };
+
+    // Add recurrence config if task is recurring
+    const recurrenceConfig = buildRecurrenceConfig();
+    if (recurrenceConfig) {
+        taskData.recurrence_config = recurrenceConfig;
+    }
 
     try {
         const url = taskId ? `/api/tasks.php?id=${taskId}` : '/api/tasks.php';
