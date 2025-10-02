@@ -14,7 +14,7 @@ session_start();
 // Load configuration
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../lib/Database.php';
 
 // CORS headers (optional, for API access)
 header('Content-Type: application/json');

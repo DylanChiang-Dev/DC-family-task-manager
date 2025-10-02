@@ -16,7 +16,7 @@ if (file_exists(__DIR__ . '/../config/database.php')) {
     // Database configured, check if tables exist
     require_once __DIR__ . '/../config/database.php';
     try {
-        require_once __DIR__ . '/../config/Database.php';
+        require_once __DIR__ . '/../lib/Database.php';
         $db = Database::getInstance()->getConnection();
 
         // Check if users table exists
