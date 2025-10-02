@@ -15,7 +15,7 @@ try {
 
     // Validate inputs
     if (empty($dbname) || empty($user)) {
-        throw new Exception('Database name and username are required');
+        throw new Exception('資料庫名稱和使用者名稱為必填');
     }
 
     // Attempt connection
@@ -32,7 +32,7 @@ try {
 
     echo json_encode([
         'success' => true,
-        'message' => 'Connection successful'
+        'message' => '連線成功'
     ]);
 } catch (PDOException $e) {
     http_response_code(400);

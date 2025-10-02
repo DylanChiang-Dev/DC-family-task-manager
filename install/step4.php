@@ -103,7 +103,7 @@ if (!file_exists(__DIR__ . '/../config/installed.lock')) {
                 </div>
 
                 <div class="mt-8 flex justify-center">
-                    <a href="/public/index.php"
+                    <a href="/"
                        class="inline-flex items-center justify-center rounded-lg bg-primary px-8 py-3 text-base font-semibold text-white shadow-sm hover:bg-primary/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
                         前往登入頁面
                     </a>
