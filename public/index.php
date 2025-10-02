@@ -1,4 +1,10 @@
 <?php
+// 检查是否已安装
+if (!file_exists('../config/installed.lock')) {
+    header('Location: ../install/index.php');
+    exit;
+}
+
 session_start();
 require_once '../config/config.php';
 

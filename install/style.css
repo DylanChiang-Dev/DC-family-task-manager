@@ -1,0 +1,267 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.install-container {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.install-header {
+    background: white;
+    padding: 30px;
+    border-radius: 10px 10px 0 0;
+    text-align: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.install-header h1 {
+    color: #667eea;
+    margin-bottom: 10px;
+}
+
+.install-header p {
+    color: #666;
+}
+
+.install-steps {
+    background: white;
+    padding: 20px;
+    display: flex;
+    justify-content: space-between;
+    border-top: 1px solid #eee;
+}
+
+.step {
+    flex: 1;
+    text-align: center;
+    padding: 10px;
+    position: relative;
+    opacity: 0.5;
+}
+
+.step.active {
+    opacity: 1;
+}
+
+.step-number {
+    display: inline-block;
+    width: 35px;
+    height: 35px;
+    line-height: 35px;
+    background: #e0e0e0;
+    color: #666;
+    border-radius: 50%;
+    margin-bottom: 8px;
+}
+
+.step.active .step-number {
+    background: #667eea;
+    color: white;
+}
+
+.step-title {
+    display: block;
+    font-size: 14px;
+    color: #666;
+}
+
+.install-content {
+    background: white;
+    padding: 40px;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.step-content h2 {
+    margin-bottom: 10px;
+    color: #333;
+}
+
+.step-content > p {
+    color: #666;
+    margin-bottom: 30px;
+}
+
+.check-list {
+    margin: 30px 0;
+}
+
+.check-item {
+    display: flex;
+    align-items: center;
+    padding: 15px;
+    margin-bottom: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+    border-left: 3px solid #ddd;
+}
+
+.check-item.checking {
+    border-left-color: #ffa502;
+}
+
+.check-item.passed {
+    border-left-color: #26de81;
+    background: #f0fff4;
+}
+
+.check-item.failed {
+    border-left-color: #ff4757;
+    background: #fff5f5;
+}
+
+.check-icon {
+    width: 30px;
+    font-size: 20px;
+}
+
+.check-name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.check-status {
+    color: #666;
+    font-size: 14px;
+}
+
+.install-form {
+    max-width: 600px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #333;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 14px;
+}
+
+.form-group small {
+    display: block;
+    margin-top: 5px;
+    color: #999;
+    font-size: 13px;
+}
+
+.button-group {
+    margin-top: 30px;
+    display: flex;
+    gap: 10px;
+}
+
+.btn-primary,
+.btn-secondary {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #5568d3;
+}
+
+.btn-secondary {
+    background: #f1f1f1;
+    color: #333;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+.test-result {
+    margin-top: 20px;
+}
+
+.test-result p {
+    padding: 12px;
+    border-radius: 5px;
+    margin: 10px 0;
+}
+
+.test-result .testing {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.test-result .success {
+    background: #d4edda;
+    color: #155724;
+}
+
+.test-result .error {
+    background: #f8d7da;
+    color: #721c24;
+}
+
+.install-progress {
+    margin-top: 30px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 30px;
+    background: #f1f1f1;
+    border-radius: 15px;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+    transition: width 0.3s;
+    width: 0;
+}
+
+#progressText {
+    text-align: center;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .install-steps {
+        flex-wrap: wrap;
+    }
+
+    .step {
+        flex-basis: 50%;
+        margin-bottom: 10px;
+    }
+
+    .install-content {
+        padding: 20px;
+    }
+}

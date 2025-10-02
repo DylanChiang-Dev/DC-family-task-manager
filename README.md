@@ -4,6 +4,7 @@
 
 ## 功能特性
 
+- 🚀 **一键安装** - 类似 WordPress 的 Web 安装向导
 - 👥 **多用户管理** - 家庭成员注册和登录
 - ✅ **任务管理** - 创建、编辑、删除、分配任务
 - 🎯 **优先级设置** - 高/中/低三级优先级
@@ -31,7 +32,11 @@ family-task-manager/
 │   ├── config.example.php
 │   └── database.example.php
 ├── database/            # 数据库脚本
-│   └── schema.sql       # 建表语句
+│   └── schema.sql       # 建表语句（可选，安装向导会自动创建）
+├── install/             # 安装向导
+│   ├── index.php        # 安装主页
+│   ├── step1-4.php      # 安装步骤
+│   └── ...              # 安装脚本
 ├── public/              # 公共资源
 │   ├── css/
 │   │   └── style.css    # 样式文件
@@ -41,66 +46,59 @@ family-task-manager/
 └── README.md
 ```
 
-## 安装部署
+## 快速开始
 
-### 环境要求
+### 方式一：Web 安装向导（推荐）⭐
+
+这是最简单的安装方式，类似 WordPress 的安装流程。
+
+#### 环境要求
 
 - PHP >= 7.4
 - MySQL >= 5.7
-- Web 服务器（Apache/Nginx）
+- Web 服务器（Apache/Nginx/宝塔面板）
 
-### 宝塔面板部署步骤
+#### 宝塔面板部署
 
-1. **创建网站**
+1. **创建网站和数据库**
    - 登录宝塔面板
    - 点击「网站」→「添加站点」
-   - 填写域名或IP，PHP版本选择 7.4 或更高
-   - 数据库选择 MySQL，记录数据库名、用户名、密码
+   - 填写域名或IP，PHP版本选择 7.4+
+   - 创建一个 MySQL 数据库，记录数据库名、用户名、密码
 
 2. **上传代码**
    ```bash
-   # 方式1：通过宝塔文件管理上传
-   # 将所有文件上传到网站根目录
-
-   # 方式2：通过 Git 克隆
+   # 方式1：Git克隆（推荐）
    cd /www/wwwroot/your-domain
    git clone https://github.com/DylanChiang-Dev/family-task-manager.git .
+
+   # 方式2：通过宝塔文件管理上传压缩包并解压
    ```
 
-3. **配置数据库**
+3. **设置运行目录**
+   - 在网站设置中，将运行目录设置为 `public`
+
+4. **设置权限**
    ```bash
-   # 复制配置文件
-   cp config/database.example.php config/database.php
-   cp config/config.example.php config/config.php
-
-   # 编辑 config/database.php，填入数据库信息
-   ```
-
-4. **导入数据库**
-   - 在宝塔面板 phpMyAdmin 中
-   - 选择创建的数据库
-   - 导入 `database/schema.sql` 文件
-
-5. **设置网站运行目录**
-   - 在网站设置中
-   - 将运行目录设置为 `public`
-
-6. **设置伪静态（可选）**
-   - 如果使用 Nginx，添加以下规则：
-   ```nginx
-   location / {
-       try_files $uri $uri/ /index.php?$query_string;
-   }
-   ```
-
-7. **设置权限**
-   ```bash
-   # 确保目录权限正确
    chmod -R 755 /www/wwwroot/your-domain
+   chmod -R 777 /www/wwwroot/your-domain/config
    chown -R www:www /www/wwwroot/your-domain
    ```
 
-### 本地开发部署
+5. **访问安装向导**
+   - 打开浏览器访问 `http://your-domain`
+   - 系统会自动跳转到安装向导 `/install/`
+   - 按照 4 个步骤完成安装：
+     1. ✓ 环境检测
+     2. ⚙️ 数据库配置
+     3. 👤 创建管理员账户
+     4. ✅ 完成安装
+
+6. **安全建议**
+   - 安装完成后，删除或重命名 `install` 目录
+   - 将 `config` 目录权限改回 755
+
+#### 本地开发环境
 
 1. **克隆仓库**
    ```bash
@@ -108,36 +106,50 @@ family-task-manager/
    cd family-task-manager
    ```
 
-2. **配置环境**
+2. **创建数据库**
    ```bash
-   cp config/database.example.php config/database.php
-   cp config/config.example.php config/config.php
+   mysql -u root -p -e "CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
    ```
 
-3. **修改配置文件**
-   编辑 `config/database.php` 和 `config/config.php`，填入对应信息
-
-4. **导入数据库**
+3. **设置权限**
    ```bash
-   mysql -u root -p < database/schema.sql
+   chmod -R 777 config
    ```
 
-5. **启动服务**
+4. **启动服务**
    ```bash
-   # 使用 PHP 内置服务器
    cd public
    php -S localhost:8000
    ```
 
-6. **访问应用**
-   打开浏览器访问 `http://localhost:8000`
+5. **访问安装向导**
+   - 打开浏览器访问 `http://localhost:8000`
+   - 跟随安装向导完成配置
 
-## 默认账户
+### 方式二：手动安装
 
-- 用户名: `admin`
-- 密码: `admin123`
+如果你更喜欢传统的手动配置方式：
 
-**⚠️ 首次登录后请立即修改密码！**
+1. **配置文件**
+   ```bash
+   cp config/database.example.php config/database.php
+   cp config/config.example.php config/config.php
+   # 编辑配置文件填入数据库信息
+   ```
+
+2. **导入数据库**
+   ```bash
+   mysql -u root -p your_database < database/schema.sql
+   ```
+
+3. **创建锁定文件**
+   ```bash
+   echo "$(date)" > config/installed.lock
+   ```
+
+4. **访问系统**
+   - 默认管理员：`admin` / `admin123`
+   - ⚠️ 首次登录后请立即修改密码
 
 ## 使用说明
 
