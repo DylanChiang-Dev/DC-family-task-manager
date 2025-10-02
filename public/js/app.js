@@ -7,6 +7,24 @@ let currentFilter = 'all';
 let selectedDate = new Date();
 let currentMonth = new Date();
 
+// Lunar calendar conversion using lunar-javascript library
+function solarToLunar(year, month, day) {
+    try {
+        if (typeof Lunar !== 'undefined') {
+            const solar = Lunar.Solar.fromYmd(year, month, day);
+            const lunar = solar.getLunar();
+            return {
+                month: lunar.getMonthInChinese(),
+                day: lunar.getDayInChinese(),
+                fullDate: `${lunar.getMonthInChinese()}${lunar.getDayInChinese()}`
+            };
+        }
+    } catch (e) {
+        console.error('Lunar conversion error:', e);
+    }
+    return null;
+}
+
 // Initialize app
 document.addEventListener('DOMContentLoaded', () => {
     checkLoginStatus();
@@ -294,40 +312,47 @@ function renderCalendar() {
 
     for (let day = 1; day <= daysInMonth; day++) {
         const todayClass = isToday(day) ? 'ring-2 ring-primary ring-offset-2 dark:ring-offset-gray-900 shadow-lg' : '';
-        const selectedClass = isSelected(day) ? 'bg-gradient-to-br from-primary to-blue-600 text-white shadow-xl scale-105' : 'bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:shadow-md';
+        const isSelectedDay = isSelected(day);
+        const selectedClass = isSelectedDay ? 'bg-primary/10 dark:bg-primary/20 border-primary dark:border-primary shadow-md scale-[1.02]' : 'bg-white dark:bg-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:shadow-md';
 
         // Get tasks for this day (including recurring instances)
         const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
         const dayTasks = tasksWithInstances.filter(task => task.due_date === dateStr);
 
+        // Get lunar date
+        const lunar = solarToLunar(year, month + 1, day);
+        const lunarText = lunar ? lunar.day : '';
+
         // Build task list HTML with colored dots
         let tasksHtml = '';
         if (dayTasks.length > 0) {
             const visibleTasks = dayTasks.slice(0, 5);
-            tasksHtml = '<div class="w-full space-y-1 mt-1">';
+            tasksHtml = '<div class="w-full space-y-1 mt-2">';
             tasksHtml += visibleTasks.map(task => {
                 const priorityColor = task.priority === 'high' ? 'bg-red-500' :
                                      task.priority === 'medium' ? 'bg-blue-500' : 'bg-green-500';
-                const textColor = isSelected(day) ? 'text-white/90' : 'text-gray-700 dark:text-gray-300';
                 return `<div class="flex items-center gap-1.5 w-full">
-                    <div class="w-1.5 h-1.5 rounded-full ${priorityColor} flex-shrink-0"></div>
-                    <span class="text-xs truncate ${textColor}" title="${task.title}">${task.title}</span>
+                    <div class="w-1.5 h-1.5 rounded-full ${priorityColor} flex-shrink-0 shadow-sm"></div>
+                    <span class="text-xs truncate text-gray-700 dark:text-gray-300" title="${task.title}">${task.title}</span>
                 </div>`;
             }).join('');
             tasksHtml += '</div>';
 
             if (dayTasks.length > 5) {
-                const moreTextColor = isSelected(day) ? 'text-white/80' : 'text-gray-500 dark:text-gray-400';
-                tasksHtml += `<div class="text-xs ${moreTextColor} mt-1 font-medium">+${dayTasks.length - 5} 更多</div>`;
+                tasksHtml += `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">+${dayTasks.length - 5} 更多</div>`;
             }
         }
 
-        const dateNumColor = isSelected(day) ? 'text-white' : isToday(day) ? 'text-primary dark:text-blue-400' : 'text-gray-900 dark:text-gray-100';
+        const dateNumColor = isSelectedDay ? 'text-primary dark:text-blue-400 font-extrabold' : isToday(day) ? 'text-primary dark:text-blue-400' : 'text-gray-900 dark:text-gray-100';
+        const lunarColor = isSelectedDay ? 'text-primary/70 dark:text-blue-400/70' : 'text-gray-500 dark:text-gray-400';
 
         html += `
             <button onclick="selectDate(${year}, ${month}, ${day})"
-                    class="relative min-h-32 p-3 flex flex-col items-start rounded-xl text-sm transition-all duration-200 border border-gray-200 dark:border-gray-700 ${selectedClass} ${todayClass}">
-                <span class="font-bold text-base ${dateNumColor} mb-1">${day}</span>
+                    class="relative min-h-32 p-3 flex flex-col items-start rounded-xl text-sm transition-all duration-200 border ${selectedClass} ${todayClass}">
+                <div class="flex items-baseline gap-2 w-full">
+                    <span class="font-bold text-base ${dateNumColor}">${day}</span>
+                    ${lunarText ? `<span class="text-xs ${lunarColor} font-medium">${lunarText}</span>` : ''}
+                </div>
                 ${tasksHtml}
             </button>
         `;
