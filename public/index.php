@@ -24,7 +24,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link rel="stylesheet" href="/public/css/style.css"/>
+    <link rel="stylesheet" href="/css/style.css"/>
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -192,6 +192,6 @@ $isLoggedIn = isset($_SESSION['user_id']);
     </div>
 <?php endif; ?>
 
-<script src="/public/js/app.js"></script>
+<script src="/js/app.js"></script>
 </body>
 </html>
