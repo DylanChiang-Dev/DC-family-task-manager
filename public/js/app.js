@@ -900,6 +900,19 @@ function openTaskModal(task = null) {
         form.reset();
         document.getElementById('task-id').value = '';
         document.getElementById('task-type').value = 'normal';
+
+        // 設置默認值：指派給當前用戶，截止日期為今天
+        if (currentUser && currentUser.id) {
+            document.getElementById('task-assignee').value = currentUser.id;
+        }
+
+        // 設置截止日期為今天
+        const today = new Date();
+        const todayStr = today.getFullYear() + '-' +
+                        String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                        String(today.getDate()).padStart(2, '0');
+        document.getElementById('task-due-date').value = todayStr;
+
         toggleRecurrenceOptions();
     }
 

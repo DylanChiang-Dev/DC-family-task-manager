@@ -146,16 +146,22 @@
     /* 左侧标题区域 */
     header .flex.items-center.gap-4:first-child {
         gap: 0.5rem !important;
+        flex-shrink: 1;
+        min-width: 0;
     }
 
     header h1 {
-        font-size: 0.75rem !important; /* 12px */
+        font-size: 0.625rem !important; /* 10px */
         white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100px;
     }
 
     header .flex.items-center.gap-4:first-child svg {
         width: 1.5rem !important; /* 24px */
         height: 1.5rem !important;
+        flex-shrink: 0;
     }
 
     /* 团队切换器移动端优化 */
