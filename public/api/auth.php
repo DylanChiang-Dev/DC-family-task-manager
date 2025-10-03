@@ -199,17 +199,32 @@ function handleLogin($db)
         return;
     }
 
+    // 如果用戶沒有當前團隊，自動設置為第一個團隊
+    $currentTeamId = $user['current_team_id'];
+    if (!$currentTeamId) {
+        $stmt = $db->prepare("SELECT team_id FROM team_members WHERE user_id = ? ORDER BY joined_at ASC LIMIT 1");
+        $stmt->execute([$user['id']]);
+        $firstTeam = $stmt->fetch();
+
+        if ($firstTeam) {
+            $currentTeamId = $firstTeam['team_id'];
+            // 更新用戶的當前團隊
+            $updateStmt = $db->prepare("UPDATE users SET current_team_id = ? WHERE id = ?");
+            $updateStmt->execute([$currentTeamId, $user['id']]);
+        }
+    }
+
     // 設置會話
     $_SESSION['user_id'] = $user['id'];
     $_SESSION['username'] = $user['username'];
     $_SESSION['nickname'] = $user['nickname'];
-    $_SESSION['current_team_id'] = $user['current_team_id'];
+    $_SESSION['current_team_id'] = $currentTeamId;
 
     // 獲取當前團隊信息
     $teamInfo = null;
-    if ($user['current_team_id']) {
+    if ($currentTeamId) {
         $stmt = $db->prepare("SELECT t.name, tm.role FROM teams t INNER JOIN team_members tm ON t.id = tm.team_id WHERE t.id = ? AND tm.user_id = ?");
-        $stmt->execute([$user['current_team_id'], $user['id']]);
+        $stmt->execute([$currentTeamId, $user['id']]);
         $teamInfo = $stmt->fetch();
     }
 
@@ -220,7 +235,7 @@ function handleLogin($db)
             'id' => $user['id'],
             'username' => $user['username'],
             'nickname' => $user['nickname'],
-            'current_team_id' => $user['current_team_id'],
+            'current_team_id' => $currentTeamId,
             'current_team_name' => $teamInfo ? $teamInfo['name'] : null,
             'current_team_role' => $teamInfo ? $teamInfo['role'] : null
         ]
