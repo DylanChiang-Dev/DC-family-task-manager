@@ -1,0 +1,275 @@
+/**
+ * 设计令牌系统 (Design Tokens)
+ * 任務管理系統 - 现代化CSS重构
+ *
+ * 使用CSS自定义属性统一管理设计变量
+ * 支持亮色/暗色主题自动切换
+ */
+
+:root {
+  /* ========================================
+     颜色系统 - 使用 oklch() 颜色空间
+     ======================================== */
+
+  /* 主色调 - Primary */
+  --color-primary-50: oklch(95% 0.02 250);
+  --color-primary-100: oklch(90% 0.04 250);
+  --color-primary-200: oklch(82% 0.08 250);
+  --color-primary-300: oklch(72% 0.12 250);
+  --color-primary-400: oklch(65% 0.14 250);
+  --color-primary-500: oklch(60% 0.15 250);    /* #137fec 主色 */
+  --color-primary-600: oklch(52% 0.14 250);
+  --color-primary-700: oklch(45% 0.12 250);
+  --color-primary-800: oklch(35% 0.10 250);
+  --color-primary-900: oklch(25% 0.08 250);
+
+  /* 语义化颜色 - Semantic Colors */
+  --color-success: oklch(70% 0.15 145);        /* 绿色 */
+  --color-warning: oklch(75% 0.15 85);         /* 黄色 */
+  --color-error: oklch(60% 0.20 25);           /* 红色 */
+  --color-info: oklch(65% 0.15 230);           /* 蓝色 */
+
+  /* 中性色 - Neutrals */
+  --color-neutral-50: oklch(98% 0 0);
+  --color-neutral-100: oklch(96% 0 0);
+  --color-neutral-200: oklch(92% 0 0);
+  --color-neutral-300: oklch(85% 0 0);
+  --color-neutral-400: oklch(70% 0 0);
+  --color-neutral-500: oklch(55% 0 0);
+  --color-neutral-600: oklch(45% 0 0);
+  --color-neutral-700: oklch(35% 0 0);
+  --color-neutral-800: oklch(25% 0 0);
+  --color-neutral-900: oklch(15% 0 0);
+
+  /* ========================================
+     主题颜色 - 亮色模式默认值
+     ======================================== */
+
+  color-scheme: light dark;
+
+  /* 表面颜色 */
+  --surface-primary: var(--color-neutral-50);
+  --surface-secondary: var(--color-neutral-100);
+  --surface-tertiary: var(--color-neutral-200);
+  --surface-overlay: oklch(100% 0 0 / 0.95);
+
+  /* 文本颜色 */
+  --text-primary: var(--color-neutral-900);
+  --text-secondary: var(--color-neutral-700);
+  --text-tertiary: var(--color-neutral-500);
+  --text-inverse: var(--color-neutral-50);
+
+  /* 边框颜色 */
+  --border-primary: var(--color-neutral-200);
+  --border-secondary: var(--color-neutral-300);
+  --border-focus: var(--color-primary-500);
+
+  /* 背景颜色 */
+  --background-page: oklch(97% 0.002 250);
+  --background-elevated: var(--color-neutral-50);
+
+  /* ========================================
+     间距系统 - 8px基准网格
+     ======================================== */
+
+  --space-0: 0;
+  --space-1: 0.25rem;   /* 4px */
+  --space-2: 0.5rem;    /* 8px */
+  --space-3: 0.75rem;   /* 12px */
+  --space-4: 1rem;      /* 16px */
+  --space-5: 1.25rem;   /* 20px */
+  --space-6: 1.5rem;    /* 24px */
+  --space-8: 2rem;      /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+  --space-20: 5rem;     /* 80px */
+  --space-24: 6rem;     /* 96px */
+
+  /* ========================================
+     排版系统 - 流式字体
+     ======================================== */
+
+  /* 字体族 */
+  --font-family-base: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                      "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei",
+                      "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-family-mono: "SF Mono", Monaco, Consolas, "Liberation Mono",
+                      "Courier New", monospace;
+
+  /* 字体大小 - 使用 clamp() 实现流式排版 */
+  --font-size-xs: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);      /* 12-14px */
+  --font-size-sm: clamp(0.875rem, 0.8rem + 0.375vw, 1rem);        /* 14-16px */
+  --font-size-base: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);        /* 16-18px */
+  --font-size-lg: clamp(1.125rem, 1rem + 0.625vw, 1.25rem);       /* 18-20px */
+  --font-size-xl: clamp(1.25rem, 1.1rem + 0.75vw, 1.5rem);        /* 20-24px */
+  --font-size-2xl: clamp(1.5rem, 1.3rem + 1vw, 1.875rem);         /* 24-30px */
+  --font-size-3xl: clamp(1.875rem, 1.6rem + 1.375vw, 2.25rem);    /* 30-36px */
+
+  /* 行高 */
+  --line-height-tight: 1.25;
+  --line-height-normal: 1.5;
+  --line-height-relaxed: 1.75;
+
+  /* 字重 */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* ========================================
+     圆角系统
+     ======================================== */
+
+  --radius-none: 0;
+  --radius-sm: 0.25rem;   /* 4px */
+  --radius-md: 0.5rem;    /* 8px */
+  --radius-lg: 0.75rem;   /* 12px */
+  --radius-xl: 1rem;      /* 16px */
+  --radius-2xl: 1.5rem;   /* 24px */
+  --radius-full: 9999px;
+
+  /* ========================================
+     阴影系统
+     ======================================== */
+
+  --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px oklch(0% 0 0 / 0.1),
+               0 2px 4px -2px oklch(0% 0 0 / 0.1);
+  --shadow-lg: 0 10px 15px -3px oklch(0% 0 0 / 0.1),
+               0 4px 6px -4px oklch(0% 0 0 / 0.1);
+  --shadow-xl: 0 20px 25px -5px oklch(0% 0 0 / 0.1),
+               0 8px 10px -6px oklch(0% 0 0 / 0.1);
+
+  /* ========================================
+     动画系统
+     ======================================== */
+
+  /* 过渡时长 */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+
+  /* 缓动函数 */
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ========================================
+     Z-index层级
+     ======================================== */
+
+  --z-dropdown: 1000;
+  --z-sticky: 1100;
+  --z-modal-backdrop: 1200;
+  --z-modal: 1300;
+  --z-toast: 1400;
+  --z-tooltip: 1500;
+
+  /* ========================================
+     断点常量 (仅用于文档，实际使用媒体查询)
+     ======================================== */
+
+  --breakpoint-sm: 640px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+  --breakpoint-2xl: 1920px;
+
+  /* ========================================
+     组件特定变量
+     ======================================== */
+
+  /* 头部高度 */
+  --header-height-mobile: 3rem;    /* 48px */
+  --header-height-desktop: 4rem;   /* 64px */
+
+  /* 任务卡片 */
+  --task-card-padding: var(--space-4);
+  --task-card-gap: var(--space-3);
+
+  /* 日历 */
+  --calendar-cell-min-height-mobile: 5rem;   /* 80px */
+  --calendar-cell-min-height-desktop: 8rem;  /* 128px */
+
+  /* 容器最大宽度 */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+  --container-2xl: 1536px;
+
+  /* 触摸友好的最小点击区域 */
+  --touch-target-min: 48px;
+}
+
+/* ========================================
+   暗色模式主题
+   ======================================== */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    /* 表面颜色 - 暗色 */
+    --surface-primary: oklch(18% 0.01 250);
+    --surface-secondary: oklch(22% 0.01 250);
+    --surface-tertiary: oklch(28% 0.01 250);
+    --surface-overlay: oklch(15% 0 0 / 0.95);
+
+    /* 文本颜色 - 暗色 */
+    --text-primary: var(--color-neutral-50);
+    --text-secondary: var(--color-neutral-300);
+    --text-tertiary: var(--color-neutral-500);
+    --text-inverse: var(--color-neutral-900);
+
+    /* 边框颜色 - 暗色 */
+    --border-primary: oklch(35% 0.01 250);
+    --border-secondary: oklch(40% 0.01 250);
+
+    /* 背景颜色 - 暗色 */
+    --background-page: oklch(15% 0.01 250);
+    --background-elevated: oklch(20% 0.01 250);
+
+    /* 调整阴影以适配暗色模式 */
+    --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px oklch(0% 0 0 / 0.4),
+                 0 2px 4px -2px oklch(0% 0 0 / 0.4);
+    --shadow-lg: 0 10px 15px -3px oklch(0% 0 0 / 0.5),
+                 0 4px 6px -4px oklch(0% 0 0 / 0.5);
+    --shadow-xl: 0 20px 25px -5px oklch(0% 0 0 / 0.6),
+                 0 8px 10px -6px oklch(0% 0 0 / 0.6);
+  }
+}
+
+/* ========================================
+   手动暗色模式类（优先级高于系统偏好）
+   ======================================== */
+
+.dark {
+  color-scheme: dark;
+
+  /* 与 prefers-color-scheme: dark 相同的变量覆盖 */
+  --surface-primary: oklch(18% 0.01 250);
+  --surface-secondary: oklch(22% 0.01 250);
+  --surface-tertiary: oklch(28% 0.01 250);
+  --surface-overlay: oklch(15% 0 0 / 0.95);
+
+  --text-primary: var(--color-neutral-50);
+  --text-secondary: var(--color-neutral-300);
+  --text-tertiary: var(--color-neutral-500);
+  --text-inverse: var(--color-neutral-900);
+
+  --border-primary: oklch(35% 0.01 250);
+  --border-secondary: oklch(40% 0.01 250);
+
+  --background-page: oklch(15% 0.01 250);
+  --background-elevated: oklch(20% 0.01 250);
+
+  --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px oklch(0% 0 0 / 0.4),
+               0 2px 4px -2px oklch(0% 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px oklch(0% 0 0 / 0.5),
+               0 4px 6px -4px oklch(0% 0 0 / 0.5);
+  --shadow-xl: 0 20px 25px -5px oklch(0% 0 0 / 0.6),
+               0 8px 10px -6px oklch(0% 0 0 / 0.6);
+}

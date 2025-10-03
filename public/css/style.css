@@ -1,284 +1,136 @@
-/* Family Task Manager Styles */
+/**
+ * 任務管理系統 - 主样式文件
+ *
+ * 这是现代化CSS重构后的主入口文件
+ * 所有样式按功能模块化组织，采用CSS层级管理优先级
+ *
+ * 架构特性:
+ * - 设计令牌系统 (CSS变量)
+ * - 移动优先响应式设计
+ * - 容器查询支持
+ * - 逻辑属性 (国际化友好)
+ * - 零 !important hack
+ * - 性能优化 (contain, will-change)
+ * - 无障碍性改进
+ */
 
-/* Tab styles */
-.tab-active {
-    border-color: #137fec;
-    color: #137fec;
+/* ========================================
+   CSS层级管理 (Cascade Layers)
+   定义清晰的优先级顺序，避免使用 !important
+   ======================================== */
+
+@layer tokens, base, layout, components, utilities, legacy;
+
+/* ========================================
+   设计令牌层 - 最低优先级
+   ======================================== */
+
+@layer tokens {
+  @import url('design-tokens.css');
 }
 
-.tab-inactive {
+/* ========================================
+   基础样式层 - CSS重置和基础元素
+   ======================================== */
+
+@layer base {
+  @import url('base.css');
+}
+
+/* ========================================
+   布局系统层 - 容器、网格、Flexbox
+   ======================================== */
+
+@layer layout {
+  @import url('layout.css');
+}
+
+/* ========================================
+   组件样式层 - 可复用组件
+   ======================================== */
+
+@layer components {
+  @import url('components.css');
+}
+
+/* ========================================
+   工具类层 - 实用工具类
+   ======================================== */
+
+@layer utilities {
+  @import url('utilities.css');
+}
+
+/* ========================================
+   遗留样式层 - 向后兼容
+   用于保留一些旧样式，确保平滑过渡
+   ======================================== */
+
+@layer legacy {
+  /* Tab样式 - 向后兼容 */
+  .tab-active {
+    border-color: var(--color-primary-500);
+    color: var(--color-primary-500);
+  }
+
+  .tab-inactive {
     border-color: transparent;
+  }
+
+  /* 优先级徽章 - 向后兼容类名 */
+  .priority-low {
+    background-color: oklch(from var(--color-success) l c h / 0.15);
+    color: var(--color-success);
+  }
+
+  .priority-medium {
+    background-color: oklch(from var(--color-info) l c h / 0.15);
+    color: var(--color-info);
+  }
+
+  .priority-high {
+    background-color: oklch(from var(--color-error) l c h / 0.15);
+    color: var(--color-error);
+  }
+
+  /* 状态徽章 - 向后兼容类名 */
+  .status-pending {
+    background-color: oklch(from var(--color-warning) l c h / 0.15);
+    color: var(--color-warning);
+  }
+
+  .status-in_progress {
+    background-color: oklch(from var(--color-info) l c h / 0.15);
+    color: var(--color-info);
+  }
+
+  .status-completed {
+    background-color: oklch(from var(--color-success) l c h / 0.15);
+    color: var(--color-success);
+  }
+
+  .status-cancelled {
+    background-color: oklch(from var(--color-neutral-500) l c h / 0.15);
+    color: var(--color-neutral-600);
+  }
 }
 
-/* Task card styles */
-.task-card {
-    @apply p-4 rounded-lg border border-gray-200 dark:border-gray-700 hover:shadow-md transition-shadow cursor-pointer;
-}
+/* ========================================
+   性能优化提示
+   ======================================== */
 
-.task-card:hover {
-    @apply border-primary/50;
-}
+/*
+  关键渲染路径优化建议:
+  1. 将常用的CSS变量内联到HTML <head>中
+  2. 延迟加载非关键CSS (utilities.css)
+  3. 压缩和合并CSS文件用于生产环境
+  4. 使用 preload 预加载字体文件
+*/
 
-/* Priority badges */
-.priority-low {
-    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
-}
-
-.priority-medium {
-    @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300;
-}
-
-.priority-high {
-    @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300;
-}
-
-/* Status badges */
-.status-pending {
-    @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300;
-}
-
-.status-in_progress {
-    @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300;
-}
-
-.status-completed {
-    @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300;
-}
-
-.status-cancelled {
-    @apply bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300;
-}
-
-/* Modal animation */
-#task-modal {
-    animation: fadeIn 0.2s ease-in-out;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-/* Loading spinner */
-.spinner {
-    border: 3px solid #f3f4f6;
-    border-top: 3px solid #137fec;
-    border-radius: 50%;
-    width: 20px;
-    height: 20px;
-    animation: spin 1s linear infinite;
-    display: inline-block;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-}
-
-::-webkit-scrollbar-track {
-    background: #f1f1f1;
-}
-
-.dark ::-webkit-scrollbar-track {
-    background: #2d3748;
-}
-
-::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-    background: #555;
-}
-
-.dark ::-webkit-scrollbar-thumb {
-    background: #4a5568;
-}
-
-.dark ::-webkit-scrollbar-thumb:hover {
-    background: #718096;
-}
-
-/* Calendar enhancements */
-.calendar button:hover {
-    transform: translateY(-1px);
-}
-
-.calendar button:active {
-    transform: translateY(0);
-}
-
-/* Task card hover effect */
-.group:hover {
-    transform: translateY(-2px);
-}
-
-/* Smooth animations */
-* {
-    transition-property: transform, box-shadow, background-color, border-color;
-    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-    transition-duration: 150ms;
-}
-
-/* Mobile Optimizations */
-@media (max-width: 640px) {
-    /* Header 移动端优化 */
-    header .container > .flex {
-        height: 3rem !important; /* 48px，从64px减小 */
-    }
-
-    header .container {
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-    }
-
-    /* 左侧标题区域 */
-    header .flex.items-center.gap-4:first-child {
-        gap: 0.5rem !important;
-        flex-shrink: 1;
-        min-width: 0;
-    }
-
-    header h1 {
-        font-size: 0.625rem !important; /* 10px */
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        max-width: 100px;
-    }
-
-    header .flex.items-center.gap-4:first-child svg {
-        width: 1.5rem !important; /* 24px */
-        height: 1.5rem !important;
-        flex-shrink: 0;
-    }
-
-    /* 团队切换器移动端优化 */
-    #team-dropdown-btn {
-        padding: 0.25rem 0.375rem !important;
-        font-size: 0.625rem !important; /* 10px */
-        gap: 0.25rem !important;
-    }
-
-    #team-dropdown-btn span {
-        max-width: 40px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-
-    #team-dropdown-btn svg {
-        width: 0.75rem !important;
-        height: 0.75rem !important;
-    }
-
-    /* 右侧导航按钮移动端优化 */
-    header .flex.items-center.gap-4:last-child {
-        gap: 0.25rem !important;
-    }
-
-    header button,
-    header span {
-        font-size: 0.625rem !important; /* 10px */
-        padding: 0.25rem !important;
-    }
-
-    /* 简化昵称显示 */
-    header .flex.items-center.gap-4:last-child > span {
-        display: none !important; /* 移动端完全隐藏"您好，xxx" */
-    }
-
-    /* 日历移动端优化 */
-    .calendar .grid.grid-cols-7 {
-        gap: 0.25rem !important; /* 减小间隙从gap-2到gap-1 */
-    }
-
-    /* 日历单元格移动端优化 */
-    .calendar button {
-        min-height: 5rem !important; /* 80px，从128px减小 */
-        padding: 0.5rem !important; /* 从12px减小到8px */
-        font-size: 0.75rem !important; /* 12px */
-    }
-
-    .calendar button .font-bold.text-base {
-        font-size: 0.875rem !important; /* 14px，从16px减小 */
-    }
-
-    .calendar button .text-xs {
-        font-size: 0.625rem !important; /* 10px，从12px减小 */
-    }
-
-    /* 日历标题移动端优化 */
-    .calendar h3 {
-        font-size: 1.125rem !important; /* 18px，从24px减小 */
-    }
-
-    .calendar .flex.items-center.justify-between.mb-6 {
-        padding: 0.75rem !important; /* 从16px减小到12px */
-        margin-bottom: 1rem !important; /* 从24px减小到16px */
-    }
-
-    .calendar .flex.items-center.justify-between.mb-6 button {
-        padding: 0.5rem !important;
-    }
-
-    .calendar .flex.items-center.justify-between.mb-6 svg {
-        width: 1.25rem !important; /* 20px，从24px减小 */
-        height: 1.25rem !important;
-    }
-
-    /* 星期标题移动端优化 */
-    .calendar .grid.grid-cols-7.gap-2.mb-3 div {
-        font-size: 0.625rem !important; /* 10px，从14px减小 */
-        padding-top: 0.5rem !important;
-        padding-bottom: 0.5rem !important;
-    }
-
-    /* 任务点和文字移动端优化 */
-    .calendar .space-y-1 {
-        gap: 0.125rem !important;
-        margin-top: 0.25rem !important;
-    }
-
-    .calendar .w-1\.5.h-1\.5 {
-        width: 0.25rem !important; /* 4px，从6px减小 */
-        height: 0.25rem !important;
-    }
-
-    .calendar .text-xs.truncate {
-        font-size: 0.5rem !important; /* 8px，从12px减小 */
-        line-height: 0.75rem !important;
-    }
-
-    /* 主容器移动端padding优化 */
-    #app-main {
-        padding-left: 0.5rem !important;
-        padding-right: 0.5rem !important;
-        padding-top: 1rem !important;
-        padding-bottom: 1rem !important;
-    }
-
-    /* 模态框移动端优化 */
-    #task-modal > div,
-    #settings-modal > div {
-        max-width: 95% !important;
-        margin: 0.5rem !important;
-        padding: 1rem !important;
-    }
-
-    /* 登录/注册表单移动端优化 */
-    #auth-screen .max-w-md {
-        max-width: 95% !important;
-    }
-}
+/*
+  TODO生产环境优化:
+  - 使用 PostCSS 处理 @import
+  - 启用 CSS压缩 (cssnano)
+  - 生成 Critical CSS
+  - 添加 autoprefixer 支持旧浏览器
+*/

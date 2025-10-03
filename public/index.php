@@ -19,27 +19,24 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>任務管理系統</title>
-    <!-- Tailwind CSS CDN -->
+
+    <!-- 现代化CSS架构 - 模块化导入 -->
+    <link rel="stylesheet" href="/css/design-tokens.css"/>
+    <link rel="stylesheet" href="/css/base.css"/>
+    <link rel="stylesheet" href="/css/layout.css"/>
+    <link rel="stylesheet" href="/css/components.css"/>
+    <link rel="stylesheet" href="/css/utilities.css"/>
+
+    <!-- Tailwind CSS CDN - 仅用于快速原型，生产环境应移除 -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link rel="stylesheet" href="/css/style.css"/>
     <script>
+        // Tailwind配置 - 与设计令牌保持一致
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
                         "primary": "#137fec",
-                        "background-light": "#f6f7f8",
-                        "background-dark": "#101922",
-                    },
-                    fontFamily: {
-                        "display": ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"]
-                    },
-                    borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
                     },
                 },
             },
