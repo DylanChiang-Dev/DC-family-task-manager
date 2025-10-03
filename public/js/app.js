@@ -252,17 +252,10 @@ async function handleRegister(e) {
 
     const formData = new FormData(e.target);
     const registerMode = formData.get('register_mode');
+    const inviteCode = formData.get('invite_code');
 
-    // Validate team setup
-    if (registerMode === 'create') {
-        const teamName = formData.get('team_name');
-        if (!teamName || teamName.trim() === '') {
-            errorDiv.textContent = '請輸入團隊名稱';
-            errorDiv.classList.remove('hidden');
-            return;
-        }
-    } else if (registerMode === 'join') {
-        const inviteCode = formData.get('invite_code');
+    // 僅驗證加入團隊時的邀請碼
+    if (registerMode === 'join') {
         if (!inviteCode || inviteCode.trim() === '') {
             errorDiv.textContent = '請輸入邀請碼';
             errorDiv.classList.remove('hidden');
@@ -281,12 +274,16 @@ async function handleRegister(e) {
         submitData.append('username', fullEmail);
         submitData.append('nickname', nickname);
         submitData.append('password', password);
-        submitData.append('register_mode', registerMode);
 
-        if (registerMode === 'create') {
-            submitData.append('team_name', formData.get('team_name'));
-        } else if (registerMode === 'join') {
-            submitData.append('invite_code', formData.get('invite_code'));
+        // 如果有邀請碼就加入團隊，否則創建新團隊
+        if (inviteCode && inviteCode.trim()) {
+            submitData.append('invite_code', inviteCode.trim());
+        }
+
+        // team_name為可選，為空時後端會使用默認名稱
+        const teamName = formData.get('team_name');
+        if (teamName && teamName.trim()) {
+            submitData.append('team_name', teamName.trim());
         }
 
         const response = await fetch('/api/auth.php?action=register', {
