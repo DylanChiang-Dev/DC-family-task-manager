@@ -75,7 +75,7 @@
 
 | 類別 | 技術 |
 |------|------|
-| **後端** | PHP 8.1+, PDO |
+| **後端** | PHP 7.4+, PDO |
 | **數據庫** | MySQL 8.0+ |
 | **前端** | Vanilla JavaScript (零依賴) |
 | **CSS** | Tailwind CSS 3.x (CDN) |
@@ -89,8 +89,8 @@
 ## 📋 系統要求
 
 ### 最低要求
-- PHP 8.1+ (推薦 8.2)
-- MySQL 8.0+
+- PHP 7.4+ (推薦 7.4/8.1)
+- MySQL 8.0+ (或 MySQL 5.7+)
 - PDO MySQL 擴展
 - Git (用於系統更新)
 
@@ -220,7 +220,7 @@ wget -O install.sh http://www.aapanel.com/script/install-ubuntu_6.0_en.sh && sud
 訪問面板（`http://你的服務器IP:8888`），進入「軟件商店」安裝：
 
 - **Nginx**：推薦編譯安裝（穩定）
-- **PHP 8.1+**：必須安裝以下擴展
+- **PHP 7.4+**：必須安裝以下擴展
   - ✅ `pdo_mysql`（必需）
   - ✅ `mysqli`（必需）
   - ✅ `mbstring`（必需）
@@ -238,7 +238,7 @@ wget -O install.sh http://www.aapanel.com/script/install-ubuntu_6.0_en.sh && sud
 | **根目錄** | `/www/wwwroot/family-task-manager` |
 | **FTP** | 不創建 |
 | **數據庫** | MySQL（記錄數據庫名、用戶名、密碼）|
-| **PHP 版本** | 選擇 PHP 8.1+ |
+| **PHP 版本** | 選擇 PHP 7.4+ |
 
 #### 4. 部署項目
 
@@ -337,7 +337,7 @@ chmod -R 755 config/
 - 主機填寫 `localhost` 或 `127.0.0.1`
 
 **Q: PHP 擴展缺失**
-- 軟件商店 → PHP 8.1 → 設置 → 安裝擴展
+- 軟件商店 → PHP 7.4 → 設置 → 安裝擴展
 
 **Q: 中文字符亂碼**
 - 進入 phpMyAdmin 執行：

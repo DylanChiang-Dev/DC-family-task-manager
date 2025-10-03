@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Family Task Manager** - A PHP+MySQL multi-team task management system with WordPress-style web installation wizard. Supports both family and work use cases with Slack/Feishu-style workspace architecture.
 
-- **Tech Stack**: PHP 8.1+, MySQL 8.0, Tailwind CSS 3.x, vanilla JavaScript, RESTful API
+- **Tech Stack**: PHP 7.4+, MySQL 8.0/5.7+, Tailwind CSS 3.x, vanilla JavaScript, RESTful API
 - **UI Framework**: Tailwind CSS with custom theme (dark mode enabled)
 - **Fonts**: Public Sans, Material Symbols Outlined icons
 - **Deployment**: Baota Panel (production), Docker (local dev)
@@ -311,7 +311,7 @@ This was added to fix 404 errors on install directory during development.
 
 **Services** (from docker-compose.yml):
 
-- `web`: Custom PHP 8.1-fpm with PDO MySQL extensions (Dockerfile)
+- `web`: Custom PHP 7.4-fpm with PDO MySQL extensions (Dockerfile)
 - `nginx`: Nginx Alpine reverse proxy (port 8080)
 - `db`: MySQL 8.0 (port 3306, `mysql_native_password` plugin)
 - `phpmyadmin`: Database GUI (port 8081)
