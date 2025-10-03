@@ -1,13 +1,5 @@
 /* Family Task Manager Styles */
 
-.material-symbols-outlined {
-    font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24
-}
-
 /* Tab styles */
 .tab-active {
     border-color: #137fec;

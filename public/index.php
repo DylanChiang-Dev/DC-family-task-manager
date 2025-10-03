@@ -19,11 +19,9 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>任務管理系統</title>
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
-    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet"/>
-    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <!-- 使用国内CDN加速访问 -->
+    <script src="https://cdn.jsdelivr.net/npm/tailwindcss@3.4.0/lib/index.min.js"></script>
+    <script src="https://lf3-cdn-tos.bytecdntp.com/cdn/expire-1-M/tailwindcss/3.0.23/tailwind.min.js"></script>
     <link rel="stylesheet" href="/css/style.css"/>
     <script>
         tailwind.config = {
@@ -36,7 +34,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                         "background-dark": "#101922",
                     },
                     fontFamily: {
-                        "display": ["Public Sans"]
+                        "display": ["-apple-system", "BlinkMacSystemFont", "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", "Helvetica", "Arial", "sans-serif"]
                     },
                     borderRadius: {
                         "DEFAULT": "0.25rem",
