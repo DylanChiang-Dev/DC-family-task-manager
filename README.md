@@ -78,9 +78,9 @@
 | **後端** | PHP 8.1+, PDO |
 | **數據庫** | MySQL 8.0+ |
 | **前端** | Vanilla JavaScript (零依賴) |
-| **CSS** | Tailwind CSS 3.x |
-| **字體** | Google Fonts (Public Sans) |
-| **圖標** | Material Symbols Outlined |
+| **CSS** | Tailwind CSS 3.x (國內 CDN) |
+| **字體** | 系統字體（PingFang SC / Microsoft YaHei） |
+| **圖標** | SVG 圖標 |
 | **架構** | RESTful API |
 | **容器化** | Docker + Docker Compose |
 
@@ -187,94 +187,165 @@ docker-compose exec -T db mysql -u root -proot --default-character-set=utf8mb4 f
 
 ---
 
-### 方式二：傳統 LAMP/LNMP 部署
+### 方式二：寶塔面板 / aaPanel 部署（⭐ 生產環境推薦）
 
-**適用場景**：已有 PHP+MySQL 環境的服務器
+**適用場景**：使用寶塔面板或 aaPanel 的生產服務器
 
-#### 1. 上傳文件
+#### 1. 安裝寶塔面板
+
+**中國大陸用戶（寶塔面板）**：
 
 ```bash
-# 克隆到服務器
-git clone https://github.com/DylanChiang-Dev/family-task-manager.git /var/www/html/family-tasks
-cd /var/www/html/family-tasks
+# CentOS 安裝
+yum install -y wget && wget -O install.sh https://download.bt.cn/install/install_6.0.sh && sh install.sh ed8484bec
+
+# Ubuntu/Debian 安裝
+wget -O install.sh https://download.bt.cn/install/install-ubuntu_6.0.sh && sudo bash install.sh ed8484bec
 ```
 
-#### 2. 配置 Web 服務器
+**國際用戶（aaPanel）**：
 
-**Nginx 配置範例**：
+```bash
+# CentOS 安裝
+yum install -y wget && wget -O install.sh http://www.aapanel.com/script/install_6.0_en.sh && bash install.sh aapanel
+
+# Ubuntu/Debian 安裝
+wget -O install.sh http://www.aapanel.com/script/install-ubuntu_6.0_en.sh && sudo bash install.sh aapanel
+```
+
+安裝完成後記錄面板地址、用戶名和密碼。
+
+#### 2. 安裝軟件環境
+
+訪問面板（`http://你的服務器IP:8888`），進入「軟件商店」安裝：
+
+- **Nginx**：推薦編譯安裝（穩定）
+- **PHP 8.1+**：必須安裝以下擴展
+  - ✅ `pdo_mysql`（必需）
+  - ✅ `mysqli`（必需）
+  - ✅ `mbstring`（必需）
+  - ✅ `opcache`（性能優化）
+  - ✅ `fileinfo`（文件信息）
+- **MySQL 8.0+**：記錄 root 密碼
+
+#### 3. 添加站點
+
+點擊左側「網站」→「添加站點」：
+
+| 字段 | 值 |
+|------|------|
+| **域名** | 您的域名或 IP 地址 |
+| **根目錄** | `/www/wwwroot/family-task-manager` |
+| **FTP** | 不創建 |
+| **數據庫** | MySQL（記錄數據庫名、用戶名、密碼）|
+| **PHP 版本** | 選擇 PHP 8.1+ |
+
+#### 4. 部署項目
+
+**方式 A：Git 部署（推薦）**
+
+```bash
+# SSH 連接服務器後
+cd /www/wwwroot
+rm -rf family-task-manager  # 刪除寶塔創建的空目錄
+
+# 克隆項目
+git clone https://github.com/DylanChiang-Dev/family-task-manager.git
+cd family-task-manager
+```
+
+**方式 B：ZIP 上傳**
+
+1. 下載 [最新版本 ZIP](https://github.com/DylanChiang-Dev/family-task-manager/releases)
+2. 進入站點根目錄文件管理器
+3. 上傳 ZIP 並解壓
+
+#### 5. 配置站點
+
+在網站設置中：
+
+**A. 設置運行目錄**
+- 點擊「網站目錄」
+- **運行目錄**選擇 `/public`
+- 勾選「防跨站攻擊」
+- 點擊「保存」
+
+**B. 設置偽靜態**
+- 點擊「偽靜態」
+- 選擇 **laravel5** 或手動添加：
 
 ```nginx
-server {
-    listen 80;
-    server_name yourdomain.com;
-    root /var/www/html/family-tasks/public;
-    index index.php;
+location / {
+    try_files $uri $uri/ /index.php?$query_string;
+}
 
-    location / {
-        try_files $uri $uri/ /index.php?$query_string;
-    }
-
-    location ~ \.php$ {
-        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
-        fastcgi_index index.php;
-        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
-        include fastcgi_params;
-    }
+location ~ \.php$ {
+    fastcgi_pass unix:/tmp/php-cgi-81.sock;
+    fastcgi_index index.php;
+    include fastcgi_params;
+    fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
 }
 ```
 
-**Apache 配置（需啟用 mod_rewrite）**：
-
-```apache
-<VirtualHost *:80>
-    ServerName yourdomain.com
-    DocumentRoot /var/www/html/family-tasks/public
-
-    <Directory /var/www/html/family-tasks/public>
-        Options Indexes FollowSymLinks
-        AllowOverride All
-        Require all granted
-    </Directory>
-</VirtualHost>
-```
-
-#### 3. 設置權限
+#### 6. 設置權限
 
 ```bash
-# 設置文件所有者（根據你的環境調整）
-chown -R www-data:www-data /var/www/html/family-tasks
+cd /www/wwwroot/family-task-manager
 
-# 設置 config 目錄可寫（安裝時需要）
-chmod 777 /var/www/html/family-tasks/config
+# 設置 config 目錄權限（安裝時需要可寫）
+chmod -R 777 config/
+
+# 設置所有者為 www
+chown -R www:www /www/wwwroot/family-task-manager
 ```
 
-#### 4. 創建數據庫
+#### 7. 完成安裝
+
+訪問您的域名或 IP，按照安裝向導操作：
+
+- **步驟 1**：環境檢查（自動）
+- **步驟 2**：數據庫配置（填寫步驟 3 創建的數據庫信息）
+- **步驟 3**：創建管理員賬號
+- **步驟 4**：完成！
+
+#### 8. 安裝後安全加固
 
 ```bash
-mysql -u root -p
-```
+cd /www/wwwroot/family-task-manager
 
-```sql
-CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-CREATE USER 'family_user'@'localhost' IDENTIFIED BY 'your_password';
-GRANT ALL PRIVILEGES ON family_tasks.* TO 'family_user'@'localhost';
-FLUSH PRIVILEGES;
-EXIT;
-```
-
-#### 5. 訪問域名完成安裝
-
-訪問 http://yourdomain.com，按照安裝向導操作。
-
-#### 6. 安裝後安全加固
-
-```bash
-# 刪除安裝目錄
-rm -rf /var/www/html/family-tasks/install
+# 刪除安裝目錄（重要！）
+rm -rf install/
 
 # 設置 config 目錄為只讀
-chmod 755 /var/www/html/family-tasks/config
+chmod -R 755 config/
 ```
+
+#### 9. 配置 SSL（可選但推薦）
+
+在站點設置中：
+- 點擊「SSL」→「Let's Encrypt」
+- 勾選您的域名 → 點擊「申請」
+- 勾選「強制 HTTPS」
+
+#### 常見問題
+
+**Q: 訪問站點顯示 404**
+- 檢查運行目錄是否設置為 `/public`
+
+**Q: 數據庫連接失敗**
+- 確認數據庫名、用戶名、密碼正確
+- 主機填寫 `localhost` 或 `127.0.0.1`
+
+**Q: PHP 擴展缺失**
+- 軟件商店 → PHP 8.1 → 設置 → 安裝擴展
+
+**Q: 中文字符亂碼**
+- 進入 phpMyAdmin 執行：
+  ```sql
+  ALTER DATABASE 數據庫名 CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+  ```
+
+詳細文檔：[BAOTA_GUIDE.md](BAOTA_GUIDE.md) | [DOCKER_GUIDE.md](DOCKER_GUIDE.md)
 
 ---
 
@@ -671,7 +742,6 @@ chore: 更新依賴
 **Dylan Chiang**
 
 - GitHub: [@DylanChiang-Dev](https://github.com/DylanChiang-Dev)
-- Email: dylan@example.com
 
 ---
 
