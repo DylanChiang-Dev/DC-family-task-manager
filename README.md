@@ -314,7 +314,7 @@ chown -R www:www /www/wwwroot/family-task-manager
 cd /www/wwwroot/family-task-manager
 
 # 刪除安裝目錄（重要！）
-rm -rf install/
+rm -rf public/install/
 
 # 設置 config 目錄為只讀
 chmod -R 755 config/
@@ -394,17 +394,17 @@ family-task-manager/
 │   │   └── default.conf          # Nginx 虛擬主機配置
 │   └── php/
 │       └── php.ini               # PHP 配置
-├── install/                      # 安裝向導
-│   ├── index.php                 # 安裝入口
-│   ├── step1.php                 # 環境檢查
-│   ├── step2.php                 # 數據庫配置
-│   ├── step3.php                 # 管理員創建
-│   └── step4.php                 # 安裝完成
 ├── lib/                          # 輔助類庫
 │   ├── Database.php              # 數據庫單例
 │   └── TeamHelper.php            # 團隊輔助函數
 ├── public/                       # Web 根目錄
 │   ├── index.php                 # 主應用入口
+│   ├── install/                  # 安裝向導（安裝後刪除）
+│   │   ├── index.php             # 安裝入口
+│   │   ├── step1.php             # 環境檢查
+│   │   ├── step2.php             # 數據庫配置
+│   │   ├── step3.php             # 管理員創建
+│   │   └── step4.php             # 安裝完成
 │   ├── css/
 │   │   └── style.css             # 自定義樣式
 │   └── js/

@@ -4,13 +4,13 @@
  */
 
 // Check if already installed
-if (file_exists(__DIR__ . '/../config/installed.lock')) {
+if (file_exists(__DIR__ . '/../../config/installed.lock')) {
     header('Location: /public/index.php');
     exit;
 }
 
 // Check if database is configured
-if (!file_exists(__DIR__ . '/../config/database.php')) {
+if (!file_exists(__DIR__ . '/../../config/database.php')) {
     header('Location: /install/step2.php');
     exit;
 }

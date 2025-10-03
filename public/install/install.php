@@ -8,12 +8,12 @@ header('Content-Type: application/json');
 
 try {
     // Check if already installed
-    if (file_exists(__DIR__ . '/../config/installed.lock')) {
+    if (file_exists(__DIR__ . '/../../config/installed.lock')) {
         throw new Exception('Already installed');
     }
 
     // Check if database config exists
-    if (!file_exists(__DIR__ . '/../config/database.php')) {
+    if (!file_exists(__DIR__ . '/../../config/database.php')) {
         throw new Exception('Database not configured');
     }
 
@@ -37,13 +37,13 @@ try {
     }
 
     // Load database configuration
-    require_once __DIR__ . '/../config/database.php';
-    require_once __DIR__ . '/../lib/Database.php';
+    require_once __DIR__ . '/../../config/database.php';
+    require_once __DIR__ . '/../../lib/Database.php';
 
     $db = Database::getInstance()->getConnection();
 
     // Read and execute schema.sql
-    $schemaSQL = file_get_contents(__DIR__ . '/../database/schema.sql');
+    $schemaSQL = file_get_contents(__DIR__ . '/../../database/schema.sql');
     if ($schemaSQL === false) {
         throw new Exception('Failed to read schema.sql');
     }
@@ -81,7 +81,7 @@ try {
     $stmt->execute([$username, $hashedPassword, $nickname]);
 
     // Create installed.lock file
-    $lockFile = __DIR__ . '/../config/installed.lock';
+    $lockFile = __DIR__ . '/../../config/installed.lock';
     $lockContent = "Installed at: " . date('Y-m-d H:i:s') . "\n";
     $lockContent .= "First user: $username\n";
 

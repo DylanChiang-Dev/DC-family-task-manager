@@ -269,20 +269,11 @@ Status: `pending|in_progress|completed|cancelled`
 
 ### Nginx Routing (Docker)
 
-**Critical configuration** in [docker/nginx/default.conf](docker/nginx/default.conf):
+**Standard configuration** in [docker/nginx/default.conf](docker/nginx/default.conf):
 
-- `/` → serves from `/var/www/html/public` (main app)
-- `/install` → serves from `/var/www/html` (installation wizard)
-- PHP routing uses **dynamic root path** based on URI:
-
-```nginx
-set $root_path /var/www/html/public;
-if ($uri ~* ^/install/) {
-    set $root_path /var/www/html;
-}
-```
-
-This was added to fix 404 errors on install directory during development.
+- Web root: `/var/www/html/public`
+- All files (including `/install`) are served from public directory
+- No special routing needed - install wizard is accessible at `/install/index.php`
 
 ### Frontend Architecture
 

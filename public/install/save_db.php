@@ -41,7 +41,7 @@ try {
     $configContent .= "define('DB_PASS', " . var_export($pass, true) . ");\n";
 
     // Save to file
-    $configPath = __DIR__ . '/../config/database.php';
+    $configPath = __DIR__ . '/../../config/database.php';
     $result = file_put_contents($configPath, $configContent);
 
     if ($result === false) {
@@ -49,9 +49,9 @@ try {
     }
 
     // Also create config.php if it doesn't exist
-    $appConfigPath = __DIR__ . '/../config/config.php';
+    $appConfigPath = __DIR__ . '/../../config/config.php';
     if (!file_exists($appConfigPath)) {
-        $appConfigContent = file_get_contents(__DIR__ . '/../config/config.example.php');
+        $appConfigContent = file_get_contents(__DIR__ . '/../../config/config.example.php');
         file_put_contents($appConfigPath, $appConfigContent);
     }
 

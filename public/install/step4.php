@@ -4,7 +4,7 @@
  */
 
 // Check if already installed
-if (!file_exists(__DIR__ . '/../config/installed.lock')) {
+if (!file_exists(__DIR__ . '/../../config/installed.lock')) {
     header('Location: /install/index.php');
     exit;
 }

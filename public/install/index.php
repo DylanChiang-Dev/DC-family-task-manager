@@ -6,17 +6,17 @@
  */
 
 // Check if already installed
-if (file_exists(__DIR__ . '/../config/installed.lock')) {
+if (file_exists(__DIR__ . '/../../config/installed.lock')) {
     header('Location: /public/index.php');
     exit;
 }
 
 // Check if database configuration exists
-if (file_exists(__DIR__ . '/../config/database.php')) {
+if (file_exists(__DIR__ . '/../../config/database.php')) {
     // Database configured, check if tables exist
-    require_once __DIR__ . '/../config/database.php';
+    require_once __DIR__ . '/../../config/database.php';
     try {
-        require_once __DIR__ . '/../lib/Database.php';
+        require_once __DIR__ . '/../../lib/Database.php';
         $db = Database::getInstance()->getConnection();
 
         // Check if users table exists

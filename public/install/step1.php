@@ -22,7 +22,7 @@ $checks['pdo_mysql'] = [
 ];
 
 // Config directory writable
-$configDir = __DIR__ . '/../config';
+$configDir = __DIR__ . '/../../config';
 $checks['config_writable'] = [
     'name' => '配置目錄可寫',
     'detail' => '保存配置文件所需',
