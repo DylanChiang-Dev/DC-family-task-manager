@@ -116,7 +116,7 @@ function handleCreateTask($db, $userId, $currentTeamId)
     $assigneeId = $input['assignee_id'] ?? null;
     $priority = $input['priority'] ?? 'medium';
     $status = $input['status'] ?? 'pending';
-    $dueDate = $input['due_date'] ?? null;
+    $dueDate = !empty($input['due_date']) ? $input['due_date'] : null; // 修復：空字符串轉為NULL
     $taskType = $input['task_type'] ?? 'normal';
     $recurrenceConfig = $input['recurrence_config'] ?? null;
     $parentTaskId = $input['parent_task_id'] ?? null;
@@ -221,7 +221,7 @@ function handleUpdateTask($db, $userId, $currentTeamId)
 
     if (isset($input['due_date'])) {
         $fields[] = "due_date = ?";
-        $values[] = $input['due_date'];
+        $values[] = !empty($input['due_date']) ? $input['due_date'] : null; // 修復：空字符串轉為NULL
     }
 
     if (isset($input['task_type'])) {

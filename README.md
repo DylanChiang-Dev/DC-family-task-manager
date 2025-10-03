@@ -78,7 +78,7 @@
 | **後端** | PHP 8.1+, PDO |
 | **數據庫** | MySQL 8.0+ |
 | **前端** | Vanilla JavaScript (零依賴) |
-| **CSS** | Tailwind CSS 3.x (國內 CDN) |
+| **CSS** | Tailwind CSS 3.x (CDN) |
 | **字體** | 系統字體（PingFang SC / Microsoft YaHei） |
 | **圖標** | SVG 圖標 |
 | **架構** | RESTful API |

@@ -16,9 +16,10 @@ if (file_exists(__DIR__ . '/../config/installed.lock')) {
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>家庭任務管理系統安裝 - 資料庫配置</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <!-- Google Fonts在中国访问受限，已移除，使用系统字体替代 -->
+    <!-- <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;900&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700;900&display=swap" rel="stylesheet"/> -->
     <link rel="stylesheet" href="/install/style.css"/>
     <script src="/install/install.js"></script>
     <script>
