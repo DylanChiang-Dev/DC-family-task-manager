@@ -40,7 +40,7 @@ try {
             break;
 
         case 'check':
-            handleCheck();
+            handleCheck($db);
             break;
 
         default:
@@ -257,9 +257,23 @@ function handleLogout()
 /**
  * 檢查登錄狀態
  */
-function handleCheck()
+function handleCheck($db)
 {
     if (isset($_SESSION['user_id'])) {
+        // 如果current_team_id為NULL，自動設置為第一個團隊
+        if (!isset($_SESSION['current_team_id']) || $_SESSION['current_team_id'] === null) {
+            $stmt = $db->prepare("SELECT team_id FROM team_members WHERE user_id = ? ORDER BY joined_at ASC LIMIT 1");
+            $stmt->execute([$_SESSION['user_id']]);
+            $firstTeam = $stmt->fetch();
+
+            if ($firstTeam) {
+                $_SESSION['current_team_id'] = $firstTeam['team_id'];
+                // 同時更新數據庫
+                $updateStmt = $db->prepare("UPDATE users SET current_team_id = ? WHERE id = ?");
+                $updateStmt->execute([$firstTeam['team_id'], $_SESSION['user_id']]);
+            }
+        }
+
         echo json_encode([
             'success' => true,
             'logged_in' => true,
