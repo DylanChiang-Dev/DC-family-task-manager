@@ -1,5 +1,5 @@
 -- Family Task Manager Database Schema
--- MySQL 8.0+
+-- MySQL 5.7.8+ (JSON type support required)
 -- Charset: utf8mb4
 
 -- Teams table
