@@ -76,7 +76,7 @@
 | 類別 | 技術 |
 |------|------|
 | **後端** | PHP 7.4+, PDO |
-| **數據庫** | MySQL 8.0+ |
+| **數據庫** | MySQL 5.7.8+ / 8.0+ |
 | **前端** | Vanilla JavaScript (零依賴) |
 | **CSS** | Tailwind CSS 3.x (CDN) |
 | **字體** | 系統字體（PingFang SC / Microsoft YaHei） |
@@ -90,7 +90,7 @@
 
 ### 最低要求
 - PHP 7.4+ (推薦 7.4/8.1)
-- MySQL 8.0+ (或 MySQL 5.7+)
+- MySQL 5.7.8+ (寶塔面板 5.7.44 完全支持)
 - PDO MySQL 擴展
 - Git (用於系統更新)
 
@@ -226,7 +226,7 @@ wget -O install.sh http://www.aapanel.com/script/install-ubuntu_6.0_en.sh && sud
   - ✅ `mbstring`（必需）
   - ✅ `opcache`（性能優化）
   - ✅ `fileinfo`（文件信息）
-- **MySQL 8.0+**：記錄 root 密碼
+- **MySQL 5.7/8.0**：記錄 root 密碼（寶塔面板 5.7.44 完全支持）
 
 #### 3. 添加站點
 
