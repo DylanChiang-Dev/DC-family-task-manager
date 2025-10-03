@@ -11,10 +11,10 @@
 session_start();
 
 // 載入配置
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../lib/Database.php';
-require_once __DIR__ . '/../lib/TeamHelper.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../lib/Database.php';
+require_once __DIR__ . '/../../lib/TeamHelper.php';
 
 header('Content-Type: application/json');
 
@@ -67,7 +67,7 @@ try {
  */
 function handleGetVersion()
 {
-    $projectRoot = dirname(__DIR__);
+    $projectRoot = dirname(dirname(__DIR__));
 
     if (!is_dir($projectRoot . '/.git')) {
         echo json_encode([
@@ -109,7 +109,7 @@ function handleGetVersion()
  */
 function handleCheckUpdate()
 {
-    $projectRoot = dirname(__DIR__);
+    $projectRoot = dirname(dirname(__DIR__));
 
     if (!is_dir($projectRoot . '/.git')) {
         echo json_encode([
@@ -179,7 +179,7 @@ function handleCheckUpdate()
  */
 function handleUpdate()
 {
-    $projectRoot = dirname(__DIR__);
+    $projectRoot = dirname(dirname(__DIR__));
     $updateScript = $projectRoot . '/update.sh';
 
     if (!file_exists($updateScript)) {

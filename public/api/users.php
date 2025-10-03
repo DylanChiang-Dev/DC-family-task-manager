@@ -9,9 +9,9 @@
 session_start();
 
 // 載入配置
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../lib/Database.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../lib/Database.php';
 
 header('Content-Type: application/json');
 

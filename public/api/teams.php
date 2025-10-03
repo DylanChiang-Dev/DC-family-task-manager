@@ -17,10 +17,10 @@
 session_start();
 
 // Load dependencies
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../lib/Database.php';
-require_once __DIR__ . '/../lib/TeamHelper.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../lib/Database.php';
+require_once __DIR__ . '/../../lib/TeamHelper.php';
 
 header('Content-Type: application/json');
 

@@ -12,10 +12,10 @@
 session_start();
 
 // 載入配置
-require_once __DIR__ . '/../config/database.php';
-require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../lib/Database.php';
-require_once __DIR__ . '/../lib/TeamHelper.php';
+require_once __DIR__ . '/../../config/database.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../lib/Database.php';
+require_once __DIR__ . '/../../lib/TeamHelper.php';
 
 // CORS 標頭（可選，用於 API 訪問）
 header('Content-Type: application/json');

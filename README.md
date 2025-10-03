@@ -372,13 +372,6 @@ php -S localhost:8000
 
 ```
 family-task-manager/
-├── api/                          # RESTful API 端點
-│   ├── auth.php                  # 認證 API（登錄/註冊/登出）
-│   ├── tasks.php                 # 任務 CRUD API
-│   ├── users.php                 # 用戶列表 API
-│   ├── teams.php                 # 團隊管理 API
-│   ├── profile.php               # 用戶資料 API
-│   └── update.php                # 系統更新 API
 ├── config/                       # 配置文件（不提交到 Git）
 │   ├── database.php              # 數據庫配置
 │   ├── config.php                # 應用配置
@@ -399,6 +392,13 @@ family-task-manager/
 │   └── TeamHelper.php            # 團隊輔助函數
 ├── public/                       # Web 根目錄
 │   ├── index.php                 # 主應用入口
+│   ├── api/                      # RESTful API 端點
+│   │   ├── auth.php              # 認證 API（登錄/註冊/登出）
+│   │   ├── tasks.php             # 任務 CRUD API
+│   │   ├── users.php             # 用戶列表 API
+│   │   ├── teams.php             # 團隊管理 API
+│   │   ├── profile.php           # 用戶資料 API
+│   │   └── update.php            # 系統更新 API
 │   ├── install/                  # 安裝向導（安裝後刪除）
 │   │   ├── index.php             # 安裝入口
 │   │   ├── step1.php             # 環境檢查
