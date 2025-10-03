@@ -18,7 +18,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
 <head>
     <meta charset="utf-8"/>
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
-    <title>家庭任務管理系統</title>
+    <title>任務管理系統</title>
     <link href="https://fonts.googleapis.com" rel="preconnect"/>
     <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
     <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;700&display=swap" rel="stylesheet"/>
@@ -64,7 +64,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
                                 <path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path>
                             </svg>
                         </div>
-                        <h1 class="text-xl font-bold text-slate-900 dark:text-white">家庭任務管理系統</h1>
+                        <h1 class="text-xl font-bold text-slate-900 dark:text-white">任務管理系統</h1>
                     </div>
                 </div>
             </div>
@@ -74,7 +74,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
             <div class="w-full max-w-md space-y-8">
                 <div>
                     <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-slate-900 dark:text-white">歡迎</h2>
-                    <p class="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">登入以管理您家庭的任務</p>
+                    <p class="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">登入以管理您的任務</p>
                 </div>
 
                 <div class="bg-white dark:bg-slate-900/50 p-8 shadow-sm rounded-lg">
@@ -89,8 +89,8 @@ $isLoggedIn = isset($_SESSION['user_id']);
                     <form id="login-form" class="mt-8 space-y-6">
                         <div class="space-y-4">
                             <div>
-                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="login-username">使用者名稱</label>
-                                <input autocomplete="username" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="login-username" name="username" required type="text"/>
+                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="login-username">郵箱</label>
+                                <input autocomplete="email" class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="login-username" name="username" required type="email" placeholder="example@email.com"/>
                             </div>
                             <div>
                                 <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="login-password">密碼</label>
@@ -107,16 +107,64 @@ $isLoggedIn = isset($_SESSION['user_id']);
                     <form id="register-form" class="mt-8 space-y-6 hidden">
                         <div class="space-y-4">
                             <div>
-                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="reg-username">使用者名稱</label>
-                                <input class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="reg-username" name="username" required type="text"/>
+                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">郵箱</label>
+                                <div class="mt-1 flex gap-2">
+                                    <input class="flex-1 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="email-username" name="email_username" required type="text" placeholder="用戶名"/>
+                                    <span class="flex items-center text-slate-500 dark:text-slate-400">@</span>
+                                    <select id="email-domain" class="flex-1 rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" onchange="toggleCustomDomain()">
+                                        <option value="gmail.com">gmail.com</option>
+                                        <option value="qq.com">qq.com</option>
+                                        <option value="163.com">163.com</option>
+                                        <option value="outlook.com">outlook.com</option>
+                                        <option value="hotmail.com">hotmail.com</option>
+                                        <option value="custom">其他</option>
+                                    </select>
+                                </div>
+                                <input id="custom-domain" type="text" class="hidden mt-2 w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" placeholder="輸入自定義郵箱域名，例如：company.com"/>
                             </div>
                             <div>
                                 <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="reg-nickname">暱稱</label>
-                                <input class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="reg-nickname" name="nickname" required type="text"/>
+                                <input class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="reg-nickname" name="nickname" required type="text" placeholder="您的昵稱"/>
                             </div>
                             <div>
                                 <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="reg-password">密碼</label>
                                 <input class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="reg-password" name="password" required type="password" minlength="6"/>
+                            </div>
+                            <div>
+                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="reg-password-confirm">確認密碼</label>
+                                <input class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="reg-password-confirm" name="password_confirm" required type="password" minlength="6"/>
+                            </div>
+
+                            <!-- Team Setup -->
+                            <div class="border-t border-slate-200 dark:border-slate-700 pt-4">
+                                <label class="text-sm font-medium text-slate-700 dark:text-slate-300">團隊設定</label>
+                                <div class="mt-2 space-y-2">
+                                    <label class="flex items-center">
+                                        <input type="radio" name="register_mode" value="create" checked onchange="toggleTeamFields()" class="text-primary focus:ring-primary"/>
+                                        <span class="ml-2 text-sm text-slate-700 dark:text-slate-300">創建新團隊</span>
+                                    </label>
+                                    <label class="flex items-center">
+                                        <input type="radio" name="register_mode" value="join" onchange="toggleTeamFields()" class="text-primary focus:ring-primary"/>
+                                        <span class="ml-2 text-sm text-slate-700 dark:text-slate-300">加入現有團隊</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Create Team Fields -->
+                            <div id="create-team-fields" class="space-y-4">
+                                <div>
+                                    <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="team-name">團隊名稱</label>
+                                    <input class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100" id="team-name" name="team_name" type="text" placeholder="例如：張家、XX公司產品組"/>
+                                </div>
+                            </div>
+
+                            <!-- Join Team Fields -->
+                            <div id="join-team-fields" class="space-y-4 hidden">
+                                <div>
+                                    <label class="text-sm font-medium text-slate-700 dark:text-slate-300" for="invite-code">邀請碼</label>
+                                    <input class="mt-1 block w-full rounded-lg border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 focus:border-primary focus:ring-primary text-slate-900 dark:text-slate-100 uppercase" id="invite-code" name="invite_code" type="text" placeholder="輸入6位邀請碼" maxlength="6"/>
+                                    <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">向團隊管理員索取邀請碼</p>
+                                </div>
                             </div>
                         </div>
                         <div>
@@ -273,6 +321,109 @@ $isLoggedIn = isset($_SESSION['user_id']);
                     <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">儲存</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white dark:bg-slate-900 rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-4">設置</h3>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-gray-200 dark:border-gray-700 mb-4">
+                <button onclick="switchSettingsTab('profile')" id="profile-tab" class="px-4 py-2 font-medium text-primary border-b-2 border-primary">
+                    個人設置
+                </button>
+                <button onclick="switchSettingsTab('team')" id="team-tab" class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                    團隊設置
+                </button>
+            </div>
+
+            <!-- Profile Settings -->
+            <div id="profile-settings" class="space-y-4">
+                <form id="settings-form" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">暱稱</label>
+                        <input type="text" id="settings-nickname" required class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">新密碼（留空表示不修改）</label>
+                        <input type="password" id="settings-password" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">確認新密碼</label>
+                        <input type="password" id="settings-password-confirm" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100"/>
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button type="button" onclick="closeSettings()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">取消</button>
+                        <button type="submit" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">儲存</button>
+                    </div>
+                </form>
+
+                <!-- 系統更新 -->
+                <div class="mt-6 border-t border-gray-200 dark:border-gray-700 pt-6">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">系統更新</h4>
+                    <div id="version-info" class="mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">當前版本</span>
+                            <span id="current-version" class="text-sm font-mono text-gray-900 dark:text-white">檢查中...</span>
+                        </div>
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">分支</span>
+                            <span id="current-branch" class="text-sm font-mono text-gray-900 dark:text-white">-</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-sm text-gray-600 dark:text-gray-400">最後更新</span>
+                            <span id="last-update" class="text-sm text-gray-900 dark:text-white">-</span>
+                        </div>
+                    </div>
+                    <div id="update-status" class="hidden mb-4 p-4 rounded-lg"></div>
+                    <div class="flex gap-3">
+                        <button onclick="checkForUpdates()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center justify-center gap-2">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            檢查更新
+                        </button>
+                        <button id="update-btn" onclick="performUpdate()" class="hidden flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 flex items-center justify-center gap-2">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                            立即更新
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Settings -->
+            <div id="team-settings" class="hidden">
+                <!-- 創建新團隊按鈕 -->
+                <div class="mb-4">
+                    <button onclick="showCreateTeamForm()" class="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 font-medium flex items-center justify-center gap-2">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        創建新團隊
+                    </button>
+                </div>
+
+                <!-- 創建團隊表單（默認隱藏） -->
+                <div id="create-team-form" class="hidden mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">創建新團隊</h4>
+                    <div class="flex gap-2">
+                        <input type="text" id="new-team-name" placeholder="輸入團隊名稱" class="flex-1 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"/>
+                        <button onclick="createNewTeam()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">創建</button>
+                        <button onclick="hideCreateTeamForm()" class="px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-600">取消</button>
+                    </div>
+                </div>
+
+                <div class="space-y-4" id="all-teams-list">
+                    <!-- All teams will be loaded here -->
+                </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="closeSettings()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">關閉</button>
+                </div>
+            </div>
         </div>
     </div>
 <?php endif; ?>

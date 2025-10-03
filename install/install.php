@@ -1,7 +1,7 @@
 <?php
 /**
  * Execute Installation API
- * Creates database tables and admin user
+ * Creates database tables and first user
  */
 
 header('Content-Type: application/json');
@@ -71,19 +71,19 @@ try {
         }
     }
 
-    // Delete default admin if exists
+    // Delete default user if exists
     $stmt = $db->prepare("DELETE FROM users WHERE username = 'admin'");
     $stmt->execute();
 
-    // Create admin user with provided credentials
+    // Create first user with provided credentials
     $hashedPassword = password_hash($password, PASSWORD_BCRYPT, ['cost' => 10]);
-    $stmt = $db->prepare("INSERT INTO users (username, password, nickname, role) VALUES (?, ?, ?, 'admin')");
+    $stmt = $db->prepare("INSERT INTO users (username, password, nickname) VALUES (?, ?, ?)");
     $stmt->execute([$username, $hashedPassword, $nickname]);
 
     // Create installed.lock file
     $lockFile = __DIR__ . '/../config/installed.lock';
     $lockContent = "Installed at: " . date('Y-m-d H:i:s') . "\n";
-    $lockContent .= "Admin user: $username\n";
+    $lockContent .= "First user: $username\n";
 
     if (file_put_contents($lockFile, $lockContent) === false) {
         throw new Exception('Failed to create lock file');

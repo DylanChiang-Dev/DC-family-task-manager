@@ -1,277 +1,714 @@
-# Family Task Manager
+# 家庭任務管理系統 | Family Task Manager
 
-A modern, self-hosted family task management system built with PHP and MySQL. Features a WordPress-style web installation wizard, responsive design with dark mode support, and complete task management capabilities.
+<div align="center">
 
-## ✨ Features
+![PHP Version](https://img.shields.io/badge/PHP-8.1+-blue)
+![MySQL Version](https://img.shields.io/badge/MySQL-8.0+-orange)
+![License](https://img.shields.io/badge/license-MIT-green)
+![Docker](https://img.shields.io/badge/Docker-Ready-blue)
 
-- **WordPress-Style Installation Wizard**
-  - 4-step guided setup process
-  - Automatic environment checking
-  - Real-time database connection testing
-  - One-click installation
+一款現代化的自托管多團隊任務管理系統，支持家庭和工作場景。採用 Slack/Feishu 風格的多工作區架構，內置農曆日期、週期任務、自動更新等功能。
 
-- **User Management**
-  - Secure user authentication (bcrypt password hashing)
-  - Role-based access (Admin/Member)
-  - User registration and login
-  - Session-based authentication
+[功能特性](#-功能特性) • [快速開始](#-快速開始) • [文檔](#-文檔) • [貢獻](#-貢獻)
 
-- **Task Management**
-  - Create, read, update, and delete tasks
-  - Priority levels (Low/Medium/High)
-  - Status tracking (Pending/In Progress/Completed/Cancelled)
-  - Task assignment to family members
-  - Due date management
-  - Real-time task filtering by status
+</div>
 
-- **Modern UI/UX**
-  - Responsive design (mobile, tablet, desktop)
-  - Dark mode support
-  - Clean and intuitive interface
-  - Material Design icons
-  - Tailwind CSS framework
+---
 
-## 🛠️ Tech Stack
+## ✨ 功能特性
 
-- **Backend**: PHP 8.1+ with PDO
-- **Database**: MySQL 8.0+
-- **Frontend**: Vanilla JavaScript (no framework dependencies)
-- **CSS**: Tailwind CSS 3.x
-- **Fonts**: Google Fonts (Public Sans)
-- **Icons**: Material Symbols Outlined
-- **Architecture**: RESTful API
+### 🏢 多團隊架構（Slack/Feishu 模式）
+- **多工作區支持**：用戶可加入多個團隊（如「家庭團隊」「工作團隊」）並自由切換
+- **數據隔離**：每個團隊的任務、成員完全獨立
+- **邀請碼系統**：6位邀請碼快速加入團隊
+- **角色管理**：團隊管理員和普通成員，權限獨立管理
+- **靈活切換**：頂部下拉菜單一鍵切換團隊上下文
 
-## 📋 Requirements
+### 📅 任務管理
+- **完整 CRUD**：創建、讀取、更新、刪除任務
+- **優先級**：低/中/高三檔優先級
+- **狀態跟蹤**：待處理/進行中/已完成/已取消
+- **任務分配**：指派給團隊成員
+- **截止日期**：日曆選擇器設置到期時間
+- **實時過濾**：按狀態快速篩選任務
+- **日曆視圖**：直觀的月曆展示任務
 
-- PHP 7.4 or higher
-- MySQL 8.0 or higher
-- PDO MySQL extension
-- Writable `config/` directory
+### 🔄 週期任務
+- **任務類型**：一般任務、週期任務、重複任務
+- **週期頻率**：每日、每週、每月、每年
+- **靈活配置**：
+  - 每週任務：選擇星期幾（如每週一/三/五）
+  - 每月任務：選擇日期（如每月1號和15號）
+  - 每年任務：選擇月份和日期（如每年生日）
+- **自動生成**：到期後自動創建下一週期任務
 
-## 🚀 Quick Start
+### 🌙 農曆日期
+- **本地農曆轉換**：純 JavaScript 實現，1900-2100 年範圍
+- **日曆顯示**：日曆中同時顯示公曆和農曆日期
+- **節日提醒**：支持農曆節日（春節、端午、中秋等）
+- **閏月支持**：完整支持農曆閏月計算
 
-### Option 1: Docker (Recommended)
+### 🎨 現代化界面
+- **響應式設計**：完美適配手機、平板、桌面
+- **深色模式**：支持亮色/深色主題自動切換
+- **Material Design**：Material Symbols Outlined 圖標
+- **Tailwind CSS**：現代化 UI 框架
+- **零依賴前端**：原生 JavaScript，無需構建工具
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/DylanChiang-Dev/family-task-manager.git
-   cd family-task-manager
-   ```
+### 🔐 安全特性
+- **密碼安全**：bcrypt 哈希（cost=10）
+- **SQL 注入防護**：全面使用 PDO 預處理語句
+- **會話管理**：安全的 Session 處理
+- **輸入驗證**：服務端和客戶端雙重驗證
+- **XSS 防護**：模板輸出轉義
 
-2. **Start Docker services**
-   ```bash
-   docker-compose up -d
-   ```
+### 🚀 系統特性
+- **WordPress 風格安裝**：4步可視化安裝向導
+- **一鍵更新**：Web界面檢查和執行系統更新
+- **數據庫遷移**：自動管理表結構變更
+- **Docker 支持**：開箱即用的 Docker Compose 配置
+- **郵箱登錄**：支持主流郵箱快速註冊
 
-3. **Access the application**
-   - Main App: http://localhost:8080
-   - phpMyAdmin: http://localhost:8081
+---
 
-4. **Complete the installation wizard**
-   - Follow the 4-step setup process
-   - Default database credentials (Docker):
-     - Host: `db`
-     - Port: `3306`
-     - Database: `family_tasks`
-     - Username: `family_user`
-     - Password: `family_pass`
+## 🛠️ 技術棧
 
-### Option 2: PHP Built-in Server
+| 類別 | 技術 |
+|------|------|
+| **後端** | PHP 8.1+, PDO |
+| **數據庫** | MySQL 8.0+ |
+| **前端** | Vanilla JavaScript (零依賴) |
+| **CSS** | Tailwind CSS 3.x |
+| **字體** | Google Fonts (Public Sans) |
+| **圖標** | Material Symbols Outlined |
+| **架構** | RESTful API |
+| **容器化** | Docker + Docker Compose |
 
-1. **Create MySQL database**
-   ```bash
-   mysql -u root -p
-   CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
+---
 
-2. **Start PHP server**
-   ```bash
-   cd public
-   php -S localhost:8000
-   ```
+## 📋 系統要求
 
-3. **Access the application**
-   - Open http://localhost:8000
-   - Complete the installation wizard
+### 最低要求
+- PHP 8.1+ (推薦 8.2)
+- MySQL 8.0+
+- PDO MySQL 擴展
+- Git (用於系統更新)
 
-### Option 3: Baota Panel (Production)
+### Docker 要求
+- Docker 20.10+
+- Docker Compose 2.0+
 
-1. **Upload files** to your server (e.g., `/www/wwwroot/yourdomain.com`)
+---
 
-2. **Configure web root** to `/public` directory in Baota Panel
+## 🚀 快速開始
 
-3. **Set permissions**
-   ```bash
-   chmod -R 777 config/
-   ```
+### 方式一：Docker 部署（⭐ 推薦）
 
-4. **Access your domain** and complete the installation wizard
+**適用場景**：開發、測試、生產環境
 
-5. **Post-installation security** (recommended)
-   ```bash
-   # Remove installation directory
-   rm -rf /install
+#### 1. 克隆倉庫
 
-   # Set config directory to read-only
-   chmod -R 755 config/
-   ```
+```bash
+git clone https://github.com/DylanChiang-Dev/family-task-manager.git
+cd family-task-manager
+```
 
-## 📁 Project Structure
+#### 2. 啟動服務
+
+```bash
+# 啟動所有容器（PHP-FPM, Nginx, MySQL, phpMyAdmin）
+docker-compose up -d
+
+# 查看容器狀態
+docker-compose ps
+
+# 查看日誌
+docker-compose logs -f
+```
+
+#### 3. 訪問應用
+
+| 服務 | 地址 |
+|------|------|
+| **主應用** | http://localhost:8080 |
+| **phpMyAdmin** | http://localhost:8081 |
+| **MySQL** | localhost:3306 |
+
+#### 4. 完成安裝向導
+
+訪問 http://localhost:8080，按照4步安裝向導操作：
+
+**步驟1：環境檢查**
+- 自動檢測 PHP 版本、擴展、權限
+
+**步驟2：數據庫配置**
+- 主機：`db`（Docker 內部服務名，不是 localhost）
+- 端口：`3306`
+- 數據庫：`family_tasks`
+- 用戶名：`family_user`
+- 密碼：`family_pass`
+
+**步驟3：管理員賬號**
+- 創建第一個管理員賬號
+
+**步驟4：完成**
+- 開始使用系統！
+
+#### 5. 常用 Docker 命令
+
+```bash
+# 停止服務
+docker-compose down
+
+# 停止並刪除數據（⚠️ 會清空數據庫）
+docker-compose down -v
+
+# 重啟服務
+docker-compose restart
+
+# 重新構建容器
+docker-compose up -d --build
+
+# 進入 MySQL 容器
+docker-compose exec db mysql -u root -proot family_tasks
+
+# 進入 PHP 容器
+docker-compose exec web sh
+
+# 查看 Nginx 日誌
+docker-compose logs nginx
+
+# 數據庫備份
+docker-compose exec db mysqldump -u root -proot --default-character-set=utf8mb4 family_tasks > backup_$(date +%Y%m%d).sql
+
+# 數據庫恢復
+docker-compose exec -T db mysql -u root -proot --default-character-set=utf8mb4 family_tasks < backup.sql
+```
+
+---
+
+### 方式二：傳統 LAMP/LNMP 部署
+
+**適用場景**：已有 PHP+MySQL 環境的服務器
+
+#### 1. 上傳文件
+
+```bash
+# 克隆到服務器
+git clone https://github.com/DylanChiang-Dev/family-task-manager.git /var/www/html/family-tasks
+cd /var/www/html/family-tasks
+```
+
+#### 2. 配置 Web 服務器
+
+**Nginx 配置範例**：
+
+```nginx
+server {
+    listen 80;
+    server_name yourdomain.com;
+    root /var/www/html/family-tasks/public;
+    index index.php;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.1-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+}
+```
+
+**Apache 配置（需啟用 mod_rewrite）**：
+
+```apache
+<VirtualHost *:80>
+    ServerName yourdomain.com
+    DocumentRoot /var/www/html/family-tasks/public
+
+    <Directory /var/www/html/family-tasks/public>
+        Options Indexes FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+</VirtualHost>
+```
+
+#### 3. 設置權限
+
+```bash
+# 設置文件所有者（根據你的環境調整）
+chown -R www-data:www-data /var/www/html/family-tasks
+
+# 設置 config 目錄可寫（安裝時需要）
+chmod 777 /var/www/html/family-tasks/config
+```
+
+#### 4. 創建數據庫
+
+```bash
+mysql -u root -p
+```
+
+```sql
+CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'family_user'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON family_tasks.* TO 'family_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+#### 5. 訪問域名完成安裝
+
+訪問 http://yourdomain.com，按照安裝向導操作。
+
+#### 6. 安裝後安全加固
+
+```bash
+# 刪除安裝目錄
+rm -rf /var/www/html/family-tasks/install
+
+# 設置 config 目錄為只讀
+chmod 755 /var/www/html/family-tasks/config
+```
+
+---
+
+### 方式三：PHP 內置服務器（僅開發用）
+
+**⚠️ 僅用於開發和測試，不要在生產環境使用！**
+
+```bash
+# 1. 創建數據庫
+mysql -u root -p -e "CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+
+# 2. 啟動開發服務器
+cd public
+php -S localhost:8000
+
+# 3. 訪問 http://localhost:8000
+```
+
+---
+
+## 📚 文檔
+
+### 項目結構
 
 ```
 family-task-manager/
-├── api/                    # RESTful API endpoints
-│   ├── auth.php           # Authentication (login/register/logout)
-│   ├── tasks.php          # Task CRUD operations
-│   └── users.php          # User listing
-├── config/                 # Configuration files (not committed)
-│   ├── Database.php       # Database singleton class
-│   ├── config.php         # App configuration
-│   └── database.php       # Database credentials
+├── api/                          # RESTful API 端點
+│   ├── auth.php                  # 認證 API（登錄/註冊/登出）
+│   ├── tasks.php                 # 任務 CRUD API
+│   ├── users.php                 # 用戶列表 API
+│   ├── teams.php                 # 團隊管理 API
+│   ├── profile.php               # 用戶資料 API
+│   └── update.php                # 系統更新 API
+├── config/                       # 配置文件（不提交到 Git）
+│   ├── database.php              # 數據庫配置
+│   ├── config.php                # 應用配置
+│   └── installed.lock            # 安裝鎖定文件
 ├── database/
-│   └── schema.sql         # Database schema
-├── docker/                # Docker configuration
+│   ├── schema.sql                # 數據庫表結構
+│   ├── seed_demo_tasks.sql      # 示例數據
+│   └── migrations/               # 數據庫遷移目錄
+│       ├── README.md             # 遷移系統文檔
+│       └── *.sql                 # 遷移文件
+├── docker/
 │   ├── nginx/
-│   │   └── default.conf   # Nginx virtual host
+│   │   └── default.conf          # Nginx 虛擬主機配置
 │   └── php/
-│       └── php.ini        # PHP settings
-├── install/               # Installation wizard
-│   ├── step1.php          # Environment check
-│   ├── step2.php          # Database configuration
-│   ├── step3.php          # Admin account creation
-│   ├── step4.php          # Installation complete
-│   └── *.php              # Backend APIs
-├── public/                # Web root directory
-│   ├── index.php          # Main application entry
+│       └── php.ini               # PHP 配置
+├── install/                      # 安裝向導
+│   ├── index.php                 # 安裝入口
+│   ├── step1.php                 # 環境檢查
+│   ├── step2.php                 # 數據庫配置
+│   ├── step3.php                 # 管理員創建
+│   └── step4.php                 # 安裝完成
+├── lib/                          # 輔助類庫
+│   ├── Database.php              # 數據庫單例
+│   └── TeamHelper.php            # 團隊輔助函數
+├── public/                       # Web 根目錄
+│   ├── index.php                 # 主應用入口
 │   ├── css/
-│   │   └── style.css      # Custom styles
+│   │   └── style.css             # 自定義樣式
 │   └── js/
-│       └── app.js         # Frontend logic
-├── docs/                  # Documentation
-├── docker-compose.yml     # Docker services definition
-├── Dockerfile             # PHP-FPM custom image
-└── README.md              # This file
+│       ├── app.js                # 前端邏輯
+│       └── lunar.js              # 農曆轉換庫
+├── scripts/                      # 系統腳本
+│   ├── migrate.php               # 遷移執行腳本
+│   └── make-migration.php        # 遷移生成工具
+├── docker-compose.yml            # Docker 服務定義
+├── Dockerfile                    # PHP-FPM 鏡像
+├── update.sh                     # 系統更新腳本
+├── .env.example                  # 環境變量示例
+├── CLAUDE.md                     # 項目技術文檔
+└── README.md                     # 本文件
 ```
 
-## 🔧 Development
+### API 文檔
 
-### Docker Commands
+#### 認證 API (`/api/auth.php`)
 
 ```bash
-# Start services
-docker-compose up -d
+# 註冊
+POST /api/auth.php?action=register
+Body: { username, nickname, password, register_mode, team_name/invite_code }
 
-# View logs
-docker-compose logs -f
+# 登錄
+POST /api/auth.php?action=login
+Body: { username, password }
 
-# Stop services
-docker-compose down
+# 登出
+POST /api/auth.php?action=logout
 
-# Rebuild containers
-docker-compose up -d --build
-
-# Access MySQL shell
-docker-compose exec db mysql -u family_user -pfamily_pass family_tasks
-
-# Reset database (WARNING: deletes all data)
-docker-compose down -v
+# 檢查登錄狀態
+GET /api/auth.php?action=check
 ```
 
-### Database Reset
+#### 任務 API (`/api/tasks.php`)
 
 ```bash
-# Docker environment
-docker-compose exec db mysql -u root -proot -e "DROP DATABASE family_tasks; CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+# 獲取所有任務
+GET /api/tasks.php
 
-# Remove installation lock
-rm -f config/installed.lock config/database.php config/config.php
+# 按狀態過濾
+GET /api/tasks.php?status=pending
+
+# 創建任務
+POST /api/tasks.php
+Body: { title, description, assignee_id, priority, status, due_date, task_type, recurrence_config }
+
+# 更新任務
+PUT /api/tasks.php?id=123
+Body: { title, description, ... }
+
+# 刪除任務
+DELETE /api/tasks.php?id=123
 ```
 
-## 🔒 Security Features
+#### 團隊 API (`/api/teams.php`)
 
-- **Password Security**: bcrypt hashing with cost factor 10
-- **SQL Injection Prevention**: PDO prepared statements throughout
-- **Session Management**: Secure session handling with HttpOnly cookies
-- **Input Validation**: Server-side validation for all user inputs
-- **XSS Protection**: Output escaping in templates
-- **Installation Lock**: Prevents re-installation after setup
+```bash
+# 獲取用戶的所有團隊
+GET /api/teams.php
 
-## 📚 API Documentation
+# 創建新團隊
+POST /api/teams.php
+Body: { name }
 
-### Authentication API (`/api/auth.php`)
+# 加入團隊
+POST /api/teams.php?action=join
+Body: { invite_code }
 
-- `POST ?action=register` - Register new user
-- `POST ?action=login` - User login
-- `POST ?action=logout` - User logout
-- `GET ?action=check` - Check login status
+# 切換團隊
+POST /api/teams.php?action=switch
+Body: { team_id }
 
-### Tasks API (`/api/tasks.php`)
+# 更新團隊（管理員）
+PUT /api/teams.php?id=123
+Body: { name }
 
-- `GET /api/tasks.php` - Get all tasks
-- `GET /api/tasks.php?status=pending` - Filter tasks by status
-- `POST /api/tasks.php` - Create new task
-- `PUT /api/tasks.php?id=X` - Update task
-- `DELETE /api/tasks.php?id=X` - Delete task
+# 刪除團隊（管理員）
+DELETE /api/teams.php?id=123
 
-### Users API (`/api/users.php`)
+# 獲取團隊成員
+GET /api/teams.php?id=123&action=members
 
-- `GET /api/users.php` - Get all users
+# 重新生成邀請碼（管理員）
+POST /api/teams.php?id=123&action=regenerate_code
 
-## 🌐 Environment Variables
-
-Copy `.env.example` to `.env` and customize:
-
-```env
-# Database (Docker)
-DB_HOST=db
-DB_PORT=3306
-DB_NAME=family_tasks
-DB_USER=family_user
-DB_PASS=family_pass
-
-# Application
-APP_NAME="Family Task Manager"
-APP_ENV=development
-APP_DEBUG=true
+# 移除成員（管理員）
+DELETE /api/teams.php?id=123&user_id=456
 ```
 
-## 🐛 Troubleshooting
+#### 系統更新 API (`/api/update.php`)
 
-### Config directory not writable
+```bash
+# 獲取版本信息
+GET /api/update.php?action=version
+
+# 檢查更新
+GET /api/update.php?action=check
+
+# 執行更新（管理員）
+POST /api/update.php?action=update
+```
+
+---
+
+## 🔄 數據庫遷移系統
+
+本系統內置完整的數據庫遷移管理，類似 Laravel Migrations。
+
+### 創建遷移
+
+```bash
+# 使用命令生成遷移文件
+php scripts/make-migration.php "add user avatar column"
+
+# 生成：database/migrations/20250103120000_add_user_avatar_column.sql
+```
+
+### 編寫遷移
+
+```sql
+-- 20250103120000_add_user_avatar_column.sql
+-- 添加用戶頭像欄位
+
+ALTER TABLE users
+ADD COLUMN avatar_url VARCHAR(255) NULL COMMENT '頭像URL' AFTER nickname;
+
+ALTER TABLE users ADD INDEX idx_avatar (avatar_url);
+```
+
+### 執行遷移
+
+```bash
+# 查看遷移狀態
+php scripts/migrate.php --status
+
+# 執行所有待執行的遷移
+php scripts/migrate.php
+
+# 回滾最後一次遷移（需要 .down.sql 文件）
+php scripts/migrate.php --rollback
+```
+
+### 自動遷移
+
+更新系統時會自動執行遷移：
+
+```bash
+bash update.sh  # 自動拉取代碼並執行遷移
+```
+
+詳細文檔：[database/migrations/README.md](database/migrations/README.md)
+
+---
+
+## 🔧 系統更新
+
+### 通過 Web 界面更新
+
+1. 登錄系統
+2. 點擊「設置」→「個人設置」
+3. 滾動到「系統更新」區域
+4. 點擊「檢查更新」
+5. 如有新版本，點擊「立即更新」
+
+### 通過命令行更新
+
+```bash
+bash update.sh
+```
+
+更新腳本會自動：
+- ✅ 拉取最新代碼
+- ✅ 備份配置文件
+- ✅ 執行數據庫遷移
+- ✅ 恢復配置文件
+- ✅ 設置文件權限（寶塔面板）
+- ✅ 顯示更新日誌
+
+**要求**：項目必須使用 Git 部署（不支持 ZIP 上傳）
+
+---
+
+## 🐛 常見問題
+
+### 1. Docker 容器啟動失敗
+
+```bash
+# 查看日誌
+docker-compose logs
+
+# 檢查端口占用
+sudo lsof -i :8080
+sudo lsof -i :3306
+
+# 修改端口（編輯 docker-compose.yml）
+ports:
+  - "8888:80"  # 改為 8888
+```
+
+### 2. config 目錄無寫權限
 
 ```bash
 chmod -R 777 config/
 ```
 
-### Database connection failed
+### 3. 中文字符亂碼
 
-- Verify MySQL is running
-- Check database credentials
-- For Docker: use `db` as hostname, not `localhost`
+確保數據庫使用 UTF-8：
 
-### Installation wizard not appearing
+```sql
+ALTER DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
-- Delete `config/installed.lock` to restart installation
-- Clear browser cache
+導入數據時使用：
 
-## 📄 License
+```bash
+mysql --default-character-set=utf8mb4 family_tasks < file.sql
+```
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+### 4. Docker 環境數據庫連接失敗
 
-## 👨‍💻 Author
+確保使用服務名 `db` 而不是 `localhost`：
 
-**Dylan Chiang**
-- GitHub: [@DylanChiang-Dev](https://github.com/DylanChiang-Dev)
-- Repository: [family-task-manager](https://github.com/DylanChiang-Dev/family-task-manager)
+```
+主機: db  ✅
+主機: localhost  ❌
+```
 
-## 🤝 Contributing
+### 5. 重置安裝
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+```bash
+# 刪除配置文件
+rm -f config/installed.lock config/database.php config/config.php
 
-## ⭐ Show Your Support
+# Docker 環境重置數據庫
+docker-compose exec db mysql -u root -proot -e "DROP DATABASE family_tasks; CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+```
 
-Give a ⭐️ if this project helped you!
+### 6. 更新失敗
+
+```bash
+# 檢查 Git 倉庫狀態
+git status
+
+# 放棄本地修改
+git reset --hard
+
+# 重新執行更新
+bash update.sh
+```
 
 ---
 
-Built with ❤️ using PHP, MySQL, and Tailwind CSS
+## 📸 截圖
+
+> TODO: 添加應用截圖
+
+---
+
+## 🗺️ 路線圖
+
+- [ ] 任務評論功能
+- [ ] 文件附件上傳
+- [ ] 任務標籤系統
+- [ ] 郵件通知
+- [ ] WebSocket 實時更新
+- [ ] 移動端 APP
+- [ ] 數據導出（Excel/CSV）
+- [ ] 任務模板
+- [ ] 甘特圖視圖
+
+---
+
+## 🤝 貢獻
+
+歡迎貢獻！請遵循以下步驟：
+
+### 提交 Issue
+
+- 使用清晰的標題描述問題
+- 提供詳細的復現步驟
+- 附上錯誤日誌和截圖
+- 說明您的環境（PHP版本、MySQL版本、操作系統等）
+
+### 提交 Pull Request
+
+1. Fork 本倉庫
+2. 創建特性分支：`git checkout -b feature/AmazingFeature`
+3. 提交更改：`git commit -m 'Add some AmazingFeature'`
+4. 推送到分支：`git push origin feature/AmazingFeature`
+5. 開啟 Pull Request
+
+### 代碼規範
+
+- PHP 遵循 PSR-12 編碼規範
+- 使用繁體中文註釋
+- 所有 API 必須返回 JSON 格式
+- 數據庫操作必須使用 PDO 預處理語句
+- 前端使用原生 JavaScript（無需構建工具）
+
+### 提交信息規範
+
+```
+feat: 添加任務評論功能
+fix: 修復任務刪除後團隊切換錯誤
+docs: 更新 README 安裝說明
+style: 格式化代碼
+refactor: 重構團隊管理 API
+test: 添加單元測試
+chore: 更新依賴
+```
+
+---
+
+## 📄 開源協議
+
+本項目採用 [MIT License](LICENSE) 開源協議。
+
+您可以自由地：
+- ✅ 使用本項目用於商業用途
+- ✅ 修改源代碼
+- ✅ 分發本項目
+- ✅ 私有使用
+
+唯一要求：
+- 保留版權聲明和許可證聲明
+
+---
+
+## 👨‍💻 作者
+
+**Dylan Chiang**
+
+- GitHub: [@DylanChiang-Dev](https://github.com/DylanChiang-Dev)
+- Email: dylan@example.com
+
+---
+
+## 🙏 致謝
+
+感謝以下開源項目：
+
+- [PHP](https://www.php.net/) - 後端語言
+- [MySQL](https://www.mysql.com/) - 數據庫
+- [Tailwind CSS](https://tailwindcss.com/) - CSS 框架
+- [Docker](https://www.docker.com/) - 容器化平台
+- [Material Symbols](https://fonts.google.com/icons) - 圖標庫
+
+---
+
+## ⭐ Star History
+
+如果這個項目對您有幫助，請給一個 ⭐️ Star！
+
+[![Star History Chart](https://api.star-history.com/svg?repos=DylanChiang-Dev/family-task-manager&type=Date)](https://star-history.com/#DylanChiang-Dev/family-task-manager&Date)
+
+---
+
+## 📞 支持
+
+遇到問題？
+
+- 📖 查看 [文檔](https://github.com/DylanChiang-Dev/family-task-manager/wiki)
+- 🐛 提交 [Issue](https://github.com/DylanChiang-Dev/family-task-manager/issues)
+- 💬 參與 [Discussions](https://github.com/DylanChiang-Dev/family-task-manager/discussions)
+
+---
+
+<div align="center">
+
+**Built with ❤️ using PHP, MySQL, and Tailwind CSS**
+
+[⬆ 回到頂部](#家庭任務管理系統--family-task-manager)
+
+</div>

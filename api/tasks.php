@@ -1,24 +1,24 @@
 <?php
 /**
- * Tasks API
+ * 任務 API
  *
- * Endpoints:
- * - GET /api/tasks.php - Get all tasks (with optional status filter)
- * - POST /api/tasks.php - Create new task
- * - PUT /api/tasks.php?id=X - Update task
- * - DELETE /api/tasks.php?id=X - Delete task
+ * 端點：
+ * - GET /api/tasks.php - 獲取所有任務（可選狀態過濾）
+ * - POST /api/tasks.php - 創建新任務
+ * - PUT /api/tasks.php?id=X - 更新任務
+ * - DELETE /api/tasks.php?id=X - 刪除任務
  */
 
 session_start();
 
-// Load configuration
+// 載入配置
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../lib/Database.php';
 
 header('Content-Type: application/json');
 
-// Check authentication
+// 檢查認證
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
@@ -26,6 +26,15 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = $_SESSION['user_id'];
+$currentTeamId = $_SESSION['current_team_id'] ?? null;
+
+// 檢查用戶是否選擇了團隊
+if (!$currentTeamId) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => 'No team selected']);
+    exit;
+}
+
 $method = $_SERVER['REQUEST_METHOD'];
 
 try {
@@ -33,19 +42,19 @@ try {
 
     switch ($method) {
         case 'GET':
-            handleGetTasks($db, $userId);
+            handleGetTasks($db, $userId, $currentTeamId);
             break;
 
         case 'POST':
-            handleCreateTask($db, $userId);
+            handleCreateTask($db, $userId, $currentTeamId);
             break;
 
         case 'PUT':
-            handleUpdateTask($db, $userId);
+            handleUpdateTask($db, $userId, $currentTeamId);
             break;
 
         case 'DELETE':
-            handleDeleteTask($db, $userId);
+            handleDeleteTask($db, $userId, $currentTeamId);
             break;
 
         default:
@@ -58,9 +67,9 @@ try {
 }
 
 /**
- * Get all tasks
+ * 獲取當前團隊的所有任務
  */
-function handleGetTasks($db, $userId)
+function handleGetTasks($db, $userId, $currentTeamId)
 {
     $status = $_GET['status'] ?? 'all';
 
@@ -69,10 +78,11 @@ function handleGetTasks($db, $userId)
                    u2.username as assignee_username, u2.nickname as assignee_nickname
             FROM tasks t
             LEFT JOIN users u1 ON t.creator_id = u1.id
-            LEFT JOIN users u2 ON t.assignee_id = u2.id";
+            LEFT JOIN users u2 ON t.assignee_id = u2.id
+            WHERE t.team_id = ?";
 
     if ($status !== 'all') {
-        $sql .= " WHERE t.status = ?";
+        $sql .= " AND t.status = ?";
     }
 
     $sql .= " ORDER BY t.created_at DESC";
@@ -80,9 +90,9 @@ function handleGetTasks($db, $userId)
     $stmt = $db->prepare($sql);
 
     if ($status !== 'all') {
-        $stmt->execute([$status]);
+        $stmt->execute([$currentTeamId, $status]);
     } else {
-        $stmt->execute();
+        $stmt->execute([$currentTeamId]);
     }
 
     $tasks = $stmt->fetchAll();
@@ -94,9 +104,9 @@ function handleGetTasks($db, $userId)
 }
 
 /**
- * Create new task
+ * 為當前團隊創建新任務
  */
-function handleCreateTask($db, $userId)
+function handleCreateTask($db, $userId, $currentTeamId)
 {
     // Get JSON input or POST data
     $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
@@ -140,10 +150,10 @@ function handleCreateTask($db, $userId)
         $recurrenceConfig = json_encode($recurrenceConfig);
     }
 
-    // Insert task
-    $stmt = $db->prepare("INSERT INTO tasks (title, description, creator_id, assignee_id, priority, status, due_date, task_type, recurrence_config, parent_task_id)
-                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$title, $description, $userId, $assigneeId, $priority, $status, $dueDate, $taskType, $recurrenceConfig, $parentTaskId]);
+    // Insert task with team_id
+    $stmt = $db->prepare("INSERT INTO tasks (team_id, title, description, creator_id, assignee_id, priority, status, due_date, task_type, recurrence_config, parent_task_id)
+                          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$currentTeamId, $title, $description, $userId, $assigneeId, $priority, $status, $dueDate, $taskType, $recurrenceConfig, $parentTaskId]);
 
     $taskId = $db->lastInsertId();
 
@@ -155,9 +165,9 @@ function handleCreateTask($db, $userId)
 }
 
 /**
- * Update task
+ * 更新任務（必須屬於當前團隊）
  */
-function handleUpdateTask($db, $userId)
+function handleUpdateTask($db, $userId, $currentTeamId)
 {
     $taskId = $_GET['id'] ?? 0;
 
@@ -170,13 +180,13 @@ function handleUpdateTask($db, $userId)
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
 
-    // Check if task exists
-    $stmt = $db->prepare("SELECT id FROM tasks WHERE id = ?");
-    $stmt->execute([$taskId]);
+    // Check if task exists and belongs to current team
+    $stmt = $db->prepare("SELECT id FROM tasks WHERE id = ? AND team_id = ?");
+    $stmt->execute([$taskId, $currentTeamId]);
 
     if (!$stmt->fetch()) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Task not found']);
+        echo json_encode(['success' => false, 'message' => 'Task not found or does not belong to your team']);
         return;
     }
 
@@ -252,9 +262,9 @@ function handleUpdateTask($db, $userId)
 }
 
 /**
- * Delete task
+ * 刪除任務（必須屬於當前團隊）
  */
-function handleDeleteTask($db, $userId)
+function handleDeleteTask($db, $userId, $currentTeamId)
 {
     $taskId = $_GET['id'] ?? 0;
 
@@ -264,13 +274,13 @@ function handleDeleteTask($db, $userId)
         return;
     }
 
-    // Delete task
-    $stmt = $db->prepare("DELETE FROM tasks WHERE id = ?");
-    $stmt->execute([$taskId]);
+    // Delete task (only if belongs to current team)
+    $stmt = $db->prepare("DELETE FROM tasks WHERE id = ? AND team_id = ?");
+    $stmt->execute([$taskId, $currentTeamId]);
 
     if ($stmt->rowCount() === 0) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Task not found']);
+        echo json_encode(['success' => false, 'message' => 'Task not found or does not belong to your team']);
         return;
     }
 

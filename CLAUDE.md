@@ -4,9 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Family Task Manager** - A PHP+MySQL family todo list management system with WordPress-style web installation wizard. Features multi-user support, task CRUD operations, priority/status management, and responsive design with dark mode support.
+**Family Task Manager** - A PHP+MySQL multi-team task management system with WordPress-style web installation wizard. Supports both family and work use cases with Slack/Feishu-style workspace architecture.
 
-- **Tech Stack**: PHP 7.4+, MySQL 8.0, Tailwind CSS 3.x, vanilla JavaScript, RESTful API
+- **Tech Stack**: PHP 8.1+, MySQL 8.0, Tailwind CSS 3.x, vanilla JavaScript, RESTful API
 - **UI Framework**: Tailwind CSS with custom theme (dark mode enabled)
 - **Fonts**: Public Sans, Material Symbols Outlined icons
 - **Deployment**: Baota Panel (production), Docker (local dev)
@@ -59,11 +59,131 @@ mysql -u root -p -e "CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE 
 
 ```bash
 # Docker environment
-docker-compose exec db mysql -u root -proot -e "DROP DATABASE family_tasks; CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
+docker compose exec db mysql -u root -proot -e "DROP DATABASE family_tasks; CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
 
 # Remove installation locks to reinstall
 rm -f config/installed.lock config/database.php config/config.php
 ```
+
+### Database Operations (中文字符支持)
+
+```bash
+# Import data with UTF-8 support (REQUIRED for Chinese characters)
+docker compose exec db mysql -u root -proot --default-character-set=utf8mb4 family_tasks < file.sql
+
+# Query tasks with UTF-8
+docker compose exec db mysql -u root -proot --default-character-set=utf8mb4 -e "SELECT * FROM tasks;" family_tasks
+
+# Backup with UTF-8
+docker compose exec db mysqldump -u root -proot --default-character-set=utf8mb4 family_tasks > backup.sql
+```
+
+**CRITICAL**: MySQL defaults to `latin1` encoding. Always use `--default-character-set=utf8mb4` to avoid Chinese character corruption. See [database/README.md](database/README.md) for troubleshooting.
+
+### Database Migrations
+
+The project uses a migration system to manage database schema changes:
+
+```bash
+# Create new migration
+php scripts/make-migration.php "add user avatar column"
+
+# Run pending migrations
+php scripts/migrate.php
+
+# Check migration status
+php scripts/migrate.php --status
+
+# Rollback last migration (if .down.sql exists)
+php scripts/migrate.php --rollback
+```
+
+**Migration Naming**: `YYYYMMDDHHMMSS_description.sql` (e.g., `20250103120000_add_user_avatar.sql`)
+
+**Auto-execution**: Migrations run automatically during system updates via `update.sh`
+
+See [database/migrations/README.md](database/migrations/README.md) for detailed usage and examples.
+
+### System Updates
+
+Update system code and database automatically:
+
+```bash
+# Run update script (pulls latest code, runs migrations, updates permissions)
+bash update.sh
+
+# Or use web interface: Settings → Personal Settings → System Update
+```
+
+Features:
+- Automatic Git pull from configured branch
+- Auto-backup of config files (database.php, config.php, installed.lock)
+- Auto-execution of pending database migrations
+- Baota Panel permission management
+- Update changelog display
+- Rollback on failure
+
+**Requirements**: Project must be deployed via Git (not ZIP upload)
+
+## Project Features
+
+### Multi-Team Architecture (Slack/Feishu Model)
+
+**Core Concept**: Users can belong to multiple teams (workspaces) and switch between them, similar to Slack or Feishu.
+
+- **Registration Flow**: Users choose to either create a new team OR join existing team via 6-character invite code
+- **Team Switching**: Click team dropdown in header to switch between teams (e.g., 家庭團隊, 工作團隊一, 工作團隊二)
+- **Data Isolation**: Tasks, users, and all data are strictly isolated per team
+- **Roles**: Each user has a role (admin/member) within each team independently
+- **Team Management**:
+  - Admins can modify team name, regenerate invite codes, and remove members
+  - Members can view team info and invite codes but cannot modify
+
+**Database Schema**:
+```sql
+teams (id, name, invite_code, created_by, timestamps)
+team_members (team_id, user_id, role) -- Many-to-many with roles
+users (id, username, password, nickname, current_team_id, timestamps)
+tasks (team_id, title, ...) -- All tasks belong to a team
+```
+
+**Key Files**:
+- [lib/TeamHelper.php](lib/TeamHelper.php) - Team utility functions (invite code generation, permission checks)
+- [api/teams.php](api/teams.php) - Team CRUD, join/switch/members/regenerate_code endpoints
+- [api/auth.php](api/auth.php) - Registration with team creation/joining
+- [api/tasks.php](api/tasks.php) - Team-scoped task queries
+- [api/users.php](api/users.php) - Returns only current team members
+- [api/profile.php](api/profile.php) - User profile updates (nickname, password)
+
+**Frontend**:
+- Team switcher dropdown in header (public/js/app.js:441-492)
+- Settings modal with Profile/Team tabs (public/index.php:311-357)
+- **Unified Team Management**: All teams displayed in a single view - no need to switch teams to manage them
+  - Shows all teams user belongs to in card layout
+  - Each team card displays: name, invite code, member list
+  - Admins can edit team name, regenerate invite code, remove members inline
+  - Current team highlighted with ring border
+  - Located in Settings → Team Settings tab (public/js/app.js:983-1202)
+
+### Recurring Tasks (週期任務)
+- **Task Types**: normal (一般), recurring (週期), repeatable (重複)
+- **Frequencies**: daily, weekly, monthly, yearly
+- **Storage**: JSON config in `tasks.recurrence_config` column
+- **Migration**: [database/migrations/add_recurring_tasks.sql](database/migrations/add_recurring_tasks.sql)
+- **Details**: See [RECURRING_TASKS.md](RECURRING_TASKS.md)
+
+### Lunar Calendar (農曆顯示)
+- **Library**: Pure JavaScript implementation in [public/js/lunar.js](public/js/lunar.js)
+- **Range**: 1900-2100 (200 years)
+- **Algorithm**: Based on base date 1900-01-31 (正月初一) with day offset calculation
+- **Usage**: `LunarCalendar.solarToLunar(year, month, day)` returns `{year, month, day, isLeap}`
+- **Details**: See [LUNAR_CALENDAR.md](LUNAR_CALENDAR.md)
+
+### Demo Data
+- **File**: [database/seed_demo_tasks.sql](database/seed_demo_tasks.sql) (16 sample tasks)
+- **Categories**: Today (3), Tomorrow (2), This Week (3), Next Week (2), Recurring (4), Completed (2)
+- **Import**: `docker compose exec db mysql -u root -proot --default-character-set=utf8mb4 family_tasks < database/seed_demo_tasks.sql`
+- **CRITICAL**: Always use `--default-character-set=utf8mb4` for Chinese character support
 
 ## Architecture & Key Concepts
 
@@ -82,7 +202,7 @@ The system uses a **WordPress-style 4-step web installation wizard** instead of 
 
 ### Database Connection Architecture
 
-**Singleton Pattern** in [config/Database.php](config/Database.php):
+**Singleton Pattern** in [lib/Database.php](lib/Database.php):
 
 ```php
 Database::getInstance()->getConnection()
@@ -99,11 +219,13 @@ This allows Docker containers to use host `db` (service name) while local dev us
 
 ### RESTful API Structure
 
-All APIs follow consistent patterns:
+All APIs follow consistent patterns with **team-scoped access control**:
 
-- **Auth API** [api/auth.php](api/auth.php): `?action=login|logout|register|check`
-- **Tasks API** [api/tasks.php](api/tasks.php): RESTful methods (GET/POST/PUT/DELETE)
-- **Users API** [api/users.php](api/users.php): GET for user listing (task assignment)
+- **Auth API** [api/auth.php](api/auth.php): `?action=login|logout|register|check` (registration includes team creation/joining)
+- **Teams API** [api/teams.php](api/teams.php): GET all teams, GET team details, POST create/join/switch, PUT update (admin), DELETE remove members (admin), POST regenerate invite code (admin)
+- **Tasks API** [api/tasks.php](api/tasks.php): RESTful methods (GET/POST/PUT/DELETE) - all queries filtered by `current_team_id`
+- **Users API** [api/users.php](api/users.php): GET for user listing - returns only current team members
+- **Profile API** [api/profile.php](api/profile.php): POST to update nickname and password
 
 Session management via native PHP `$_SESSION`, auth check via `/api/auth.php?action=check`.
 
@@ -111,21 +233,35 @@ Session management via native PHP `$_SESSION`, auth check via `/api/auth.php?act
 
 - **Password hashing**: `password_hash()` with bcrypt (cost=10)
 - **SQL injection prevention**: PDO prepared statements throughout
-- **Session management**: `session_start()` in all API files
+- **Team isolation**: All queries check `team_id` and verify user membership via `TeamHelper::isTeamMember()`
+- **Permission checks**: Admin-only operations verified via `TeamHelper::isTeamAdmin()`
 - **Input validation**: Empty checks, trim(), username uniqueness validation
-- **Error responses**: Proper HTTP status codes (400, 401, 404, 405, 409, 500)
+- **Error responses**: Proper HTTP status codes (400, 401, 403, 404, 405, 409, 500)
 
 ### Database Schema
 
-**3 tables** with foreign key constraints:
+**Multi-team architecture** with 5 core tables:
 
 ```sql
-users (id, username, password, nickname, role, timestamps)
-tasks (id, title, description, creator_id, assignee_id, priority, status, due_date, timestamps)
-  - FOREIGN KEY (creator_id) REFERENCES users(id) ON DELETE CASCADE
-  - FOREIGN KEY (assignee_id) REFERENCES users(id) ON DELETE SET NULL
-task_comments (id, task_id, user_id, content, created_at)
-  - FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+teams (id, name, invite_code, created_by, timestamps)
+  - invite_code: 6-character unique code (excluding confusing chars: 0,O,I,1)
+
+team_members (id, team_id, user_id, role, joined_at)
+  - role: ENUM('admin', 'member')
+  - UNIQUE KEY (team_id, user_id)
+  - Many-to-many relationship between users and teams
+
+users (id, username, password, nickname, current_team_id, timestamps)
+  - current_team_id: Currently selected team for session
+
+tasks (id, team_id, title, description, creator_id, assignee_id, priority, status, due_date, task_type, recurrence_config, parent_task_id, timestamps)
+  - team_id: Team this task belongs to (strict isolation)
+  - FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE CASCADE
+  - task_type: ENUM('normal', 'recurring', 'repeatable')
+  - recurrence_config: JSON for recurring task settings
+
+task_comments (id, team_id, task_id, user_id, content, created_at)
+  - team_id: Team isolation for comments
 ```
 
 Priority: `low|medium|high`
@@ -152,11 +288,24 @@ This was added to fix 404 errors on install directory during development.
 
 **Vanilla JavaScript** (no frameworks) in [public/js/app.js](public/js/app.js):
 
-- AJAX requests via `fetch()` API
-- Task CRUD operations with modal dialogs
-- Real-time filtering (status-based)
-- Session check on page load
-- Event delegation for dynamic elements
+- **Global State**: `currentUser`, `allTasks`, `allUsers`, `allTeams`, `currentTeam`, `currentFilter`, `selectedDate`
+- **Team Management**:
+  - `loadTeams()` - Fetch all teams user belongs to (public/js/app.js:494-510)
+  - `switchCurrentTeam(teamId)` - Switch team and reload data (public/js/app.js:512-544)
+  - `toggleTeamDropdown()` - Click-based dropdown (not hover) (public/js/app.js:546-576)
+- **Settings Modal**: Tabbed interface with Profile/Team tabs (public/js/app.js:963-986)
+- **Team Settings**: Load team details, members, invite code, admin controls (public/js/app.js:988-1176)
+- **AJAX**: `fetch()` API for all RESTful operations
+- **Session**: Auto-check on page load via `checkLoginStatus()` (public/js/app.js:81-96)
+
+**UI Notes**:
+- All code comments are in Traditional Chinese (繁體中文) as per project requirements
+- Team dropdown uses click-to-open (not hover) to prevent accidental closing
+- Settings modal width increased to `max-w-2xl` to accommodate team member list
+- **UX Optimization**: All team management in one place - users don't need to switch teams to view/edit settings
+  - Reduces user operation cost
+  - All teams visible simultaneously
+  - Edit any team's settings without context switching
 
 ## Docker Environment Details
 
@@ -177,29 +326,7 @@ This was added to fix 404 errors on install directory during development.
 
 **Volume mounts**: Project root syncs to `/var/www/html` for live reload.
 
-## Common Development Tasks
-
-### Adding New API Endpoints
-
-1. Create new action in existing API file or new file in `/api/`
-2. Follow pattern: check request method, validate input, use prepared statements
-3. Return JSON with proper HTTP status codes
-4. Update frontend [public/js/app.js](public/js/app.js) to call new endpoint
-
-### Modifying Database Schema
-
-1. Update [database/schema.sql](database/schema.sql)
-2. Update [install/install.php](install/install.php) (wizard execution script)
-3. Test by removing lock and re-running installation wizard
-4. For production: write migration script
-
-### Frontend Changes
-
-- CSS: [public/css/style.css](public/css/style.css)
-- JS: [public/js/app.js](public/js/app.js)
-- No build process required (vanilla stack)
-
-### Access URLs
+## Access URLs
 
 **Docker environment**:
 - Main app: http://localhost:8080
@@ -208,6 +335,13 @@ This was added to fix 404 errors on install directory during development.
 
 **PHP built-in server**:
 - Main app: http://localhost:8000
+
+## Test Account
+
+**Development/Testing Credentials**:
+- Username: `3331322@gmail.com`
+- Password: `ca123456789`
+- Purpose: Use this account for testing multi-team features, settings, and team management
 
 ## Deployment (Baota Panel)
 
@@ -219,8 +353,15 @@ This was added to fix 404 errors on install directory during development.
 
 ## Important Notes
 
-- **Never commit** `config/installed.lock`, `config/database.php`, `config/config.php` (in .gitignore)
-- **Default admin** (from schema.sql): `admin` / `admin123` (must change after install)
-- **Docker version field** removed from docker-compose.yml (deprecated in newer versions)
-- **File permissions** matter: `config/` must be writable during installation
+- **Code Comments**: All code comments must be in Traditional Chinese (繁體中文) as per project standards
+- **UX Philosophy**: Minimize user operation cost - all settings should be accessible without context switching
+  - Example: Team settings show ALL teams in one view, no need to switch teams first
+  - Principle: Reduce clicks, reduce confusion, increase efficiency
+- **Never commit**: `config/installed.lock`, `config/database.php`, `config/config.php` (in .gitignore)
+- **Default credentials**: First team creator becomes admin automatically
+- **Team Invite Codes**: 6 characters, uppercase, excluding confusing chars (0,O,I,1) - see `TeamHelper::generateInviteCode()`
+- **File permissions**: `config/` must be writable during installation
 - **Security**: Installation wizard should be removed/disabled in production
+- **Chinese character corruption**: ALWAYS use `--default-character-set=utf8mb4` for MySQL CLI operations (import/export/query)
+- **Multi-team isolation**: All API queries MUST filter by `current_team_id` from session - never expose cross-team data
+- **Permission checks**: Always verify admin role via `TeamHelper::isTeamAdmin()` before allowing destructive operations

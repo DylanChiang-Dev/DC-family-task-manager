@@ -1,33 +1,48 @@
 <?php
 /**
- * Users API
+ * 用戶 API
  *
- * Endpoints:
- * - GET /api/users.php - Get all users (for task assignment dropdown)
+ * 端點：
+ * - GET /api/users.php - 獲取所有用戶（用於任務指派下拉列表）
  */
 
 session_start();
 
-// Load configuration
+// 載入配置
 require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../lib/Database.php';
 
 header('Content-Type: application/json');
 
-// Check authentication
+// 檢查認證
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => 'Unauthorized']);
     exit;
 }
 
+$userId = $_SESSION['user_id'];
+$currentTeamId = $_SESSION['current_team_id'] ?? null;
+
 try {
     $db = Database::getInstance()->getConnection();
 
-    // Get all users
-    $stmt = $db->query("SELECT id, username, nickname, role FROM users ORDER BY nickname");
-    $users = $stmt->fetchAll();
+    // 僅獲取當前團隊的用戶
+    if ($currentTeamId) {
+        $stmt = $db->prepare("
+            SELECT u.id, u.username, u.nickname, tm.role
+            FROM users u
+            INNER JOIN team_members tm ON u.id = tm.user_id
+            WHERE tm.team_id = ?
+            ORDER BY u.nickname
+        ");
+        $stmt->execute([$currentTeamId]);
+        $users = $stmt->fetchAll();
+    } else {
+        // 未選擇團隊，返回空列表
+        $users = [];
+    }
 
     echo json_encode([
         'success' => true,
