@@ -125,6 +125,59 @@ Features:
 
 **Requirements**: Project must be deployed via Git (not ZIP upload)
 
+### Production Environment Deployment
+
+**IMPORTANT**: When developing features for production environment (e.g., https://list.3331322.xyz/), code changes will NOT take effect immediately due to browser caching and server-side caching.
+
+**Development Workflow for Production**:
+
+1. **Make Code Changes** locally (edit CSS/JS/PHP files)
+
+2. **Commit and Push**:
+   ```bash
+   git add .
+   git commit -m "fix: description of changes"
+   git push
+   ```
+
+3. **Notify User** to manually update on server:
+   ```bash
+   # User runs on production server (Baota Panel)
+   cd /www/wwwroot/list.3331322.xyz
+   git pull origin main
+   ```
+
+4. **Clear Browser Cache** (if testing UI changes):
+   - Hard refresh: `Cmd+Shift+R` (Mac) / `Ctrl+Shift+R` (Windows)
+   - Or add cache-busting query: `?nocache=<random_number>`
+
+**Testing Strategy**:
+- ✅ DO: Commit → Push → Tell user to update → User tests
+- ❌ DON'T: Test directly on production via MCP without commit/push
+- ❌ DON'T: Expect immediate changes without git pull on server
+
+**Why This Workflow**:
+- Production uses static file serving with aggressive caching
+- PHP opcode cache may need manual clearing
+- Browser caches CSS/JS files
+- Git is the single source of truth
+
+**Example Workflow**:
+```bash
+# 1. Claude makes changes
+git add public/css/style.css public/js/app.js
+git commit -m "fix: mobile UI responsive design"
+git push
+
+# 2. Claude tells user:
+# "代码已推送，请在生产服务器运行: cd /www/wwwroot/list.3331322.xyz && git pull"
+
+# 3. User runs on server:
+cd /www/wwwroot/list.3331322.xyz && git pull
+
+# 4. User hard refreshes browser to test
+```
+
 ## Project Features
 
 ### Multi-Team Architecture (Slack/Feishu Model)
