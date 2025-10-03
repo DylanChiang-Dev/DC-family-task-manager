@@ -18,7 +18,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 # Start all services (PHP-FPM, Nginx, MySQL, phpMyAdmin)
-docker-compose up -d
+docker compose up -d  # Note: Use 'docker compose' (not 'docker-compose') for newer Docker versions
 
 # View container status
 docker-compose ps
@@ -332,15 +332,31 @@ Status: `pending|in_progress|completed|cancelled`
 
 **Vanilla JavaScript** (no frameworks) in [public/js/app.js](public/js/app.js):
 
-- **Global State**: `currentUser`, `allTasks`, `allUsers`, `allTeams`, `currentTeam`, `currentFilter`, `selectedDate`
+- **Global State**: `currentUser`, `allTasks`, `allUsers`, `allTeams`, `currentTeam`, `currentFilter`, `selectedDate`, `currentMonth` (for calendar)
+- **Initialization**: `checkLoginStatus()` on page load → `loadTeams()` → `loadUsers()` → `loadTasks()` → `renderCalendar()`
 - **Team Management**:
-  - `loadTeams()` - Fetch all teams user belongs to (public/js/app.js:494-510)
-  - `switchCurrentTeam(teamId)` - Switch team and reload data (public/js/app.js:512-544)
-  - `toggleTeamDropdown()` - Click-based dropdown (not hover) (public/js/app.js:546-576)
-- **Settings Modal**: Tabbed interface with Profile/Team tabs (public/js/app.js:963-986)
-- **Team Settings**: Load team details, members, invite code, admin controls (public/js/app.js:988-1176)
+  - `loadTeams()` - Fetch all teams user belongs to
+  - `switchCurrentTeam(teamId)` - Switch team and reload data
+  - `toggleTeamDropdown()` - Click-based dropdown (not hover)
+- **Task Management**:
+  - `openTaskModal(task)` - Create/edit task modal with **default values**: assignee = currentUser, due_date = today
+  - `handleTaskSubmit()` - Form validation and API call
+  - `deleteTask(taskId)` - With confirmation dialog
+  - `generateRecurringTaskInstances()` - Expands recurring tasks for calendar display
+- **Calendar**:
+  - `renderCalendar()` - Main calendar rendering with lunar dates
+  - `selectDate(year, month, day)` - Date selection handler
+  - `solarToLunar()` - Lunar calendar conversion (from lunar.js)
+- **Settings Modal**: Tabbed interface with Profile/Team tabs
+- **Team Settings**: Load team details, members, invite code, admin controls
 - **AJAX**: `fetch()` API for all RESTful operations
-- **Session**: Auto-check on page load via `checkLoginStatus()` (public/js/app.js:81-96)
+- **Session**: Auto-check on page load via `checkLoginStatus()`
+
+**Key UI/UX Features**:
+- Task creation defaults: assignee = current user, due_date = today (app.js:904-914)
+- Mobile-responsive CSS with breakpoint @640px (style.css:135-262)
+- Calendar displays lunar dates alongside solar dates
+- Recurring task instances generated client-side for month view
 
 **UI Notes**:
 - All code comments are in Traditional Chinese (繁體中文) as per project requirements
@@ -380,12 +396,28 @@ Status: `pending|in_progress|completed|cancelled`
 **PHP built-in server**:
 - Main app: http://localhost:8000
 
-## Test Account
+## Test Accounts
 
 **Development/Testing Credentials**:
+
+Production test account:
 - Username: `3331322@gmail.com`
 - Password: `ca123456789`
 - Purpose: Use this account for testing multi-team features, settings, and team management
+
+Local development accounts (create via web UI or SQL):
+- Username: `123@qq.com`, Password: `123456`
+- Username: `456@qq.com`, Password: `123456`
+
+**Creating test users programmatically**:
+```bash
+# Via web registration UI at http://localhost:8080/
+# Or via SQL (after installation):
+docker compose exec db mysql -u root -proot family_tasks -e "
+INSERT INTO users (username, password, nickname) VALUES
+('123@qq.com', '\$2y\$10\$[bcrypt_hash]', '测试用户123');
+"
+```
 
 ## Deployment (Baota Panel)
 
