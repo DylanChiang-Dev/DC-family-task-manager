@@ -14,13 +14,13 @@
  * - POST /api/teams.php?id=X&action=regenerate_code - Regenerate invite code (admin only)
  */
 
-session_start();
-
-// Load dependencies
+// Load dependencies（必須在session_start()之前）
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../lib/Database.php';
 require_once __DIR__ . '/../../lib/TeamHelper.php';
+
+session_start();
 
 header('Content-Type: application/json');
 

@@ -9,12 +9,12 @@
  * - DELETE /api/tasks.php?id=X - 刪除任務
  */
 
-session_start();
-
-// 載入配置
+// 載入配置（必須在session_start()之前）
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../lib/Database.php';
+
+session_start();
 
 header('Content-Type: application/json');
 
