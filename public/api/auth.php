@@ -66,9 +66,8 @@ function handleRegister($db)
     $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
     $nickname = trim($_POST['nickname'] ?? '');
-    $registerMode = trim($_POST['register_mode'] ?? 'create'); // 'create' or 'join'
-    $teamName = trim($_POST['team_name'] ?? '');
     $inviteCode = strtoupper(trim($_POST['invite_code'] ?? ''));
+    $teamName = trim($_POST['team_name'] ?? '');
 
     // 驗證輸入
     if (empty($username) || empty($password) || empty($nickname)) {
@@ -89,22 +88,12 @@ function handleRegister($db)
         return;
     }
 
-    // 驗證團隊設置
-    if ($registerMode === 'create' && empty($teamName)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Team name is required']);
-        return;
-    }
-
-    if ($registerMode === 'join' && empty($inviteCode)) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Invite code is required']);
-        return;
-    }
-
-    // 如果是加入團隊，驗證邀請碼是否存在
+    // 判斷註冊模式：有邀請碼就加入團隊，否則創建新團隊
     $teamId = null;
+    $registerMode = !empty($inviteCode) ? 'join' : 'create';
+
     if ($registerMode === 'join') {
+        // 驗證邀請碼是否存在
         $team = TeamHelper::getTeamByInviteCode($db, $inviteCode);
         if (!$team) {
             http_response_code(404);
@@ -112,6 +101,11 @@ function handleRegister($db)
             return;
         }
         $teamId = $team['id'];
+    } else {
+        // 如果沒有提供團隊名稱，使用默認名稱
+        if (empty($teamName)) {
+            $teamName = $nickname . '的團隊';
+        }
     }
 
     // 檢查用戶名是否已存在
