@@ -18,38 +18,104 @@ let isTeamDropdownOpen = false;
  * 初始化暗色模式
  * 優先級: localStorage > 系統偏好 > 默認淺色
  */
-function initDarkMode() {
-    const savedTheme = localStorage.getItem('theme');
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-
-    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
-        document.documentElement.classList.add('dark');
-    } else {
-        document.documentElement.classList.remove('dark');
-    }
-}
 
 /**
- * 切換暗色模式
+ * 主題模式枚舉
  */
-function toggleDarkMode() {
-    const isDark = document.documentElement.classList.contains('dark');
+const THEME_MODES = {
+    LIGHT: 'light',
+    DARK: 'dark',
+    SYSTEM: 'system'
+};
 
-    if (isDark) {
-        document.documentElement.classList.remove('dark');
-        localStorage.setItem('theme', 'light');
-    } else {
-        document.documentElement.classList.add('dark');
-        localStorage.setItem('theme', 'dark');
+/**
+ * 初始化主題系統
+ */
+function initThemeSystem() {
+    const savedTheme = localStorage.getItem('theme') || THEME_MODES.SYSTEM;
+    applyTheme(savedTheme);
+    updateThemeIcon(savedTheme);
+}
+
+/**
+ * 應用主題
+ */
+function applyTheme(theme) {
+    localStorage.setItem('theme', theme);
+
+    // 清除所有主題類
+    document.documentElement.classList.remove('light', 'dark');
+
+    switch (theme) {
+        case THEME_MODES.LIGHT:
+            document.documentElement.classList.add('light');
+            break;
+        case THEME_MODES.DARK:
+            document.documentElement.classList.add('dark');
+            break;
+        case THEME_MODES.SYSTEM:
+            const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            // 系統模式下不添加任何類，讓CSS處理
+            break;
     }
 }
 
 /**
- * 監聽系統主題變化（可選）
+ * 更新主題圖標
+ */
+function updateThemeIcon(theme) {
+    const lightIcon = document.getElementById('theme-icon-light');
+    const darkIcon = document.getElementById('theme-icon-dark');
+    const systemIcon = document.getElementById('theme-icon-system');
+
+    // 隱藏所有圖標
+    if (lightIcon) lightIcon.classList.add('hidden');
+    if (darkIcon) darkIcon.classList.add('hidden');
+    if (systemIcon) systemIcon.classList.add('hidden');
+
+    // 顯示當前主題圖標
+    switch (theme) {
+        case THEME_MODES.LIGHT:
+            if (lightIcon) lightIcon.classList.remove('hidden');
+            break;
+        case THEME_MODES.DARK:
+            if (darkIcon) darkIcon.classList.remove('hidden');
+            break;
+        case THEME_MODES.SYSTEM:
+            if (systemIcon) systemIcon.classList.remove('hidden');
+            break;
+    }
+}
+
+/**
+ * 切換主題模式（輪循：light -> dark -> system -> light）
+ */
+function toggleThemeMode() {
+    const currentTheme = localStorage.getItem('theme') || THEME_MODES.SYSTEM;
+    let nextTheme;
+
+    switch (currentTheme) {
+        case THEME_MODES.LIGHT:
+            nextTheme = THEME_MODES.DARK;
+            break;
+        case THEME_MODES.DARK:
+            nextTheme = THEME_MODES.SYSTEM;
+            break;
+        default:
+            nextTheme = THEME_MODES.LIGHT;
+            break;
+    }
+
+    applyTheme(nextTheme);
+    updateThemeIcon(nextTheme);
+}
+
+/**
+ * 監聽系統主題變化
  */
 window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-    // 如果用戶沒有手動設置過，則跟隨系統偏好
-    if (!localStorage.getItem('theme')) {
+    const currentTheme = localStorage.getItem('theme');
+    if (currentTheme === THEME_MODES.SYSTEM) {
         if (e.matches) {
             document.documentElement.classList.add('dark');
         } else {
@@ -76,7 +142,7 @@ function solarToLunar(year, month, day) {
 
 // 初始化應用
 document.addEventListener('DOMContentLoaded', () => {
-    initDarkMode(); // 初始化暗色模式
+    initThemeSystem(); // 初始化主題系統
     checkLoginStatus();
     setupEventListeners();
 });
@@ -580,7 +646,7 @@ function renderCalendar() {
         // Build task list HTML with colored dots
         let tasksHtml = '';
         if (dayTasks.length > 0) {
-            const visibleTasks = dayTasks.slice(0, 5);
+            const visibleTasks = dayTasks.slice(0, 4);
             tasksHtml = '<div class="w-full space-y-1 mt-2">';
             tasksHtml += visibleTasks.map(task => {
                 const priorityColor = task.priority === 'high' ? 'bg-red-500' :
@@ -592,8 +658,8 @@ function renderCalendar() {
             }).join('');
             tasksHtml += '</div>';
 
-            if (dayTasks.length > 5) {
-                tasksHtml += `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">+${dayTasks.length - 5} 更多</div>`;
+            if (dayTasks.length > 4) {
+                tasksHtml += `<div class="text-xs text-gray-500 dark:text-gray-400 mt-1 font-medium">+${dayTasks.length - 4} 更多</div>`;
             }
         }
 
@@ -679,7 +745,7 @@ function renderHeader() {
     ` : '';
 
     header.innerHTML = `
-        <header class="bg-white dark:bg-background-dark/50 border-b border-gray-200 dark:border-gray-700/50">
+        <header class="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
             <div class="container mx-auto px-4 sm:px-6 lg:px-8">
                 <div class="flex items-center justify-between h-16">
                     <div class="flex items-center gap-4">
@@ -692,16 +758,22 @@ function renderHeader() {
                     <div class="flex items-center gap-4">
                         ${teamDropdown}
                         <button
-                            onclick="toggleDarkMode()"
+                            onclick="toggleThemeMode()"
                             class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
-                            title="切換暗色模式"
-                            aria-label="切換暗色模式"
+                            title="切換主題模式"
+                            aria-label="切換主題模式"
                         >
-                            <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden dark:hidden" fill="currentColor" viewBox="0 0 20 20">
+                            <!-- 白天模式圖標 -->
+                            <svg id="theme-icon-light" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path>
                             </svg>
-                            <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
+                            <!-- 暗色模式圖標 -->
+                            <svg id="theme-icon-dark" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                            </svg>
+                            <!-- 跟隨系統圖標 -->
+                            <svg id="theme-icon-system" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
                             </svg>
                         </button>
                         <span class="text-sm text-gray-600 dark:text-gray-300">您好，${currentUser.nickname}</span>

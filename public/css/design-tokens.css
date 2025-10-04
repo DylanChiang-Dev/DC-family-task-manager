@@ -205,16 +205,51 @@
 }
 
 /* ========================================
-   暗色模式主题
+   手动暗色模式类（最高优先级）
    ======================================== */
 
+.dark {
+  color-scheme: dark;
+
+  /* 手动暗色模式的变量覆盖 */
+  --surface-primary: oklch(12% 0.01 250);
+  --surface-secondary: oklch(15% 0.01 250);
+  --surface-tertiary: oklch(18% 0.01 250);
+  --surface-overlay: oklch(10% 0 0 / 0.95);
+
+  --text-primary: var(--color-neutral-50);
+  --text-secondary: var(--color-neutral-300);
+  --text-tertiary: var(--color-neutral-500);
+  --text-inverse: var(--color-neutral-900);
+
+  --border-primary: oklch(25% 0.01 250);
+  --border-secondary: oklch(30% 0.01 250);
+
+  /* 背景颜色 - 暗色（更深的黑色） */
+  --background-page: oklch(8% 0.01 250);
+  --background-elevated: oklch(12% 0.01 250);
+
+  --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.3);
+  --shadow-md: 0 4px 6px -1px oklch(0% 0 0 / 0.4),
+               0 2px 4px -2px oklch(0% 0 0 / 0.4);
+  --shadow-lg: 0 10px 15px -3px oklch(0% 0 0 / 0.5),
+               0 4px 6px -4px oklch(0% 0 0 / 0.5);
+  --shadow-xl: 0 20px 25px -5px oklch(0% 0 0 / 0.6),
+               0 8px 10px -6px oklch(0% 0 0 / 0.6);
+}
+
+/* ========================================
+   系统主题偏好（仅在没有手动设置时生效）
+   ======================================== */
+
+/* 系统暗色模式偏好 - 只有在没有手动设置时生效 */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not(.light):not(.dark) {
     /* 表面颜色 - 暗色 */
-    --surface-primary: oklch(20% 0.01 250);
-    --surface-secondary: oklch(24% 0.01 250);
-    --surface-tertiary: oklch(28% 0.01 250);
-    --surface-overlay: oklch(18% 0 0 / 0.95);
+    --surface-primary: oklch(12% 0.01 250);
+    --surface-secondary: oklch(15% 0.01 250);
+    --surface-tertiary: oklch(18% 0.01 250);
+    --surface-overlay: oklch(10% 0 0 / 0.95);
 
     /* 文本颜色 - 暗色 */
     --text-primary: var(--color-neutral-50);
@@ -223,12 +258,12 @@
     --text-inverse: var(--color-neutral-900);
 
     /* 边框颜色 - 暗色 */
-    --border-primary: oklch(35% 0.01 250);
-    --border-secondary: oklch(40% 0.01 250);
+    --border-primary: oklch(25% 0.01 250);
+    --border-secondary: oklch(30% 0.01 250);
 
-    /* 背景颜色 - 暗色（从15%提升到20%，避免纯黑） */
-    --background-page: oklch(20% 0.01 250);
-    --background-elevated: oklch(24% 0.01 250);
+    /* 背景颜色 - 暗色（更深的黑色） */
+    --background-page: oklch(8% 0.01 250);
+    --background-elevated: oklch(12% 0.01 250);
 
     /* 调整阴影以适配暗色模式 */
     --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.3);
@@ -239,38 +274,4 @@
     --shadow-xl: 0 20px 25px -5px oklch(0% 0 0 / 0.6),
                  0 8px 10px -6px oklch(0% 0 0 / 0.6);
   }
-}
-
-/* ========================================
-   手动暗色模式类（优先级高于系统偏好）
-   ======================================== */
-
-.dark {
-  color-scheme: dark;
-
-  /* 手动暗色模式的变量覆盖 */
-  --surface-primary: oklch(20% 0.01 250);
-  --surface-secondary: oklch(24% 0.01 250);
-  --surface-tertiary: oklch(28% 0.01 250);
-  --surface-overlay: oklch(18% 0 0 / 0.95);
-
-  --text-primary: var(--color-neutral-50);
-  --text-secondary: var(--color-neutral-300);
-  --text-tertiary: var(--color-neutral-500);
-  --text-inverse: var(--color-neutral-900);
-
-  --border-primary: oklch(35% 0.01 250);
-  --border-secondary: oklch(40% 0.01 250);
-
-  /* 背景颜色 - 暗色（从15%提升到20%，避免纯黑） */
-  --background-page: oklch(20% 0.01 250);
-  --background-elevated: oklch(24% 0.01 250);
-
-  --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px oklch(0% 0 0 / 0.4),
-               0 2px 4px -2px oklch(0% 0 0 / 0.4);
-  --shadow-lg: 0 10px 15px -3px oklch(0% 0 0 / 0.5),
-               0 4px 6px -4px oklch(0% 0 0 / 0.5);
-  --shadow-xl: 0 20px 25px -5px oklch(0% 0 0 / 0.6),
-               0 8px 10px -6px oklch(0% 0 0 / 0.6);
 }
