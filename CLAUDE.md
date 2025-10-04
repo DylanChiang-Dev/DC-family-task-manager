@@ -218,6 +218,11 @@ tasks (team_id, title, ...) -- All tasks belong to a team
   - Current team highlighted with ring border
   - Located in Settings → Team Settings tab (public/js/app.js:983-1202)
 
+**Responsive Design**:
+- **Mobile** (<1024px): Calendar hidden, only task list shown (full width)
+- **Desktop** (≥1024px): Calendar (2/3 width) + Task list (1/3 width) side-by-side
+- Implemented via `hidden lg:block` Tailwind classes and CSS Grid layout
+
 ### Recurring Tasks (週期任務)
 - **Task Types**: normal (一般), recurring (週期), repeatable (重複)
 - **Frequencies**: daily, weekly, monthly, yearly
@@ -237,6 +242,58 @@ tasks (team_id, title, ...) -- All tasks belong to a team
 - **Categories**: Today (3), Tomorrow (2), This Week (3), Next Week (2), Recurring (4), Completed (2)
 - **Import**: `docker compose exec db mysql -u root -proot --default-character-set=utf8mb4 family_tasks < database/seed_demo_tasks.sql`
 - **CRITICAL**: Always use `--default-character-set=utf8mb4` for Chinese character support
+
+## CSS Architecture (v1.1.0+)
+
+**Modern CSS Refactor** - As of v1.1.0, the project uses a modular, mobile-first CSS architecture:
+
+### File Structure
+```
+public/css/
+├── design-tokens.css   # CSS variables (colors, spacing, fonts, shadows)
+├── base.css           # Modern CSS reset, base elements
+├── components.css     # Reusable components (buttons, cards, badges)
+├── layout.css         # Responsive layout system (containers, grids, flexbox)
+├── utilities.css      # Utility classes
+└── style.css          # Main entry point (CSS Cascade Layers)
+```
+
+### Key Features
+- **Design Tokens**: All design decisions centralized in CSS variables using `oklch()` color space
+- **Mobile-First**: 5 breakpoints - mobile(default) → sm(640px) → lg(1024px) → xl(1280px) → 2xl(1920px)
+- **Container Queries**: Components respond to container size, not just viewport
+- **Logical Properties**: `margin-inline`, `padding-block` for internationalization
+- **Zero !important**: CSS Cascade Layers manage specificity without hacks
+- **Performance**: `contain`, `will-change` for GPU acceleration
+- **Dark Mode**: Auto-switching via `prefers-color-scheme` and `.dark` class
+
+### Responsive Breakpoints
+```css
+/* Mobile-first approach */
+.element { /* mobile styles - default */ }
+
+@media (min-width: 640px) { /* tablet */ }
+@media (min-width: 1024px) { /* desktop */ }
+@media (min-width: 1280px) { /* large desktop */ }
+@media (min-width: 1920px) { /* 4K */ }
+```
+
+### Importing CSS
+The main `index.php` imports modular CSS files:
+```html
+<link rel="stylesheet" href="/css/design-tokens.css"/>
+<link rel="stylesheet" href="/css/base.css"/>
+<link rel="stylesheet" href="/css/layout.css"/>
+<link rel="stylesheet" href="/css/components.css"/>
+<link rel="stylesheet" href="/css/utilities.css"/>
+```
+
+### Legacy Compatibility
+- Tailwind CDN retained for backward compatibility
+- Legacy class names (`tab-active`, `priority-low`, etc.) preserved in `style.css` Layer
+- Old `style.css` backed up as `style.css.backup`
+
+**IMPORTANT**: When modifying styles, prefer editing the modular CSS files over inline styles or Tailwind classes.
 
 ## Architecture & Key Concepts
 
@@ -366,6 +423,12 @@ Status: `pending|in_progress|completed|cancelled`
   - Reduces user operation cost
   - All teams visible simultaneously
   - Edit any team's settings without context switching
+
+**CSS Class Conventions**:
+- **Component classes**: `.btn`, `.badge`, `.task-card`, `.modal`, `.dropdown` (from components.css)
+- **Layout classes**: `.container`, `.grid`, `.flex`, `.page-header` (from layout.css)
+- **Utility classes**: `.text-primary`, `.bg-secondary`, `.rounded-lg`, `.shadow-md` (from utilities.css)
+- **Legacy Tailwind**: Still available for quick prototyping, but prefer modular CSS classes
 
 ## Docker Environment Details
 
