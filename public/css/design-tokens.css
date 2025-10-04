@@ -211,10 +211,10 @@
 @media (prefers-color-scheme: dark) {
   :root {
     /* 表面颜色 - 暗色 */
-    --surface-primary: oklch(18% 0.01 250);
-    --surface-secondary: oklch(22% 0.01 250);
+    --surface-primary: oklch(20% 0.01 250);
+    --surface-secondary: oklch(24% 0.01 250);
     --surface-tertiary: oklch(28% 0.01 250);
-    --surface-overlay: oklch(15% 0 0 / 0.95);
+    --surface-overlay: oklch(18% 0 0 / 0.95);
 
     /* 文本颜色 - 暗色 */
     --text-primary: var(--color-neutral-50);
@@ -226,9 +226,9 @@
     --border-primary: oklch(35% 0.01 250);
     --border-secondary: oklch(40% 0.01 250);
 
-    /* 背景颜色 - 暗色 */
-    --background-page: oklch(15% 0.01 250);
-    --background-elevated: oklch(20% 0.01 250);
+    /* 背景颜色 - 暗色（从15%提升到20%，避免纯黑） */
+    --background-page: oklch(20% 0.01 250);
+    --background-elevated: oklch(24% 0.01 250);
 
     /* 调整阴影以适配暗色模式 */
     --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.3);
@@ -248,11 +248,11 @@
 .dark {
   color-scheme: dark;
 
-  /* 与 prefers-color-scheme: dark 相同的变量覆盖 */
-  --surface-primary: oklch(18% 0.01 250);
-  --surface-secondary: oklch(22% 0.01 250);
+  /* 手动暗色模式的变量覆盖 */
+  --surface-primary: oklch(20% 0.01 250);
+  --surface-secondary: oklch(24% 0.01 250);
   --surface-tertiary: oklch(28% 0.01 250);
-  --surface-overlay: oklch(15% 0 0 / 0.95);
+  --surface-overlay: oklch(18% 0 0 / 0.95);
 
   --text-primary: var(--color-neutral-50);
   --text-secondary: var(--color-neutral-300);
@@ -262,8 +262,9 @@
   --border-primary: oklch(35% 0.01 250);
   --border-secondary: oklch(40% 0.01 250);
 
-  --background-page: oklch(15% 0.01 250);
-  --background-elevated: oklch(20% 0.01 250);
+  /* 背景颜色 - 暗色（从15%提升到20%，避免纯黑） */
+  --background-page: oklch(20% 0.01 250);
+  --background-elevated: oklch(24% 0.01 250);
 
   --shadow-sm: 0 1px 2px 0 oklch(0% 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px oklch(0% 0 0 / 0.4),

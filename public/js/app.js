@@ -10,6 +10,58 @@ let selectedDate = new Date();
 let currentMonth = new Date();
 let isTeamDropdownOpen = false;
 
+// ============================================
+// 暗色模式管理
+// ============================================
+
+/**
+ * 初始化暗色模式
+ * 優先級: localStorage > 系統偏好 > 默認淺色
+ */
+function initDarkMode() {
+    const savedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+}
+
+/**
+ * 切換暗色模式
+ */
+function toggleDarkMode() {
+    const isDark = document.documentElement.classList.contains('dark');
+
+    if (isDark) {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('theme', 'light');
+    } else {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('theme', 'dark');
+    }
+}
+
+/**
+ * 監聽系統主題變化（可選）
+ */
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+    // 如果用戶沒有手動設置過，則跟隨系統偏好
+    if (!localStorage.getItem('theme')) {
+        if (e.matches) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+    }
+});
+
+// ============================================
+// 農曆轉換
+// ============================================
+
 // 使用本地農曆轉換庫進行農曆轉換
 function solarToLunar(year, month, day) {
     try {
@@ -24,6 +76,7 @@ function solarToLunar(year, month, day) {
 
 // 初始化應用
 document.addEventListener('DOMContentLoaded', () => {
+    initDarkMode(); // 初始化暗色模式
     checkLoginStatus();
     setupEventListeners();
 });
@@ -324,7 +377,22 @@ function renderMainLayout() {
     main.innerHTML = `
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-full">
             <!-- Left: Calendar (2/3 width) - 手機版隱藏 -->
-            <div class="hidden lg:block lg:col-span-2">
+            <div class="hidden lg:block lg:col-span-2 space-y-6">
+                <!-- 今日任務 -->
+                <div class="bg-white dark:bg-slate-900/50 rounded-lg shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                            <svg class="w-5 h-5 text-primary" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                            </svg>
+                            今日任務
+                        </h2>
+                        <span id="today-task-count" class="text-sm text-gray-500 dark:text-gray-400">0 項任務</span>
+                    </div>
+                    <div id="today-tasks-list" class="space-y-2"></div>
+                </div>
+
+                <!-- 日曆 -->
                 <div class="bg-white dark:bg-slate-900/50 rounded-lg shadow-sm p-6">
                     <div id="calendar-container"></div>
                 </div>
@@ -358,6 +426,77 @@ function renderMainLayout() {
     `;
 
     renderCalendar();
+    renderTodayTasks();
+}
+
+// Render today's tasks
+function renderTodayTasks() {
+    const container = document.getElementById('today-tasks-list');
+    const countElement = document.getElementById('today-task-count');
+
+    if (!container) return;
+
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+
+    // Filter tasks due today (including recurring tasks)
+    const monthStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    const monthEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+    const tasksWithInstances = generateRecurringTaskInstances(allTasks, monthStart, monthEnd);
+
+    const todayTasks = tasksWithInstances.filter(task =>
+        task.due_date === todayStr && task.status !== 'cancelled'
+    );
+
+    // Update count
+    if (countElement) {
+        countElement.textContent = `${todayTasks.length} 項任務`;
+    }
+
+    // Render tasks
+    if (todayTasks.length === 0) {
+        container.innerHTML = `
+            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <p class="text-sm">今天沒有待辦任務</p>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = todayTasks.map(task => {
+        const assignee = allUsers.find(u => u.id == task.assignee_id);
+        const priorityColors = {
+            low: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400',
+            medium: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+            high: 'bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400'
+        };
+        const statusColors = {
+            pending: 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-400',
+            in_progress: 'bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400',
+            completed: 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
+        };
+        const priorityText = {low: '低', medium: '中', high: '高'};
+        const statusText = {pending: '待處理', in_progress: '進行中', completed: '已完成'};
+
+        return `
+            <div class="flex items-center gap-3 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700/50 transition-colors cursor-pointer" onclick="openTaskModal(${JSON.stringify(task).replace(/"/g, '&quot;')})">
+                <div class="flex-1 min-w-0">
+                    <h4 class="font-medium text-gray-900 dark:text-white truncate">${task.title}</h4>
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${priorityColors[task.priority]}">${priorityText[task.priority]}</span>
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${statusColors[task.status]}">${statusText[task.status]}</span>
+                        ${assignee ? `<span class="text-xs text-gray-500 dark:text-gray-400">${assignee.nickname}</span>` : ''}
+                    </div>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                </svg>
+            </div>
+        `;
+    }).join('');
 }
 
 // Render calendar
@@ -552,6 +691,19 @@ function renderHeader() {
                     </div>
                     <div class="flex items-center gap-4">
                         ${teamDropdown}
+                        <button
+                            onclick="toggleDarkMode()"
+                            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors"
+                            title="切換暗色模式"
+                            aria-label="切換暗色模式"
+                        >
+                            <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden dark:hidden" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path>
+                            </svg>
+                            <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden dark:block" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                            </svg>
+                        </button>
                         <span class="text-sm text-gray-600 dark:text-gray-300">您好，${currentUser.nickname}</span>
                         <button onclick="showSettings()" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary">設置</button>
                         <button onclick="handleLogout()" class="text-sm text-gray-600 dark:text-gray-300 hover:text-primary">登出</button>
@@ -686,8 +838,9 @@ async function loadTasks(status = 'all') {
         if (data.success) {
             allTasks = data.tasks;
             renderTasks();
-            // Re-render calendar to show tasks
+            // Re-render calendar and today's tasks
             renderCalendar();
+            renderTodayTasks();
         }
     } catch (error) {
         console.error('Error loading tasks:', error);
