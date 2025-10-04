@@ -196,6 +196,58 @@ textarea {
   min-block-size: 6rem;
 }
 
+/* ========================================
+   日期輸入框特定樣式 - 簡化版本
+   ======================================== */
+
+/* 確保日期輸入框顯示日期選擇器 - 使用最簡配置 */
+input[type="date"] {
+  cursor: pointer;
+
+  /* 移除可能干擾的樣式 */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* Chrome/Safari/Edge - 簡化日期選擇器指示器 */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+/* Firefox - 簡化日期選擇器指示器 */
+input[type="date"]::-moz-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+/* 懸停效果 */
+input[type="date"]:hover::-webkit-calendar-picker-indicator,
+input[type="date"]:focus::-webkit-calendar-picker-indicator {
+  color: var(--color-primary-500);
+}
+
+input[type="date"]:hover::-moz-calendar-picker-indicator,
+input[type="date"]:focus::-moz-calendar-picker-indicator {
+  color: var(--color-primary-500);
+}
+
+/* 移除干擾元素 */
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="date"]::-webkit-clear-button {
+  display: none;
+}
+
 /* Placeholder样式 */
 ::placeholder {
   color: var(--text-tertiary);

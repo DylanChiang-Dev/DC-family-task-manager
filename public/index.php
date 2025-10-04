@@ -21,11 +21,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <title>任務管理系統</title>
 
     <!-- 现代化CSS架构 - 模块化导入 -->
-    <link rel="stylesheet" href="/css/design-tokens.css"/>
-    <link rel="stylesheet" href="/css/base.css"/>
-    <link rel="stylesheet" href="/css/layout.css"/>
-    <link rel="stylesheet" href="/css/components.css"/>
-    <link rel="stylesheet" href="/css/utilities.css"/>
+    <link rel="stylesheet" href="/css/design-tokens.css?v=1.2.1"/>
+    <link rel="stylesheet" href="/css/base.css?v=1.2.1"/>
+    <link rel="stylesheet" href="/css/layout.css?v=1.2.1"/>
+    <link rel="stylesheet" href="/css/components.css?v=1.2.1"/>
+    <link rel="stylesheet" href="/css/utilities.css?v=1.2.1"/>
 
     <!-- Tailwind CSS CDN - 仅用于快速原型，生产环境应移除 -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>

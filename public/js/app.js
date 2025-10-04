@@ -1767,4 +1767,223 @@ async function handleSettingsSubmit(e) {
 }
 
 // ============================================
+// 增強日期選擇器功能
+// ============================================
+
+// 初始化增強日期選擇器
+function initEnhancedDatePicker() {
+    const dateInput = document.querySelector('#task-due-date');
+    if (!dateInput) return;
+
+    // 添加增強日期選擇器按鈕
+    const enhancedPickerBtn = document.createElement('button');
+    enhancedPickerBtn.type = 'button';
+    enhancedPickerBtn.innerHTML = '📅 選擇日期';
+    enhancedPickerBtn.className = 'mt-2 w-full text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-md transition-colors';
+    enhancedPickerBtn.onclick = () => showEnhancedDatePicker(dateInput);
+
+    // 將按鈕插入到日期輸入框之後
+    dateInput.parentNode.insertBefore(enhancedPickerBtn, dateInput.nextSibling);
+}
+
+// 顯示增強日期選擇器
+function showEnhancedDatePicker(dateInput) {
+    // 移除現有的增強選擇器
+    const existingPicker = document.querySelector('#enhanced-date-picker');
+    if (existingPicker) {
+        existingPicker.remove();
+    }
+
+    // 創建增強日期選擇器容器
+    const picker = document.createElement('div');
+    picker.id = 'enhanced-date-picker';
+    picker.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+    picker.onclick = (e) => {
+        if (e.target === picker) {
+            picker.remove();
+        }
+    };
+
+    // 獲取當前日期
+    const currentDate = dateInput.value ? new Date(dateInput.value) : new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+
+    // 生成月份曆
+    const monthCalendar = generateMonthCalendar(currentYear, currentMonth, dateInput);
+
+    picker.innerHTML = `
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <div class="flex justify-between items-center mb-4">
+                <button onclick="changeEnhancedPickerMonth(-1)" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+                    ◀
+                </button>
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-200">
+                    ${currentYear}年${currentMonth + 1}月
+                </h3>
+                <button onclick="changeEnhancedPickerMonth(1)" class="text-gray-600 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200">
+                    ▶
+                </button>
+            </div>
+            <div class="grid grid-cols-7 gap-1 mb-4">
+                <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">日</div>
+                <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">一</div>
+                <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">二</div>
+                <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">三</div>
+                <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">四</div>
+                <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">五</div>
+                <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">六</div>
+                ${monthCalendar}
+            </div>
+            <div class="flex justify-between">
+                <button onclick="setEnhancedPickerToday()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+                    今天
+                </button>
+                <button onclick="setEnhancedPickerClear()" class="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors">
+                    清除
+                </button>
+                <button onclick="closeEnhancedDatePicker()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                    取消
+                </button>
+            </div>
+        </div>
+    `;
+
+    document.body.appendChild(picker);
+
+    // 存儲當前狀態
+    window.enhancedPickerState = {
+        dateInput: dateInput,
+        currentYear: currentYear,
+        currentMonth: currentMonth
+    };
+}
+
+// 生成月份曆 HTML
+function generateMonthCalendar(year, month, dateInput) {
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const selectedDate = dateInput.value ? new Date(dateInput.value) : null;
+    const today = new Date();
+
+    let html = '';
+
+    // 填充空白日期
+    for (let i = 0; i < firstDay; i++) {
+        html += '<div></div>';
+    }
+
+    // 填充日期
+    for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const isSelected = selectedDate &&
+            selectedDate.getFullYear() === year &&
+            selectedDate.getMonth() === month &&
+            selectedDate.getDate() === day;
+        const isToday = today.getFullYear() === year &&
+            today.getMonth() === month &&
+            today.getDate() === day;
+
+        let classes = 'text-center py-2 rounded cursor-pointer transition-colors ';
+        if (isSelected) {
+            classes += 'bg-blue-500 text-white hover:bg-blue-600 ';
+        } else if (isToday) {
+            classes += 'bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900 dark:text-blue-300 ';
+        } else {
+            classes += 'hover:bg-gray-100 dark:hover:bg-gray-700 ';
+        }
+
+        html += `<div class="${classes}" onclick="selectEnhancedPickerDate('${dateStr}')">${day}</div>`;
+    }
+
+    return html;
+}
+
+// 選擇日期
+function selectEnhancedPickerDate(dateStr) {
+    if (window.enhancedPickerState) {
+        window.enhancedPickerState.dateInput.value = dateStr;
+        // 觸發 change 事件
+        const event = new Event('change', { bubbles: true });
+        window.enhancedPickerState.dateInput.dispatchEvent(event);
+    }
+    closeEnhancedDatePicker();
+}
+
+// 設置為今天
+function setEnhancedPickerToday() {
+    const today = new Date();
+    const dateStr = today.getFullYear() + '-' +
+                    String(today.getMonth() + 1).padStart(2, '0') + '-' +
+                    String(today.getDate()).padStart(2, '0');
+    selectEnhancedPickerDate(dateStr);
+}
+
+// 清除日期
+function setEnhancedPickerClear() {
+    if (window.enhancedPickerState) {
+        window.enhancedPickerState.dateInput.value = '';
+        // 觸發 change 事件
+        const event = new Event('change', { bubbles: true });
+        window.enhancedPickerState.dateInput.dispatchEvent(event);
+    }
+    closeEnhancedDatePicker();
+}
+
+// 關閉增強日期選擇器
+function closeEnhancedDatePicker() {
+    const picker = document.querySelector('#enhanced-date-picker');
+    if (picker) {
+        picker.remove();
+    }
+    window.enhancedPickerState = null;
+}
+
+// 切換月份
+function changeEnhancedPickerMonth(direction) {
+    if (!window.enhancedPickerState) return;
+
+    const { dateInput, currentYear, currentMonth } = window.enhancedPickerState;
+    const newMonth = currentMonth + direction;
+    const newYear = newMonth < 0 ? currentYear - 1 : newMonth > 11 ? currentYear + 1 : currentYear;
+    const adjustedMonth = newMonth < 0 ? 11 : newMonth > 11 ? 0 : newMonth;
+
+    // 更新狀態
+    window.enhancedPickerState.currentYear = newYear;
+    window.enhancedPickerState.currentMonth = adjustedMonth;
+
+    // 更新顯示
+    const picker = document.querySelector('#enhanced-date-picker');
+    if (picker) {
+        const titleElement = picker.querySelector('h3');
+        const calendarElement = picker.querySelector('.grid.grid-cols-7');
+
+        titleElement.textContent = `${newYear}年${adjustedMonth + 1}月`;
+
+        // 重新生成月份曆（保留標題行）
+        const monthCalendar = generateMonthCalendar(newYear, adjustedMonth, dateInput);
+        calendarElement.innerHTML = `
+            <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">日</div>
+            <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">一</div>
+            <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">二</div>
+            <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">三</div>
+            <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">四</div>
+            <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">五</div>
+            <div class="text-center text-xs font-medium text-gray-600 dark:text-gray-400">六</div>
+            ${monthCalendar}
+        `;
+    }
+}
+
+// 在打開任務模態框時初始化增強日期選擇器
+const originalOpenTaskModal = openTaskModal;
+openTaskModal = function(task = null) {
+    originalOpenTaskModal(task);
+    // 延迟初始化，確保模態框完全打開
+    setTimeout(() => {
+        initEnhancedDatePicker();
+    }, 100);
+};
+
+// ============================================
 // 系統更新功能
