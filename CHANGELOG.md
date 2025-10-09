@@ -5,6 +5,52 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.2.0] - 2025-01-09
+
+### 🔐 Security (安全加固)
+
+- **Session 管理重構**
+  - 創建 `SessionManager` 類統一管理會話
+  - HttpOnly + Secure + SameSite=Strict Cookie 配置
+  - 24小時無活動自動登出機制
+  - 登錄時 Session ID 自動輪換防固定攻擊
+
+- **安全審計完成**
+  - XSS 防護：前端使用 textContent/value 避免 innerHTML
+  - SQL 注入防護：100% PDO 預處理語句
+  - CSRF 防護：SameSite Cookie 策略
+
+### 📚 Documentation (文檔)
+
+- 更新 README.md 安全特性說明
+- 新增 CHANGELOG.md 版本記錄
+
+### 📦 Files Changed
+
+- **新增**: `lib/SessionManager.php` - 統一 Session 管理類
+- **新增**: `CHANGELOG.md` - 版本變更記錄
+- **修改**: 所有 API 文件統一使用 SessionManager
+
+---
+
+## [v1.1.1] - 2025-01-09
+
+### ✨ UI 優化
+
+- 暗色模式切換優化
+- 今日任務顯示優化
+
+---
+
+## [v1.1.0] - 2025-01-09
+
+### ✨ Features
+
+- 添加任務類別管理功能
+- 類別選擇器集成
+
+---
+
 ## [v1.0.0] - 2025-01-09
 
 ### 🎉 初始發布
@@ -115,7 +161,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## 🗺️ Roadmap (路線圖)
 
-### [v1.1.0] - 計劃中
+### [v1.3.0] - 計劃中
 
 - [ ] 任務通知系統（瀏覽器推送）
 - [ ] 郵件提醒
@@ -123,7 +169,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - [ ] 任務評論功能
 - [ ] 文件附件上傳
 
-### [v2.0.0] - 計劃中
+### [v2.0.0] - 長期計劃
 
 - [ ] WebSocket 實時推送（3秒內同步）
 - [ ] 離線支持（LocalStorage 緩存）
@@ -146,7 +192,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### 當前版本
 
-**v1.0.0** - 第一個正式發布版本，包含所有 MVP 核心功能（Phase 1-6）
+**v1.2.0** - 安全加固版本，Session 管理重構 + 完整安全審計
 
 ---
 
