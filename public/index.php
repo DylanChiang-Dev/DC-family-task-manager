@@ -233,6 +233,13 @@ $isLoggedIn = isset($_SESSION['user_id']);
                         <option value="repeatable">重複任務</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">類別</label>
+                    <select id="task-category" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100">
+                        <option value="">無類別</option>
+                        <!-- Categories will be populated by JavaScript -->
+                    </select>
+                </div>
                 <!-- Recurrence configuration (shown only for recurring tasks) -->
                 <div id="recurrence-options" class="hidden space-y-3">
                     <div>
@@ -331,6 +338,9 @@ $isLoggedIn = isset($_SESSION['user_id']);
                 <button onclick="switchSettingsTab('team')" id="team-tab" class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
                     團隊設置
                 </button>
+                <button onclick="switchSettingsTab('category')" id="category-tab" class="px-4 py-2 font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                    類別管理
+                </button>
             </div>
 
             <!-- Profile Settings -->
@@ -381,6 +391,55 @@ $isLoggedIn = isset($_SESSION['user_id']);
                 <div class="space-y-4" id="all-teams-list">
                     <!-- All teams will be loaded here -->
                 </div>
+                <div class="flex gap-3 mt-6">
+                    <button type="button" onclick="closeSettings()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">關閉</button>
+                </div>
+            </div>
+
+            <!-- Category Settings -->
+            <div id="category-settings" class="hidden">
+                <!-- 管理員提示 -->
+                <div id="category-admin-notice" class="hidden mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <p class="text-sm text-yellow-800 dark:text-yellow-200">僅管理員可創建、編輯和刪除類別</p>
+                </div>
+
+                <!-- 創建類別表單 -->
+                <div id="create-category-form" class="hidden mb-4 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+                    <h4 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">創建新類別</h4>
+                    <div class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">類別名稱</label>
+                            <input type="text" id="new-category-name" placeholder="例如：家務、購物、財務" class="w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"/>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">顏色</label>
+                            <div class="flex gap-2 items-center">
+                                <input type="color" id="new-category-color" value="#3B82F6" class="h-10 w-20 rounded cursor-pointer"/>
+                                <input type="text" id="new-category-color-hex" value="#3B82F6" placeholder="#3B82F6" maxlength="7" class="flex-1 rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100"/>
+                            </div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="createNewCategory()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90">創建</button>
+                            <button onclick="hideCreateCategoryForm()" class="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-600">取消</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 創建類別按鈕（僅管理員可見） -->
+                <div id="create-category-btn-container" class="hidden mb-4">
+                    <button onclick="showCreateCategoryForm()" class="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 font-medium flex items-center justify-center gap-2">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        創建新類別
+                    </button>
+                </div>
+
+                <!-- 類別列表 -->
+                <div class="space-y-3" id="categories-list">
+                    <!-- Categories will be loaded here -->
+                </div>
+
                 <div class="flex gap-3 mt-6">
                     <button type="button" onclick="closeSettings()" class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800">關閉</button>
                 </div>

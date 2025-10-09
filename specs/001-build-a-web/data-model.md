@@ -2,7 +2,7 @@
 
 **Feature**: 001-build-a-web
 **Date**: 2025-01-09
-**Database**: MySQL 8.0 (兼容 5.7.8+)
+**Database**: MySQL 5.7.44+ (兼容 8.0+)
 **Charset**: utf8mb4_unicode_ci
 
 ---
@@ -241,6 +241,8 @@ CREATE TABLE task_history (
 1. 創建數據庫：`CREATE DATABASE family_tasks CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
 2. 執行 schema.sql：`mysql -u root -p family_tasks < database/schema.sql`
 3. （可選）導入示例數據：`mysql -u root -p family_tasks < database/seed_demo_tasks.sql`
+
+**兼容性說明**: 支持 MySQL 5.7.44+ 和 8.0+ 版本，已在寶塔面板環境中驗證。
 
 ---
 

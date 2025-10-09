@@ -9,13 +9,18 @@
  * - GET ?action=check - 檢查登錄狀態
  */
 
-// 載入配置（必須在session_start()之前）
+// 載入配置和類庫
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../lib/Database.php';
 require_once __DIR__ . '/../../lib/TeamHelper.php';
+require_once __DIR__ . '/../../lib/SessionManager.php';
 
-session_start();
+// 初始化 Session（T073: Session 安全配置 + 會話超時）
+// 註冊/登錄/檢查操作不強制要求已登錄
+$action = $_GET['action'] ?? '';
+$requireAuth = !in_array($action, ['register', 'login', 'check']);
+SessionManager::init($requireAuth);
 
 // CORS 標頭（可選，用於 API 訪問）
 header('Content-Type: application/json');
@@ -208,11 +213,13 @@ function handleLogin($db)
         }
     }
 
-    // 設置會話
-    $_SESSION['user_id'] = $user['id'];
-    $_SESSION['username'] = $user['username'];
-    $_SESSION['nickname'] = $user['nickname'];
-    $_SESSION['current_team_id'] = $currentTeamId;
+    // 創建會話（包含 Session ID 輪換和超時初始化）
+    SessionManager::create([
+        'id' => $user['id'],
+        'username' => $user['username'],
+        'nickname' => $user['nickname'],
+        'current_team_id' => $currentTeamId
+    ]);
 
     // 獲取當前團隊信息
     $teamInfo = null;
@@ -241,7 +248,7 @@ function handleLogin($db)
  */
 function handleLogout()
 {
-    session_destroy();
+    SessionManager::destroy();
     echo json_encode([
         'success' => true,
         'message' => 'Logout successful'

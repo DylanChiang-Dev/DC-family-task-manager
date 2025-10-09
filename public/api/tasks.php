@@ -9,24 +9,20 @@
  * - DELETE /api/tasks.php?id=X - 刪除任務
  */
 
-// 載入配置（必須在session_start()之前）
+// 載入配置和類庫
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../lib/Database.php';
+require_once __DIR__ . '/../../lib/TaskHistoryService.php';
+require_once __DIR__ . '/../../lib/SessionManager.php';
 
-session_start();
+// 初始化 Session（T073: 要求用戶已登錄）
+SessionManager::init(true);
 
 header('Content-Type: application/json');
 
-// 檢查認證
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
-}
-
-$userId = $_SESSION['user_id'];
-$currentTeamId = $_SESSION['current_team_id'] ?? null;
+$userId = SessionManager::getUserId();
+$currentTeamId = SessionManager::getCurrentTeamId();
 
 // 檢查用戶是否選擇了團隊
 if (!$currentTeamId) {
@@ -157,6 +153,17 @@ function handleCreateTask($db, $userId, $currentTeamId)
 
     $taskId = $db->lastInsertId();
 
+    // 記錄任務創建歷史
+    $historyService = new TaskHistoryService($db);
+    $historyService->recordTaskCreated($taskId, $userId, [
+        'title' => $title,
+        'description' => $description,
+        'assignee_id' => $assigneeId,
+        'priority' => $priority,
+        'status' => $status,
+        'due_date' => $dueDate
+    ]);
+
     echo json_encode([
         'success' => true,
         'message' => 'Task created successfully',
@@ -180,11 +187,12 @@ function handleUpdateTask($db, $userId, $currentTeamId)
     // Get JSON input
     $input = json_decode(file_get_contents('php://input'), true);
 
-    // Check if task exists and belongs to current team
-    $stmt = $db->prepare("SELECT id FROM tasks WHERE id = ? AND team_id = ?");
+    // Check if task exists and belongs to current team, and get current values for history
+    $stmt = $db->prepare("SELECT * FROM tasks WHERE id = ? AND team_id = ?");
     $stmt->execute([$taskId, $currentTeamId]);
+    $oldTask = $stmt->fetch();
 
-    if (!$stmt->fetch()) {
+    if (!$oldTask) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Task not found or does not belong to your team']);
         return;
@@ -255,6 +263,24 @@ function handleUpdateTask($db, $userId, $currentTeamId)
     $stmt = $db->prepare($sql);
     $stmt->execute($values);
 
+    // 記錄任務更新歷史
+    $historyService = new TaskHistoryService($db);
+    $newValues = array_combine(
+        array_map(function($f) { return explode(' ', $f)[0]; }, $fields),
+        array_slice($values, 0, -1)
+    );
+
+    // 提取實際變更的字段
+    $changes = $historyService->extractChanges($oldTask, array_merge($oldTask, $newValues));
+    if (!empty($changes['new_value'])) {
+        // 檢查是否有狀態變更
+        if (isset($input['status']) && $oldTask['status'] !== $input['status']) {
+            $historyService->recordStatusChanged($taskId, $userId, $oldTask['status'], $input['status']);
+        } else {
+            $historyService->recordTaskUpdated($taskId, $userId, $changes['old_value'], $changes['new_value']);
+        }
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Task updated successfully'
@@ -274,15 +300,28 @@ function handleDeleteTask($db, $userId, $currentTeamId)
         return;
     }
 
-    // Delete task (only if belongs to current team)
-    $stmt = $db->prepare("DELETE FROM tasks WHERE id = ? AND team_id = ?");
+    // Get task data before deletion for history
+    $stmt = $db->prepare("SELECT * FROM tasks WHERE id = ? AND team_id = ?");
     $stmt->execute([$taskId, $currentTeamId]);
+    $taskData = $stmt->fetch();
 
-    if ($stmt->rowCount() === 0) {
+    if (!$taskData) {
         http_response_code(404);
         echo json_encode(['success' => false, 'message' => 'Task not found or does not belong to your team']);
         return;
     }
+
+    // 記錄任務刪除歷史（在刪除之前）
+    $historyService = new TaskHistoryService($db);
+    $historyService->recordTaskDeleted($taskId, $userId, [
+        'title' => $taskData['title'],
+        'status' => $taskData['status'],
+        'priority' => $taskData['priority']
+    ]);
+
+    // Delete task (only if belongs to current team)
+    $stmt = $db->prepare("DELETE FROM tasks WHERE id = ? AND team_id = ?");
+    $stmt->execute([$taskId, $currentTeamId]);
 
     echo json_encode([
         'success' => true,
