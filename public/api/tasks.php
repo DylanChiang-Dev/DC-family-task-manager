@@ -14,6 +14,7 @@ require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../lib/Database.php';
 require_once __DIR__ . '/../../lib/TaskHistoryService.php';
+require_once __DIR__ . '/../../lib/NotificationService.php';
 require_once __DIR__ . '/../../lib/SessionManager.php';
 
 // 初始化 Session（T073: 要求用戶已登錄）
@@ -164,6 +165,12 @@ function handleCreateTask($db, $userId, $currentTeamId)
         'due_date' => $dueDate
     ]);
 
+    // 發送任務分配通知（如果分配給其他人）
+    if ($assigneeId && $assigneeId != $userId) {
+        $notificationService = new NotificationService();
+        $notificationService->sendTaskAssigned($taskId, $userId);
+    }
+
     echo json_encode([
         'success' => true,
         'message' => 'Task created successfully',
@@ -276,9 +283,19 @@ function handleUpdateTask($db, $userId, $currentTeamId)
         // 檢查是否有狀態變更
         if (isset($input['status']) && $oldTask['status'] !== $input['status']) {
             $historyService->recordStatusChanged($taskId, $userId, $oldTask['status'], $input['status']);
+
+            // 發送狀態變更通知
+            $notificationService = new NotificationService();
+            $notificationService->sendStatusChanged($taskId, $oldTask['status'], $input['status'], $userId);
         } else {
             $historyService->recordTaskUpdated($taskId, $userId, $changes['old_value'], $changes['new_value']);
         }
+    }
+
+    // 檢查分配成員變更
+    if (isset($input['assignee_id']) && $oldTask['assignee_id'] != $input['assignee_id'] && $input['assignee_id'] != $userId) {
+        $notificationService = new NotificationService();
+        $notificationService->sendTaskAssigned($taskId, $userId);
     }
 
     echo json_encode([
@@ -318,6 +335,10 @@ function handleDeleteTask($db, $userId, $currentTeamId)
         'status' => $taskData['status'],
         'priority' => $taskData['priority']
     ]);
+
+    // 發送任務刪除通知（在刪除之前）
+    $notificationService = new NotificationService();
+    $notificationService->sendTaskDeleted($taskData, $userId);
 
     // Delete task (only if belongs to current team)
     $stmt = $db->prepare("DELETE FROM tasks WHERE id = ? AND team_id = ?");

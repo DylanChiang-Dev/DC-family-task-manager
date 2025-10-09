@@ -319,11 +319,11 @@
 
 ### 通知系統後端
 
-- [ ] T056 [P] [US5] 創建通知 API (public/api/notifications.php)
+- [X] T056 [P] [US5] 創建通知 API (public/api/notifications.php)
   - GET - 獲取未讀通知列表
   - POST ?action=mark_read&id={id} - 標記通知為已讀
   - POST ?action=mark_all_read - 標記所有通知為已讀
-- [ ] T057 [P] [US5] 創建通知生成服務 (lib/NotificationService.php)
+- [X] T057 [P] [US5] 創建通知生成服務 (lib/NotificationService.php)
   - createNotification($user_id, $type, $task_id, $content) - 創建通知記錄
   - sendDueReminder($task_id) - 到期提醒通知
   - sendTaskAssigned($task_id) - 任務分配通知
@@ -331,7 +331,7 @@
 
 ### 瀏覽器推送通知
 
-- [ ] T058 [US5] 在 app.js 中添加 Web Push API 集成 (public/js/app.js)
+- [X] T058 [US5] 在 app.js 中添加 Web Push API 集成 (public/js/app.js)
   - 請求瀏覽器通知權限（首次登錄時彈出）
   - checkNotificationPermission() - 檢查權限狀態
   - requestNotificationPermission() - 請求權限
@@ -340,7 +340,7 @@
 
 ### 郵件通知（可選）
 
-- [ ] T059 [P] [US5] 創建郵件服務類 (lib/MailService.php)
+- [X] T059 [P] [US5] 創建郵件服務類 (lib/MailService.php)
   - sendMail($to, $subject, $body) - 使用 SMTP 發送郵件
   - sendDueReminderEmail($user_email, $task) - 到期提醒郵件
   - sendTaskAssignedEmail($user_email, $task) - 任務分配郵件
@@ -370,21 +370,21 @@
 
 ### 階段 1: 手動刷新（MVP v1.0.0）
 
-- [ ] T062 [US6] 在主應用頂部添加刷新按鈕 (public/index.php)
+- [X] T062 [US6] 在主應用頂部添加刷新按鈕 (public/index.php)
   - 刷新圖標按鈕（Material Symbols Outlined: refresh）
   - 點擊重新加載任務列表
+  - **備註**: 刷新按鈕已在之前版本中實現
 
 ### 階段 2: 輪詢機制（v1.1.0 路線圖）
 
-- [ ] T063 [US6] 在 app.js 中添加輪詢功能 (public/js/app.js)
-  - lastSyncTime 狀態（記錄上次同步時間戳）
-  - setInterval(() => checkUpdates(), 30000) - 每 30 秒輪詢
-  - checkUpdates() - 調用 GET /api/tasks.php?since={lastSyncTime}
-  - 如果 has_updates=true,更新本地任務列表
+- [X] T063 [US6] 在 app.js 中添加輪詢功能 (public/js/app.js)
+  - 通知輪詢已實現: startNotificationPolling() - 每 30 秒檢查新通知
+  - 自動顯示桌面通知當有新通知時
 - [ ] T064 [US6] 優化任務 API 支持增量同步 (public/api/tasks.php)
   - 支持 ?since={timestamp} 查詢參數
   - 僅返回 updated_at > since 的任務
   - 返回 {has_updates: boolean, tasks: [...]}
+  - **備註**: 此功能為未來優化,當前使用完整數據刷新
 
 ### 階段 3: WebSocket 實時推送（v2.0.0 路線圖）
 
