@@ -32,7 +32,7 @@ if (!$currentTeamId) {
 }
 
 // 驗證團隊成員資格
-if (!TeamHelper::isTeamMember($userId, $currentTeamId)) {
+if (!TeamHelper::isTeamMember($db, $userId, $currentTeamId)) {
     http_response_code(403);
     echo json_encode(['error' => '無權訪問此團隊']);
     exit;
@@ -59,7 +59,7 @@ try {
 
         case 'POST':
             // 創建類別（僅管理員）
-            if (!TeamHelper::isTeamAdmin($userId, $currentTeamId)) {
+            if (!TeamHelper::isTeamAdmin($db, $userId, $currentTeamId)) {
                 http_response_code(403);
                 echo json_encode(['error' => '僅管理員可創建類別']);
                 exit;
@@ -117,7 +117,7 @@ try {
 
         case 'PUT':
             // 更新類別（僅管理員）
-            if (!TeamHelper::isTeamAdmin($userId, $currentTeamId)) {
+            if (!TeamHelper::isTeamAdmin($db, $userId, $currentTeamId)) {
                 http_response_code(403);
                 echo json_encode(['error' => '僅管理員可更新類別']);
                 exit;
@@ -202,7 +202,7 @@ try {
 
         case 'DELETE':
             // 刪除類別（僅管理員）
-            if (!TeamHelper::isTeamAdmin($userId, $currentTeamId)) {
+            if (!TeamHelper::isTeamAdmin($db, $userId, $currentTeamId)) {
                 http_response_code(403);
                 echo json_encode(['error' => '僅管理員可刪除類別']);
                 exit;

@@ -2314,8 +2314,6 @@ openTaskModal = function(task = null) {
 // 類別管理功能
 // ============================================
 
-let allCategories = [];
-
 // 載入類別設置
 async function loadCategoriesSettings() {
     try {

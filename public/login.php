@@ -16,61 +16,61 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: var(--spacing-4);
-            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+            padding: var(--space-4);
+            background: linear-gradient(135deg, var(--color-primary-500) 0%, var(--color-primary-700) 100%);
         }
 
         .login-card {
-            background: var(--color-surface);
+            background: var(--surface-primary);
             border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-2xl);
+            box-shadow: var(--shadow-xl);
             max-width: 480px;
             width: 100%;
-            padding: var(--spacing-8);
+            padding: var(--space-8);
         }
 
         .login-header {
             text-align: center;
-            margin-bottom: var(--spacing-6);
+            margin-bottom: var(--space-6);
         }
 
         .login-header h1 {
             font-size: var(--font-size-3xl);
             font-weight: var(--font-weight-bold);
-            color: var(--color-text-primary);
-            margin-bottom: var(--spacing-2);
+            color: var(--text-primary);
+            margin-bottom: var(--space-2);
         }
 
         .login-header p {
-            color: var(--color-text-secondary);
+            color: var(--text-secondary);
             font-size: var(--font-size-sm);
         }
 
         .tabs {
             display: flex;
-            gap: var(--spacing-2);
-            margin-bottom: var(--spacing-6);
-            border-bottom: 2px solid var(--color-border);
+            gap: var(--space-2);
+            margin-bottom: var(--space-6);
+            border-bottom: 2px solid var(--border-primary);
         }
 
         .tab {
             flex: 1;
-            padding: var(--spacing-3) var(--spacing-4);
+            padding: var(--space-3) var(--space-4);
             text-align: center;
             cursor: pointer;
             border: none;
             background: none;
             font-size: var(--font-size-base);
             font-weight: var(--font-weight-medium);
-            color: var(--color-text-secondary);
+            color: var(--text-secondary);
             border-bottom: 2px solid transparent;
             margin-bottom: -2px;
-            transition: all var(--transition-base);
+            transition: all var(--duration-normal) var(--ease-out);
         }
 
         .tab.active {
-            color: var(--color-primary);
-            border-bottom-color: var(--color-primary);
+            color: var(--color-primary-500);
+            border-bottom-color: var(--color-primary-500);
         }
 
         .tab-content {
@@ -82,45 +82,54 @@
         }
 
         .form-group {
-            margin-bottom: var(--spacing-4);
+            margin-bottom: var(--space-4);
         }
 
         .form-group label {
             display: block;
-            margin-bottom: var(--spacing-2);
+            margin-bottom: var(--space-2);
             font-weight: var(--font-weight-medium);
-            color: var(--color-text-primary);
+            color: var(--text-primary);
             font-size: var(--font-size-sm);
         }
 
         .form-group input,
         .form-group select {
             width: 100%;
-            padding: var(--spacing-3);
-            border: 1px solid var(--color-border);
+            padding: var(--space-3);
+            border: 1px solid var(--border-primary);
             border-radius: var(--radius-md);
             font-size: var(--font-size-base);
-            transition: all var(--transition-base);
+            background: var(--surface-secondary);
+            color: var(--text-primary);
+            transition: all var(--duration-normal) var(--ease-out);
+        }
+
+        .form-group input::placeholder {
+            color: var(--text-tertiary);
+            opacity: 0.7;
         }
 
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
-            border-color: var(--color-primary);
-            box-shadow: 0 0 0 3px oklch(from var(--color-primary) l c h / 0.1);
+            border-color: var(--color-primary-500);
+            background: var(--surface-primary);
+            box-shadow: 0 0 0 3px oklch(from var(--color-primary-500) l c h / 0.1);
         }
 
         .radio-group {
             display: flex;
-            gap: var(--spacing-4);
-            margin-bottom: var(--spacing-4);
+            gap: var(--space-4);
+            margin-bottom: var(--space-4);
         }
 
         .radio-group label {
             display: flex;
             align-items: center;
-            gap: var(--spacing-2);
+            gap: var(--space-2);
             cursor: pointer;
+            color: var(--text-primary);
         }
 
         .radio-group input[type="radio"] {
@@ -137,19 +146,25 @@
 
         .btn {
             width: 100%;
-            padding: var(--spacing-3) var(--spacing-4);
-            background: var(--color-primary);
+            padding: var(--space-3) var(--space-4);
+            background: var(--color-primary-500);
             color: white;
             border: none;
             border-radius: var(--radius-md);
             font-size: var(--font-size-base);
             font-weight: var(--font-weight-medium);
             cursor: pointer;
-            transition: all var(--transition-base);
+            transition: all var(--duration-normal) var(--ease-out);
         }
 
         .btn:hover {
-            background: oklch(from var(--color-primary) calc(l * 0.9) c h);
+            background: var(--color-primary-600);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .btn:active {
+            transform: translateY(0);
         }
 
         .btn:disabled {
@@ -158,9 +173,9 @@
         }
 
         .alert {
-            padding: var(--spacing-3);
+            padding: var(--space-3);
             border-radius: var(--radius-md);
-            margin-bottom: var(--spacing-4);
+            margin-bottom: var(--space-4);
             font-size: var(--font-size-sm);
         }
 

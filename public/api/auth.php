@@ -25,8 +25,9 @@ SessionManager::init($requireAuth);
 // CORS 標頭（可選，用於 API 訪問）
 header('Content-Type: application/json');
 
-// 獲取操作
-$action = $_GET['action'] ?? '';
+// 獲取操作：優先從 JSON body 讀取，否則從 URL 參數讀取
+$jsonInput = json_decode(file_get_contents('php://input'), true);
+$action = $jsonInput['action'] ?? $_GET['action'] ?? '';
 
 try {
     $db = Database::getInstance()->getConnection();
@@ -68,11 +69,15 @@ function handleRegister($db)
         return;
     }
 
-    $username = trim($_POST['username'] ?? '');
-    $password = trim($_POST['password'] ?? '');
-    $nickname = trim($_POST['nickname'] ?? '');
-    $inviteCode = strtoupper(trim($_POST['invite_code'] ?? ''));
-    $teamName = trim($_POST['team_name'] ?? '');
+    // 支援 JSON 和 form-data 兩種格式
+    $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+
+    $username = trim($input['username'] ?? '');
+    $password = trim($input['password'] ?? '');
+    $nickname = trim($input['nickname'] ?? '');
+    $teamOption = trim($input['team_option'] ?? 'create');
+    $inviteCode = strtoupper(trim($input['invite_code'] ?? ''));
+    $teamName = trim($input['team_name'] ?? '');
 
     // 驗證輸入
     if (empty($username) || empty($password) || empty($nickname)) {
@@ -93,9 +98,9 @@ function handleRegister($db)
         return;
     }
 
-    // 判斷註冊模式：有邀請碼就加入團隊，否則創建新團隊
+    // 判斷註冊模式：根據 team_option 決定
     $teamId = null;
-    $registerMode = !empty($inviteCode) ? 'join' : 'create';
+    $registerMode = $teamOption === 'join' ? 'join' : 'create';
 
     if ($registerMode === 'join') {
         // 驗證邀請碼是否存在
@@ -177,8 +182,11 @@ function handleLogin($db)
         return;
     }
 
-    $username = trim($_POST['username'] ?? '');
-    $password = trim($_POST['password'] ?? '');
+    // 支援 JSON 和 form-data 兩種格式
+    $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
+
+    $username = trim($input['username'] ?? '');
+    $password = trim($input['password'] ?? '');
 
     // 驗證輸入
     if (empty($username) || empty($password)) {
