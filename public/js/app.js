@@ -8,7 +8,12 @@ let currentTeam = null;
 let selectedDate = new Date();
 let currentMonth = new Date();
 let currentFilter = 'all';
+let currentPriority = 'all'; // 優先級篩選 ('all', 'low', 'medium', 'high')
+let currentCategory = 'all'; // 類別篩選 ('all', 或類別ID)
+let currentSortBy = 'due_date'; // 排序方式 ('due_date', 'priority', 'created_at', 'updated_at')
+let currentSortOrder = 'asc'; // 排序順序 ('asc', 'desc')
 let isTeamDropdownOpen = false;
+let allCategories = []; // 所有類別列表
 
 // ============================================
 // 暗色模式管理
@@ -419,6 +424,7 @@ async function initializeApp() {
     renderHeader();
     renderMainLayout();
     await loadUsers();
+    await loadCategories(); // 加載類別列表
     await loadTasks();
 }
 
@@ -493,11 +499,69 @@ function renderMainLayout() {
                     </div>
 
                     <!-- Filter buttons -->
-                    <div class="flex flex-col gap-2 mb-6">
+                    <div class="flex flex-col gap-2 mb-4">
                         <button onclick="filterTasks('all')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-primary text-white text-center" data-filter="all">全部</button>
                         <button onclick="filterTasks('pending')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-center" data-filter="pending">待處理</button>
                         <button onclick="filterTasks('in_progress')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-center" data-filter="in_progress">進行中</button>
                         <button onclick="filterTasks('completed')" class="filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-center" data-filter="completed">已完成</button>
+                    </div>
+
+                    <!-- 優先級篩選器 -->
+                    <div class="mb-4">
+                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">優先級</h3>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="filterByPriority('all')" class="priority-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-primary text-white text-left" data-priority="all">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-gray-300"></span>
+                                    全部
+                                </span>
+                            </button>
+                            <button onclick="filterByPriority('high')" class="priority-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left" data-priority="high">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                    高優先級
+                                </span>
+                            </button>
+                            <button onclick="filterByPriority('medium')" class="priority-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left" data-priority="medium">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                    中優先級
+                                </span>
+                            </button>
+                            <button onclick="filterByPriority('low')" class="priority-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left" data-priority="low">
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                    低優先級
+                                </span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 類別導航欄 -->
+                    <div class="mb-4">
+                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">類別</h3>
+                        <div id="category-filter-list" class="flex flex-col gap-2">
+                            <!-- 類別篩選器將通過 JavaScript 動態生成 -->
+                        </div>
+                    </div>
+
+                    <!-- 排序選項 -->
+                    <div class="mb-4">
+                        <h3 class="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-2">排序</h3>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="sortTasks('due_date')" class="sort-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-primary text-white text-left" data-sort="due_date">
+                                截止日期
+                            </button>
+                            <button onclick="sortTasks('priority')" class="sort-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left" data-sort="priority">
+                                優先級
+                            </button>
+                            <button onclick="sortTasks('created_at')" class="sort-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left" data-sort="created_at">
+                                創建時間
+                            </button>
+                            <button onclick="sortTasks('updated_at')" class="sort-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left" data-sort="updated_at">
+                                修改時間
+                            </button>
+                        </div>
                     </div>
 
                     <!-- Task list -->
@@ -509,6 +573,7 @@ function renderMainLayout() {
 
     renderCalendar();
     renderTodayTasks();
+    renderCategoryFilters(); // 渲染類別篩選器
 }
 
 // Render today's tasks
@@ -1050,7 +1115,81 @@ function populateUserDropdown() {
     });
 }
 
+// Populate category dropdown in task modal
+function populateCategoryDropdown() {
+    const select = document.getElementById('task-category');
+    if (!select) return;
+
+    select.innerHTML = '<option value="">無類別</option>';
+
+    if (allCategories && allCategories.length > 0) {
+        allCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+            option.style.color = category.color || '#3B82F6';
+            select.appendChild(option);
+        });
+    }
+}
+
 // Load tasks
+// Load categories from API
+async function loadCategories() {
+    try {
+        const response = await fetch('/api/categories.php');
+        const data = await response.json();
+
+        if (data.success) {
+            allCategories = data.categories || [];
+            renderCategoryFilters();
+            populateCategoryDropdown(); // 填充類別下拉選單
+        }
+    } catch (error) {
+        console.error('Error loading categories:', error);
+        allCategories = [];
+    }
+}
+
+// Render category filters in the sidebar
+function renderCategoryFilters() {
+    const container = document.getElementById('category-filter-list');
+    if (!container) return;
+
+    // Start with "全部" button
+    let html = `
+        <button onclick="filterByCategory('all')" class="category-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${currentCategory === 'all' ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'} text-left" data-category="all">
+            <span class="inline-flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-gray-400"></span>
+                全部任務
+            </span>
+        </button>
+    `;
+
+    // Add category buttons
+    if (allCategories && allCategories.length > 0) {
+        allCategories.forEach(category => {
+            const isActive = currentCategory == category.id;
+            html += `
+                <button onclick="filterByCategory('${category.id}')" class="category-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${isActive ? 'bg-primary text-white' : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'} text-left" data-category="${category.id}">
+                    <span class="inline-flex items-center gap-2">
+                        <span class="w-2 h-2 rounded-full" style="background-color: ${category.color || '#3B82F6'}"></span>
+                        ${category.name}
+                    </span>
+                </button>
+            `;
+        });
+    } else {
+        html += `
+            <p class="text-xs text-gray-500 dark:text-gray-400 italic px-3">
+                尚未創建任何類別
+            </p>
+        `;
+    }
+
+    container.innerHTML = html;
+}
+
 async function loadTasks(status = 'all') {
     currentFilter = status;
     const url = status === 'all' ? '/api/tasks.php' : `/api/tasks.php?status=${status}`;
@@ -1061,7 +1200,7 @@ async function loadTasks(status = 'all') {
 
         if (data.success) {
             allTasks = data.tasks;
-            renderTasks();
+            applyFiltersAndSort(); // 使用新的篩選和排序函數
             // Re-render calendar and today's tasks
             renderCalendar();
             renderTodayTasks();
@@ -1078,19 +1217,140 @@ function filterTasks(status) {
     // Update filter button styles
     document.querySelectorAll('.filter-btn').forEach(btn => {
         if (btn.dataset.filter === status) {
-            btn.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-primary text-white';
+            btn.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-primary text-white text-center';
         } else {
-            btn.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300';
+            btn.className = 'filter-btn px-4 py-2 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-center';
         }
     });
 
-    // Filter and render tasks
-    if (status === 'all') {
-        renderTasks(allTasks);
+    // Apply all filters and sorting
+    applyFiltersAndSort();
+}
+
+// Filter tasks by priority
+function filterByPriority(priority) {
+    currentPriority = priority;
+
+    // Update priority button styles
+    document.querySelectorAll('.priority-btn').forEach(btn => {
+        if (btn.dataset.priority === priority) {
+            btn.className = 'priority-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-primary text-white text-left';
+        } else {
+            btn.className = 'priority-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left';
+        }
+    });
+
+    // Apply all filters and sorting
+    applyFiltersAndSort();
+}
+
+// Filter tasks by category
+function filterByCategory(categoryId) {
+    currentCategory = categoryId;
+
+    // Update category button styles
+    document.querySelectorAll('.category-btn').forEach(btn => {
+        if (btn.dataset.category === categoryId) {
+            btn.className = 'category-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-primary text-white text-left';
+        } else {
+            btn.className = 'category-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left';
+        }
+    });
+
+    // Apply all filters and sorting
+    applyFiltersAndSort();
+}
+
+// Sort tasks
+function sortTasks(sortBy) {
+    // Toggle sort order if clicking the same sort button
+    if (currentSortBy === sortBy) {
+        currentSortOrder = currentSortOrder === 'asc' ? 'desc' : 'asc';
     } else {
-        const filtered = allTasks.filter(task => task.status === status);
-        renderTasks(filtered);
+        currentSortBy = sortBy;
+        currentSortOrder = 'asc';
     }
+
+    // Update sort button styles
+    document.querySelectorAll('.sort-btn').forEach(btn => {
+        if (btn.dataset.sort === sortBy) {
+            btn.className = 'sort-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-primary text-white text-left';
+        } else {
+            btn.className = 'sort-btn px-3 py-1.5 rounded-lg text-sm font-medium transition-colors bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-left';
+        }
+    });
+
+    // Apply all filters and sorting
+    applyFiltersAndSort();
+}
+
+// Apply all filters and sorting
+function applyFiltersAndSort() {
+    let filtered = allTasks;
+
+    // Filter by status
+    if (currentFilter !== 'all') {
+        filtered = filtered.filter(task => task.status === currentFilter);
+    }
+
+    // Filter by priority
+    if (currentPriority !== 'all') {
+        filtered = filtered.filter(task => task.priority === currentPriority);
+    }
+
+    // Filter by category
+    if (currentCategory !== 'all') {
+        filtered = filtered.filter(task => task.category_id == currentCategory);
+    }
+
+    // Sort tasks
+    filtered = sortTaskArray(filtered, currentSortBy, currentSortOrder);
+
+    // Render filtered and sorted tasks
+    renderTasks(filtered);
+}
+
+// Sort task array by specified field
+function sortTaskArray(tasks, sortBy, order = 'asc') {
+    const sorted = [...tasks].sort((a, b) => {
+        let compareA, compareB;
+
+        switch (sortBy) {
+            case 'priority':
+                // Priority order: high > medium > low
+                const priorityOrder = { high: 3, medium: 2, low: 1 };
+                compareA = priorityOrder[a.priority] || 0;
+                compareB = priorityOrder[b.priority] || 0;
+                break;
+
+            case 'due_date':
+                // Sort by due date (null values last)
+                compareA = a.due_date ? new Date(a.due_date).getTime() : Infinity;
+                compareB = b.due_date ? new Date(b.due_date).getTime() : Infinity;
+                break;
+
+            case 'created_at':
+                compareA = new Date(a.created_at).getTime();
+                compareB = new Date(b.created_at).getTime();
+                break;
+
+            case 'updated_at':
+                compareA = new Date(a.updated_at).getTime();
+                compareB = new Date(b.updated_at).getTime();
+                break;
+
+            default:
+                return 0;
+        }
+
+        if (order === 'asc') {
+            return compareA - compareB;
+        } else {
+            return compareB - compareA;
+        }
+    });
+
+    return sorted;
 }
 
 // Render tasks - updated to work with new layout
@@ -1247,6 +1507,7 @@ function openTaskModal(task = null) {
         document.getElementById('task-status').value = task.status;
         document.getElementById('task-due-date').value = task.due_date || '';
         document.getElementById('task-type').value = task.task_type || 'normal';
+        document.getElementById('task-category').value = task.category_id || '';
 
         // Load recurrence config if exists
         if (task.task_type === 'recurring' && task.recurrence_config) {
@@ -1322,7 +1583,8 @@ async function handleTaskSubmit(e) {
         priority: document.getElementById('task-priority').value,
         status: document.getElementById('task-status').value,
         due_date: document.getElementById('task-due-date').value,
-        task_type: document.getElementById('task-type').value
+        task_type: document.getElementById('task-type').value,
+        category_id: document.getElementById('task-category').value || null
     };
 
     // Add recurrence config if task is recurring

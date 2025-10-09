@@ -13,13 +13,13 @@
 
 ## Technical Context
 
-**Language/Version**: PHP 7.4+ / 8.1（推薦 8.1，兼容寶塔面板 5.7.44 MySQL 版本）
+**Language/Version**: PHP 8.3+（兼容寶塔面板 MySQL 5.7.44+ 版本）
 **Primary Dependencies**:
 - 後端：PDO (MySQL)、bcrypt (密碼哈希)
 - 前端：原生 JavaScript (ES6+)、Fetch API
 - CSS：模塊化 CSS（design-tokens.css, components.css, layout.css）
 
-**Storage**: MySQL 8.0（兼容 5.7.8+）
+**Storage**: MySQL 5.7.44+（兼容 8.0+）
 - 字符集：utf8mb4_unicode_ci（強制，支持中文和 Emoji）
 - 引擎：InnoDB（支持事務和外鍵）
 - 連接池：PDO Singleton 模式
@@ -30,7 +30,7 @@
 
 **Target Platform**:
 - 開發環境：Docker Compose (Nginx + PHP-FPM + MySQL + phpMyAdmin)
-- 生產環境：寶塔面板 / aaPanel (Nginx + PHP 7.4/8.1 + MySQL 5.7/8.0)
+- 生產環境：寶塔面板 / aaPanel (Nginx + PHP 8.3+ + MySQL 5.7.44+)
 - 瀏覽器：Chrome/Firefox/Safari/Edge 最新版本（支持 ES6+、CSS Grid、Fetch API）
 
 **Project Type**: Web application (單體架構，非前後端分離)
@@ -231,6 +231,26 @@ specs/001-build-a-web/
 | 狀態管理庫 | **拒絕** - 使用全局對象（`currentUser`, `allTasks`） | 應用狀態簡單，無需 Redux/Vuex |
 | WebSocket（實時同步）| **分階段實施** - MVP 使用手動刷新，階段 2 輪詢，階段 3 WebSocket | 降低 MVP 技術風險，漸進增強 |
 | 農曆庫依賴 | **自研** - 純 JS 實現（`lunar.js`） | 避免外部依賴，符合零構建工具原則 |
+
+---
+
+## 術語定義
+
+### WordPress 風格安裝向導
+指 4 步驟 Web 安裝流程：
+1. 環境檢查（PHP 版本、擴展、權限）
+2. 數據庫配置（連接測試）
+3. 管理員創建（用戶名、密碼、團隊名）
+4. 安裝完成（生成配置文件）
+
+### 實時同步機制
+分階段實施策略：
+- **階段 1 (MVP)**: 手動刷新按鈕
+- **階段 2 (v1.1.0)**: 每 30 秒輪詢檢查更新
+- **階段 3 (v2.0.0)**: WebSocket 實時推送
+
+### 零構建工具
+指不使用 npm/webpack/Vite 等現代前端構建工具，所有資源直接加載，降低部署複雜性。
 
 ---
 

@@ -14,24 +14,19 @@
  * - POST /api/teams.php?id=X&action=regenerate_code - Regenerate invite code (admin only)
  */
 
-// Load dependencies（必須在session_start()之前）
+// Load dependencies
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../lib/Database.php';
 require_once __DIR__ . '/../../lib/TeamHelper.php';
+require_once __DIR__ . '/../../lib/SessionManager.php';
 
-session_start();
+// 初始化 Session（T073: 要求用戶已登錄）
+SessionManager::init(true);
 
 header('Content-Type: application/json');
 
-// Check authentication
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Unauthorized']);
-    exit;
-}
-
-$userId = $_SESSION['user_id'];
+$userId = SessionManager::getUserId();
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? '';
 $teamId = $_GET['id'] ?? null;
@@ -155,7 +150,7 @@ function handleCreateTeam($db, $userId)
 
     // Switch to new team
     TeamHelper::switchTeam($db, $userId, $teamId);
-    $_SESSION['current_team_id'] = $teamId;
+    SessionManager::setCurrentTeamId($teamId);
 
     echo json_encode([
         'success' => true,
@@ -233,7 +228,7 @@ function handleDeleteTeam($db, $userId, $teamId)
         if (!empty($teams)) {
             $newTeamId = $teams[0]['id'];
             TeamHelper::switchTeam($db, $userId, $newTeamId);
-            $_SESSION['current_team_id'] = $newTeamId;
+            SessionManager::setCurrentTeamId($newTeamId);
         }
     }
 

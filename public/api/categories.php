@@ -10,26 +10,20 @@
  * - DELETE: 刪除類別（僅管理員，將任務的 category_id 設為 NULL）
  */
 
-session_start();
-
-// 檢查登錄狀態
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => '未登錄']);
-    exit;
-}
-
+// 載入配置和類庫
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../lib/Database.php';
 require_once __DIR__ . '/../../lib/TeamHelper.php';
+require_once __DIR__ . '/../../lib/SessionManager.php';
+
+// 初始化 Session（T073: 要求用戶已登錄）
+SessionManager::init(true);
+
+header('Content-Type: application/json');
 
 $db = Database::getInstance()->getConnection();
-$userId = $_SESSION['user_id'];
-
-// 獲取當前團隊 ID
-$stmt = $db->prepare("SELECT current_team_id FROM users WHERE id = ?");
-$stmt->execute([$userId]);
-$currentTeamId = $stmt->fetchColumn();
+$userId = SessionManager::getUserId();
+$currentTeamId = SessionManager::getCurrentTeamId();
 
 if (!$currentTeamId) {
     http_response_code(400);
