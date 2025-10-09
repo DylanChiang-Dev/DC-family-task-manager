@@ -11,7 +11,11 @@ if (!file_exists(__DIR__ . '/../config/installed.lock')) {
 
 session_start();
 
+// Load version configuration for asset cache busting
+require_once __DIR__ . '/../config/version.php';
+
 $isLoggedIn = isset($_SESSION['user_id']);
+$assetVersion = getAssetVersion(false); // false = production mode (use version number)
 ?>
 <!DOCTYPE html>
 <html lang="zh-TW">
@@ -21,11 +25,11 @@ $isLoggedIn = isset($_SESSION['user_id']);
     <title>任務管理系統</title>
 
     <!-- 现代化CSS架构 - 模块化导入 -->
-    <link rel="stylesheet" href="/css/design-tokens.css?v=1.2.1"/>
-    <link rel="stylesheet" href="/css/base.css?v=1.2.1"/>
-    <link rel="stylesheet" href="/css/layout.css?v=1.2.1"/>
-    <link rel="stylesheet" href="/css/components.css?v=1.2.1"/>
-    <link rel="stylesheet" href="/css/utilities.css?v=1.2.1"/>
+    <link rel="stylesheet" href="/css/design-tokens.css?v=<?php echo $assetVersion; ?>"/>
+    <link rel="stylesheet" href="/css/base.css?v=<?php echo $assetVersion; ?>"/>
+    <link rel="stylesheet" href="/css/layout.css?v=<?php echo $assetVersion; ?>"/>
+    <link rel="stylesheet" href="/css/components.css?v=<?php echo $assetVersion; ?>"/>
+    <link rel="stylesheet" href="/css/utilities.css?v=<?php echo $assetVersion; ?>"/>
 
     <!-- Tailwind CSS CDN - 仅用于快速原型，生产环境应移除 -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
@@ -448,7 +452,7 @@ $isLoggedIn = isset($_SESSION['user_id']);
     </div>
 <?php endif; ?>
 
-<script src="/js/lunar.js?v=<?php echo time(); ?>"></script>
-<script src="/js/app.js?v=<?php echo time(); ?>"></script>
+<script src="/js/lunar.js?v=<?php echo $assetVersion; ?>"></script>
+<script src="/js/app.js?v=<?php echo $assetVersion; ?>"></script>
 </body>
 </html>

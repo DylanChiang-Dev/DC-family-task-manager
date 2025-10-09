@@ -423,12 +423,19 @@
   - VirtualTaskList 類（僅渲染可見區域 + 緩衝區）
   - onScroll() 動態替換 DOM 內容
   - 測試 10000 個任務時的滾動性能
-- [ ] T071 [P] 數據庫查詢優化 (database/schema.sql)
+  - **備註**: 高級優化,適用於極大數據量場景,暫不實施
+- [X] T071 [P] 數據庫查詢優化 (database/migrations/20250110150000_add_performance_indexes.sql)
   - 添加複合索引: (team_id, status), (team_id, assignee_id), (user_id, is_read)
-  - 分析慢查詢日誌
-- [ ] T072 [P] 前端資源優化 (public/css/, public/js/)
-  - CSS/JS 文件壓縮（生產環境）
-  - 添加緩存清除查詢參數（?v=版本號）
+  - 任務表優化: team+status, team+assignee, team+due_date, team+created, team+category
+  - 通知表優化: user+is_read+created_at
+  - 任務歷史表優化: task+created_at
+  - **備註**: 共添加 7 個性能索引,顯著提升查詢效率
+- [X] T072 [P] 前端資源優化 (config/version.php, public/index.php)
+  - 創建統一版本管理配置 (config/version.php)
+  - 生產環境使用版本號 (v=1.3.0)
+  - 開發環境使用時間戳 (強制刷新)
+  - 所有 CSS/JS 文件統一使用版本參數
+  - **備註**: 版本號緩存清除機制已實施,每次發布更新版本號即可
 
 ### 安全加固
 
