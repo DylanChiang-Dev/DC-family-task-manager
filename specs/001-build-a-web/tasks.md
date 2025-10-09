@@ -30,12 +30,12 @@
 
 **目的**: 專案結構初始化和基礎配置
 
-- [ ] T001 [P] 創建專案目錄結構 (config/, database/, lib/, public/, scripts/, docker/)
-- [ ] T002 [P] 配置 Docker Compose 環境 (docker-compose.yml, Dockerfile, docker/nginx/default.conf)
-- [ ] T003 [P] 配置 Git 忽略規則 (.gitignore - 排除 config/database.php, config/installed.lock)
-- [ ] T004 [P] 創建 README.md 專案介紹文檔
-- [ ] T005 [P] 創建 CLAUDE.md 技術文檔（開發指南）
-- [ ] T006 創建 .gitkeep 文件保持空目錄（config/.gitkeep, database/migrations/.gitkeep）
+- [X] T001 [P] 創建專案目錄結構 (config/, database/, lib/, public/, scripts/, docker/)
+- [X] T002 [P] 配置 Docker Compose 環境 (docker-compose.yml, Dockerfile, docker/nginx/default.conf)
+- [X] T003 [P] 配置 Git 忽略規則 (.gitignore - 排除 config/database.php, config/installed.lock)
+- [X] T004 [P] 創建 README.md 專案介紹文檔
+- [X] T005 [P] 創建 CLAUDE.md 技術文檔（開發指南）
+- [X] T006 創建 .gitkeep 文件保持空目錄（config/.gitkeep, database/migrations/.gitkeep）
 
 ---
 
@@ -47,7 +47,7 @@
 
 ### 數據庫基礎架構
 
-- [ ] T007 創建完整數據庫架構文件 (database/schema.sql - 包含 7 個核心表)
+- [X] T007 創建完整數據庫架構文件 (database/schema.sql - 包含 7 個核心表)
   - users 表（用戶、密碼哈希、暱稱、當前團隊 ID）
   - teams 表（團隊名稱、6 位邀請碼、創建者）
   - team_members 表（多對多關聯、角色 ENUM）
@@ -55,45 +55,45 @@
   - categories 表（類別名稱、顏色、團隊 ID）
   - notifications 表（通知類型、內容、是否已讀）
   - task_history 表（審計日誌、變更 JSON）
-- [ ] T008 [P] 創建數據庫遷移系統腳本 (scripts/migrate.php - 支持 --status, --rollback)
-- [ ] T009 [P] 創建遷移生成工具 (scripts/make-migration.php)
-- [ ] T010 [P] 創建示例數據 SQL (database/seed_demo_tasks.sql - 16 個示例任務)
+- [X] T008 [P] 創建數據庫遷移系統腳本 (scripts/migrate.php - 支持 --status, --rollback)
+- [X] T009 [P] 創建遷移生成工具 (scripts/make-migration.php)
+- [X] T010 [P] 創建示例數據 SQL (database/seed_demo_tasks.sql - 16 個示例任務)
 
 ### PHP 核心類庫
 
-- [ ] T011 [P] 實現數據庫單例類 (lib/Database.php - PDO Singleton, 持久連接, 支持自定義端口)
-- [ ] T012 [P] 實現團隊輔助類 (lib/TeamHelper.php)
+- [X] T011 [P] 實現數據庫單例類 (lib/Database.php - PDO Singleton, 持久連接, 支持自定義端口)
+- [X] T012 [P] 實現團隊輔助類 (lib/TeamHelper.php)
   - generateInviteCode() - 6 位邀請碼,排除 0,O,I,1
   - isTeamMember($user_id, $team_id) - 成員資格驗證
   - isTeamAdmin($user_id, $team_id) - 管理員權限驗證
 
 ### 前端基礎架構
 
-- [ ] T013 [P] 創建 CSS 設計系統 (public/css/design-tokens.css - CSS 變量: 顏色、字體、間距、陰影)
-- [ ] T014 [P] 創建 CSS Reset 和基礎樣式 (public/css/base.css - 現代 CSS Reset, 基礎元素樣式)
-- [ ] T015 [P] 創建組件樣式庫 (public/css/components.css - .btn, .badge, .task-card, .modal, .dropdown)
-- [ ] T016 [P] 創建佈局系統 (public/css/layout.css - .container, .grid, .flex, 響應式斷點)
-- [ ] T017 [P] 創建工具類樣式 (public/css/utilities.css - .text-primary, .rounded-lg, .shadow-md)
-- [ ] T018 創建主樣式入口 (public/css/style.css - CSS Cascade Layers 導入順序)
+- [X] T013 [P] 創建 CSS 設計系統 (public/css/design-tokens.css - CSS 變量: 顏色、字體、間距、陰影)
+- [X] T014 [P] 創建 CSS Reset 和基礎樣式 (public/css/base.css - 現代 CSS Reset, 基礎元素樣式)
+- [X] T015 [P] 創建組件樣式庫 (public/css/components.css - .btn, .badge, .task-card, .modal, .dropdown)
+- [X] T016 [P] 創建佈局系統 (public/css/layout.css - .container, .grid, .flex, 響應式斷點)
+- [X] T017 [P] 創建工具類樣式 (public/css/utilities.css - .text-primary, .rounded-lg, .shadow-md)
+- [X] T018 創建主樣式入口 (public/css/style.css - CSS Cascade Layers 導入順序)
 
 ### 安裝向導系統
 
-- [ ] T019 創建安裝向導入口 (public/install/index.php - 4 步驟流程控制)
-- [ ] T020 [P] 創建步驟 1: 環境檢查 (public/install/step1.php - PHP 版本、PDO 擴展、文件權限)
-- [ ] T021 [P] 創建步驟 2: 數據庫配置 (public/install/step2.php - 數據庫連接表單)
-- [ ] T022 [P] 創建步驟 3: 管理員創建 (public/install/step3.php - 用戶名、密碼、團隊名)
-- [ ] T023 [P] 創建步驟 4: 完成頁面 (public/install/step4.php - 安裝完成提示)
-- [ ] T024 [P] 創建環境檢查 API (public/install/check.php - 返回環境檢查 JSON)
-- [ ] T025 [P] 創建數據庫測試 API (public/install/test_db.php - 測試連接並返回結果)
-- [ ] T026 [P] 創建數據庫保存 API (public/install/save_db.php - 生成 config/database.php)
-- [ ] T027 創建安裝執行 API (public/install/install.php - 執行 schema.sql, 創建管理員, 生成 installed.lock)
+- [X] T019 創建安裝向導入口 (public/install/index.php - 4 步驟流程控制)
+- [X] T020 [P] 創建步驟 1: 環境檢查 (public/install/step1.php - PHP 版本、PDO 擴展、文件權限)
+- [X] T021 [P] 創建步驟 2: 數據庫配置 (public/install/step2.php - 數據庫連接表單)
+- [X] T022 [P] 創建步驟 3: 管理員創建 (public/install/step3.php - 用戶名、密碼、團隊名)
+- [X] T023 [P] 創建步驟 4: 完成頁面 (public/install/step4.php - 安裝完成提示)
+- [X] T024 [P] 創建環境檢查 API (public/install/check.php - 返回環境檢查 JSON)
+- [X] T025 [P] 創建數據庫測試 API (public/install/test_db.php - 測試連接並返回結果)
+- [X] T026 [P] 創建數據庫保存 API (public/install/save_db.php - 生成 config/database.php)
+- [X] T027 創建安裝執行 API (public/install/install.php - 執行 schema.sql, 創建管理員, 生成 installed.lock)
 
 ### 系統工具腳本
 
-- [ ] T028 [P] 創建系統更新腳本 (update.sh - Git pull, 遷移執行, 權限設置)
-- [ ] T029 [P] 創建更新 API (public/api/update.php - GET version/check, POST update)
+- [X] T028 [P] 創建系統更新腳本 (update.sh - Git pull, 遷移執行, 權限設置)
+- [X] T029 [P] 創建更新 API (public/api/update.php - GET version/check, POST update)
 
-**Checkpoint**: 基礎設施就緒 - 用戶故事實施可並行開始
+**Checkpoint**: ✅ 基礎設施就緒 - 用戶故事實施可並行開始
 
 ---
 
@@ -105,21 +105,21 @@
 
 ### 認證系統 (US1 依賴)
 
-- [ ] T030 [P] [US1] 創建認證 API (public/api/auth.php)
+- [X] T030 [P] [US1] 創建認證 API (public/api/auth.php)
   - POST ?action=register - 註冊用戶（郵箱、密碼 bcrypt cost=10、暱稱）+ 創建/加入團隊
   - POST ?action=login - 登錄驗證並創建 Session
   - POST ?action=logout - 清除 Session
   - GET ?action=check - 檢查登錄狀態
-- [ ] T031 [P] [US1] 創建登錄頁面 (public/login.php - 登錄/註冊表單、團隊創建/加入選擇)
+- [X] T031 [P] [US1] 創建登錄頁面 (public/login.php - 登錄/註冊表單、團隊創建/加入選擇)
 
 ### 任務 CRUD 核心功能
 
-- [ ] T032 [US1] 創建任務 API (public/api/tasks.php)
+- [X] T032 [US1] 創建任務 API (public/api/tasks.php)
   - GET - 獲取任務列表（支持 ?status, ?assignee_id, ?priority, ?sort_by 篩選）
   - POST - 創建任務（title 必填, description, assignee_id 默認當前用戶, priority 默認 medium, due_date, category_id）
   - PUT ?id={id} - 更新任務（含樂觀鎖定: 比對 updated_at 時間戳,衝突返回 409）
   - DELETE ?id={id} - 刪除任務（驗證創建者或管理員權限）
-- [ ] T033 [US1] 創建主應用頁面 (public/index.php)
+- [X] T033 [US1] 創建主應用頁面 (public/index.php)
   - 登錄狀態檢查（未登錄跳轉 login.php,已登錄但未安裝跳轉 install/）
   - 任務列表視圖（標題、狀態、優先級、分配成員、截止日期）
   - 任務創建/編輯模態框（表單包含所有必填/可選字段）
@@ -127,7 +127,7 @@
 
 ### 前端交互邏輯
 
-- [ ] T034 [US1] 創建主應用 JavaScript (public/js/app.js)
+- [X] T034 [US1] 創建主應用 JavaScript (public/js/app.js)
   - 全局狀態管理（currentUser, allTasks, currentFilter, selectedDate）
   - checkLoginStatus() - 頁面加載時檢查登錄狀態
   - loadTasks() - 獲取任務列表並渲染
@@ -138,7 +138,7 @@
 
 ### 任務歷史記錄
 
-- [ ] T036 [US1] 實現任務歷史記錄功能 (lib/TaskHistoryService.php, public/api/tasks.php)
+- [X] T036 [US1] 實現任務歷史記錄功能 (lib/TaskHistoryService.php, public/api/tasks.php)
   - 創建 TaskHistoryService 類：createHistoryRecord($task_id, $user_id, $action, $changes)
   - 在任務 API 中集成歷史記錄：
     - POST 創建任務時：記錄 action='created'
@@ -148,7 +148,7 @@
   - 在任務詳情頁面添加「歷史記錄」標籤頁（可選 UI，Phase 9 實施）
   - 符合 FR-028: 支持查看「誰在何時修改了什麼」
 
-**Checkpoint**: 此時用戶故事 1 應完全可用且可獨立測試
+**Checkpoint**: ✅ 此時用戶故事 1 應完全可用且可獨立測試
 
 ---
 
@@ -160,7 +160,7 @@
 
 ### 團隊管理系統
 
-- [ ] T037 [P] [US2] 創建團隊 API (public/api/teams.php)
+- [X] T037 [P] [US2] 創建團隊 API (public/api/teams.php)
   - GET - 獲取用戶所有團隊列表
   - POST - 創建新團隊（name, 自動生成 invite_code, created_by=當前用戶, 創建者自動成為 admin）
   - POST ?action=join - 加入團隊（通過 invite_code）
@@ -172,18 +172,18 @@
 
 ### 用戶管理系統
 
-- [ ] T038 [P] [US2] 創建用戶 API (public/api/users.php)
+- [X] T038 [P] [US2] 創建用戶 API (public/api/users.php)
   - GET - 獲取當前團隊成員列表（僅返回 current_team_id 的成員）
-- [ ] T039 [P] [US2] 創建個人資料 API (public/api/profile.php)
+- [X] T039 [P] [US2] 創建個人資料 API (public/api/profile.php)
   - POST - 更新暱稱和密碼（需驗證舊密碼）
 
 ### 團隊切換 UI
 
-- [ ] T040 [US2] 在主應用中添加團隊切換功能 (public/index.php)
+- [X] T040 [US2] 在主應用中添加團隊切換功能 (public/index.php)
   - 頂部團隊下拉菜單（顯示所有用戶所屬團隊）
   - 設置模態框（Profile/Team 標籤頁）
   - 團隊設置頁（顯示所有團隊的卡片佈局,包含名稱、邀請碼、成員列表、管理操作）
-- [ ] T041 [US2] 在 app.js 中添加團隊功能 (public/js/app.js)
+- [X] T041 [US2] 在 app.js 中添加團隊功能 (public/js/app.js)
   - loadTeams() - 獲取所有團隊列表
   - switchCurrentTeam(teamId) - 切換團隊並重新加載數據
   - toggleTeamDropdown() - 點擊式下拉菜單（非 hover）
@@ -194,10 +194,10 @@
 
 ### 任務分配功能
 
-- [ ] T042 [US2] 在任務創建/編輯模態框中添加成員選擇器 (public/index.php)
+- [X] T042 [US2] 在任務創建/編輯模態框中添加成員選擇器 (public/index.php)
   - 「分配給」下拉菜單（顯示當前團隊所有成員）
   - 成員頭像和暱稱顯示
-- [ ] T043 [US2] 在任務列表中添加成員篩選器 (public/index.php)
+- [X] T043 [US2] 在任務列表中添加成員篩選器 (public/index.php)
   - 左側成員篩選欄（顯示團隊成員列表）
   - 點擊成員名稱篩選其任務
   - 「分配給我的任務」/「我創建的任務」/「所有任務」視圖切換
@@ -214,7 +214,7 @@
 
 ### 農曆日曆庫
 
-- [ ] T044 [P] [US3] 創建農曆轉換 JavaScript 庫 (public/js/lunar.js)
+- [X] T044 [P] [US3] 創建農曆轉換 JavaScript 庫 (public/js/lunar.js)
   - 基準日期: 1900-01-31 = 農曆 1900 年正月初一
   - lunarInfo[] 數組（1900-2100 共 201 個元素,編碼農曆月份天數）
   - solarToLunar(year, month, day) - 公曆轉農曆
@@ -223,16 +223,16 @@
 
 ### 日曆視圖 UI
 
-- [ ] T045 [US3] 在主應用中添加日曆視圖 (public/index.php)
+- [X] T045 [US3] 在主應用中添加日曆視圖 (public/index.php)
   - 月曆網格（7 列 × 5-6 行）
   - 每個日期格子顯示農曆日期
   - 任務圓點標記（不同優先級不同顏色）
   - 今天高亮顯示
   - 上一月/下一月導航按鈕
-- [ ] T046 [US3] 在主應用中添加日曆右側任務面板 (public/index.php)
+- [X] T046 [US3] 在主應用中添加日曆右側任務面板 (public/index.php)
   - 點擊日期後顯示該日所有任務詳情列表
   - 快速創建任務按鈕（自動填充所選日期為截止日期）
-- [ ] T047 [US3] 在 app.js 中添加日曆功能 (public/js/app.js)
+- [X] T047 [US3] 在 app.js 中添加日曆功能 (public/js/app.js)
   - currentMonth 狀態（當前顯示的年月）
   - renderCalendar() - 渲染月曆網格和農曆日期
   - selectDate(year, month, day) - 日期選擇處理器
@@ -241,14 +241,14 @@
 
 ### 響應式佈局調整
 
-- [ ] T048 [US3] 優化響應式佈局 (public/css/layout.css)
+- [X] T048 [US3] 優化響應式佈局 (public/css/layout.css)
   - 移動端 (<1024px): 隱藏日曆,僅顯示任務列表（全寬）
   - 桌面端 (≥1024px): 日曆（2/3 寬度）+ 任務列表（1/3 寬度）並排
   - 使用 CSS Grid 佈局和 `hidden lg:block` 工具類
 
 ### 深色模式切換
 
-- [ ] T049 [US3] 在頂部導航添加深色模式切換按鈕 (public/index.php, public/js/app.js)
+- [X] T049 [US3] 在頂部導航添加深色模式切換按鈕 (public/index.php, public/js/app.js)
   - 在頂部導航欄添加月亮/太陽圖標按鈕（Material Symbols: dark_mode / light_mode）
   - 點擊切換 `<html>` 元素的 `.dark` 類
   - 保存用戶偏好到 LocalStorage（key: 'theme', value: 'light'|'dark'|'auto'）
@@ -270,7 +270,7 @@
 
 ### 類別管理系統
 
-- [ ] T050 [P] [US4] 創建類別 API (public/api/categories.php)
+- [X] T050 [P] [US4] 創建類別 API (public/api/categories.php)
   - GET - 獲取團隊類別列表（僅當前團隊）
   - POST - 創建類別（name 必填, color HEX 格式默認 #3B82F6, 僅管理員）
   - PUT ?id={id} - 更新類別（name, color, 僅管理員）
@@ -278,7 +278,7 @@
 
 ### 類別管理 UI
 
-- [ ] T051 [US4] 在設置模態框中添加類別管理標籤頁 (public/index.php)
+- [X] T051 [US4] 在設置模態框中添加類別管理標籤頁 (public/index.php)
   - 類別列表（顯示名稱、顏色標記、創建者）
   - 添加類別表單（僅管理員可見）
   - 編輯/刪除類別操作（僅管理員）

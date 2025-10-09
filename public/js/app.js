@@ -772,7 +772,57 @@ function nextMonth() {
 function selectDate(year, month, day) {
     selectedDate = new Date(year, month, day);
     renderCalendar();
-    filterTasksByDate();
+    showSelectedDateTasks();
+}
+
+// Show tasks for selected date in right panel
+function showSelectedDateTasks() {
+    const dateStr = selectedDate.toISOString().split('T')[0];
+    const selectedTasks = allTasks.filter(task => {
+        return task.due_date === dateStr;
+    });
+
+    const taskList = document.getElementById('task-list');
+    const selectedDatePanel = document.getElementById('selected-date-tasks');
+
+    // Show selected date info
+    const selectedDateElement = document.getElementById('selected-date-info');
+    if (selectedDateElement) {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const formattedDate = selectedDate.toLocaleDateString('zh-TW', options);
+        selectedDateElement.textContent = `${formattedDate} 的任務`;
+    }
+
+    // Update task list title
+    const taskListTitle = document.getElementById('task-list-title');
+    if (taskListTitle) {
+        taskListTitle.textContent = '當天任務';
+    }
+
+    // Show selected date tasks in task panel
+    if (selectedTasks.length > 0) {
+        taskList.innerHTML = selectedTasks.map(task => renderTaskCard(task)).join('');
+    } else {
+        taskList.innerHTML = `
+            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                <svg class="w-12 h-12 mx-auto mb-2 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 011 18 0z"></path>
+                </svg>
+                <p class="text-sm">這一天沒有任務</p>
+                <button onclick="quickCreateTaskForDate('${dateStr}')" class="mt-4 inline-flex items-center px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    快速創建任務
+                </button>
+            </div>
+        `;
+    }
+
+    // Scroll task list to top
+    if (taskList) {
+        taskList.scrollTop = 0;
+    }
 }
 
 // Filter tasks by selected date
@@ -1361,24 +1411,37 @@ function showSettings() {
 function switchSettingsTab(tab) {
     const profileTab = document.getElementById('profile-tab');
     const teamTab = document.getElementById('team-tab');
+    const categoryTab = document.getElementById('category-tab');
     const profileSettings = document.getElementById('profile-settings');
     const teamSettings = document.getElementById('team-settings');
+    const categorySettings = document.getElementById('category-settings');
 
+    // 重置所有標籤
+    [profileTab, teamTab, categoryTab].forEach(tabEl => {
+        tabEl.classList.remove('text-primary', 'border-b-2', 'border-primary');
+        tabEl.classList.add('text-gray-500', 'dark:text-gray-400');
+    });
+
+    // 隱藏所有設置面板
+    [profileSettings, teamSettings, categorySettings].forEach(panel => {
+        panel.classList.add('hidden');
+    });
+
+    // 顯示選中的標籤和面板
     if (tab === 'profile') {
         profileTab.classList.add('text-primary', 'border-b-2', 'border-primary');
         profileTab.classList.remove('text-gray-500', 'dark:text-gray-400');
-        teamTab.classList.remove('text-primary', 'border-b-2', 'border-primary');
-        teamTab.classList.add('text-gray-500', 'dark:text-gray-400');
         profileSettings.classList.remove('hidden');
-        teamSettings.classList.add('hidden');
-    } else {
+    } else if (tab === 'team') {
         teamTab.classList.add('text-primary', 'border-b-2', 'border-primary');
         teamTab.classList.remove('text-gray-500', 'dark:text-gray-400');
-        profileTab.classList.remove('text-primary', 'border-b-2', 'border-primary');
-        profileTab.classList.add('text-gray-500', 'dark:text-gray-400');
         teamSettings.classList.remove('hidden');
-        profileSettings.classList.add('hidden');
         loadAllTeamsSettings();
+    } else if (tab === 'category') {
+        categoryTab.classList.add('text-primary', 'border-b-2', 'border-primary');
+        categoryTab.classList.remove('text-gray-500', 'dark:text-gray-400');
+        categorySettings.classList.remove('hidden');
+        loadCategoriesSettings();
     }
 }
 
@@ -1984,6 +2047,214 @@ openTaskModal = function(task = null) {
         initEnhancedDatePicker();
     }, 100);
 };
+
+// ============================================
+// 類別管理功能
+// ============================================
+
+let allCategories = [];
+
+// 載入類別設置
+async function loadCategoriesSettings() {
+    try {
+        // 獲取類別列表
+        const response = await fetch('/api/categories.php');
+        if (!response.ok) throw new Error('Failed to load categories');
+        allCategories = await response.json();
+
+        // 檢查當前用戶是否為管理員
+        const isAdmin = allTeams.find(t => t.id == currentUser.current_team_id)?.role === 'admin';
+
+        // 顯示/隱藏管理員相關元素
+        const createBtn = document.getElementById('create-category-btn-container');
+        const adminNotice = document.getElementById('category-admin-notice');
+
+        if (isAdmin) {
+            createBtn.classList.remove('hidden');
+            adminNotice.classList.add('hidden');
+        } else {
+            createBtn.classList.add('hidden');
+            adminNotice.classList.remove('hidden');
+        }
+
+        // 渲染類別列表
+        renderCategoriesList(isAdmin);
+    } catch (error) {
+        console.error('載入類別失敗:', error);
+        alert('載入類別失敗');
+    }
+}
+
+// 渲染類別列表
+function renderCategoriesList(isAdmin) {
+    const list = document.getElementById('categories-list');
+
+    if (allCategories.length === 0) {
+        list.innerHTML = `
+            <div class="text-center py-8 text-gray-500 dark:text-gray-400">
+                <svg class="h-12 w-12 mx-auto mb-3 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path>
+                </svg>
+                <p class="text-sm">暫無類別</p>
+                ${isAdmin ? '<p class="text-xs mt-1">點擊上方按鈕創建第一個類別</p>' : ''}
+            </div>
+        `;
+        return;
+    }
+
+    list.innerHTML = allCategories.map(category => `
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3 flex-1">
+                    <div class="w-8 h-8 rounded-full flex-shrink-0" style="background-color: ${category.color}"></div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="text-sm font-medium text-gray-900 dark:text-white">${category.name}</h4>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">創建者：${category.creator_name || '未知'}</p>
+                    </div>
+                </div>
+                ${isAdmin ? `
+                    <div class="flex gap-2 flex-shrink-0">
+                        <button onclick="editCategory(${category.id})" class="p-2 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" title="編輯">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                            </svg>
+                        </button>
+                        <button onclick="deleteCategory(${category.id}, '${category.name}')" class="p-2 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded" title="刪除">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                        </button>
+                    </div>
+                ` : ''}
+            </div>
+        </div>
+    `).join('');
+}
+
+// 顯示創建類別表單
+function showCreateCategoryForm() {
+    document.getElementById('create-category-form').classList.remove('hidden');
+    document.getElementById('create-category-btn-container').classList.add('hidden');
+    // 重置表單
+    document.getElementById('new-category-name').value = '';
+    document.getElementById('new-category-color').value = '#3B82F6';
+    document.getElementById('new-category-color-hex').value = '#3B82F6';
+}
+
+// 隱藏創建類別表單
+function hideCreateCategoryForm() {
+    document.getElementById('create-category-form').classList.add('hidden');
+    document.getElementById('create-category-btn-container').classList.remove('hidden');
+}
+
+// 創建新類別
+async function createNewCategory() {
+    const name = document.getElementById('new-category-name').value.trim();
+    const color = document.getElementById('new-category-color-hex').value.trim();
+
+    if (!name) {
+        alert('請輸入類別名稱');
+        return;
+    }
+
+    if (!/^#[0-9A-Fa-f]{6}$/.test(color)) {
+        alert('顏色格式錯誤，請使用 HEX 格式（例如：#3B82F6）');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/categories.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, color })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || '創建類別失敗');
+        }
+
+        hideCreateCategoryForm();
+        await loadCategoriesSettings();
+        alert('類別創建成功');
+    } catch (error) {
+        console.error('創建類別失敗:', error);
+        alert(error.message || '創建類別失敗');
+    }
+}
+
+// 編輯類別
+async function editCategory(categoryId) {
+    const category = allCategories.find(c => c.id == categoryId);
+    if (!category) return;
+
+    const newName = prompt('請輸入新的類別名稱:', category.name);
+    if (!newName || newName === category.name) return;
+
+    try {
+        const response = await fetch(`/api/categories.php?id=${categoryId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newName.trim() })
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || '更新類別失敗');
+        }
+
+        await loadCategoriesSettings();
+        alert('類別更新成功');
+    } catch (error) {
+        console.error('更新類別失敗:', error);
+        alert(error.message || '更新類別失敗');
+    }
+}
+
+// 刪除類別
+async function deleteCategory(categoryId, categoryName) {
+    if (!confirm(`確定要刪除類別「${categoryName}」嗎？\n\n使用此類別的任務將不再屬於任何類別。`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/categories.php?id=${categoryId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || '刪除類別失敗');
+        }
+
+        await loadCategoriesSettings();
+        alert('類別已刪除');
+    } catch (error) {
+        console.error('刪除類別失敗:', error);
+        alert(error.message || '刪除類別失敗');
+    }
+}
+
+// 顏色選擇器同步
+document.addEventListener('DOMContentLoaded', () => {
+    const colorPicker = document.getElementById('new-category-color');
+    const colorHex = document.getElementById('new-category-color-hex');
+
+    if (colorPicker && colorHex) {
+        // 顏色選擇器變更時更新文字框
+        colorPicker.addEventListener('input', (e) => {
+            colorHex.value = e.target.value.toUpperCase();
+        });
+
+        // 文字框變更時更新顏色選擇器
+        colorHex.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+                colorPicker.value = value;
+            }
+        });
+    }
+});
 
 // ============================================
 // 系統更新功能
