@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    container_name: family-tasks-php
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "9000:9000"
+    networks:
+      - family-tasks-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: family-tasks-nginx
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    networks:
+      - family-tasks-network
+    depends_on:
+      - web
+
+  db:
+    image: mariadb:10.3
+    container_name: family-tasks-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: family_tasks
+      MYSQL_USER: family_user
+      MYSQL_PASSWORD: family_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - family-tasks-db:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci --innodb-buffer-pool-size=256M
+    networks:
+      - family-tasks-network
+
+networks:
+  family-tasks-network:
+    driver: bridge
+
+volumes:
+  family-tasks-db:
