@@ -2100,11 +2100,15 @@ function initEnhancedDatePicker() {
     const dateInput = document.querySelector('#task-due-date');
     if (!dateInput) return;
 
+    // 檢查是否已經存在按鈕，避免重複創建
+    const existingBtn = dateInput.parentNode.querySelector('.enhanced-date-picker-btn');
+    if (existingBtn) return;
+
     // 添加增強日期選擇器按鈕
     const enhancedPickerBtn = document.createElement('button');
     enhancedPickerBtn.type = 'button';
-    enhancedPickerBtn.innerHTML = '📅 選擇日期';
-    enhancedPickerBtn.className = 'mt-2 w-full text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-md transition-colors';
+    enhancedPickerBtn.textContent = '選擇日期';
+    enhancedPickerBtn.className = 'enhanced-date-picker-btn mt-2 w-full text-sm bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 px-3 py-2 rounded-md transition-colors';
     enhancedPickerBtn.onclick = () => showEnhancedDatePicker(dateInput);
 
     // 將按鈕插入到日期輸入框之後
@@ -2313,8 +2317,6 @@ openTaskModal = function(task = null) {
 // ============================================
 // 類別管理功能
 // ============================================
-
-let allCategories = [];
 
 // 載入類別設置
 async function loadCategoriesSettings() {
