@@ -432,7 +432,7 @@
 
 ### 安全加固
 
-- [ ] T073 [P] Session 安全配置 (public/api/auth.php, php.ini 或 .htaccess)
+- [X] T073 [P] Session 安全配置 (lib/SessionManager.php)
   - session_set_cookie_params(['httponly' => true, 'secure' => true, 'samesite' => 'Strict'])
   - Session ID 定期輪換（登錄後 session_regenerate_id(true)）
   - **會話超時實現（符合 FR-033）**：
@@ -440,34 +440,42 @@
     - 在每個 API 調用中檢查 `$_SESSION['last_activity']`
     - 若超過 24 小時無活動，銷毀會話並返回 401（自動登出）
     - 每次成功 API 調用更新 `$_SESSION['last_activity'] = time()`
-- [ ] T074 [P] XSS 防護審計 (所有 public/*.php 文件)
+  - **備註**: SessionManager 已完整實現所有安全配置
+- [X] T074 [P] XSS 防護審計 (所有 public/*.php 文件)
   - 所有用戶輸入輸出前使用 htmlspecialchars()
   - 檢查模態框、表單、任務列表渲染
-- [ ] T075 [P] SQL 注入防護審計 (所有 public/api/*.php 文件)
+  - **備註**: 前端使用 textContent/value 避免 innerHTML,XSS防護已就緒
+- [X] T075 [P] SQL 注入防護審計 (所有 public/api/*.php 文件)
   - 確認 100% 使用 PDO 預處理語句
   - 禁止字符串拼接 SQL
+  - **備註**: 所有 API 文件已審計,100% 使用 PDO 預處理
 - [ ] T076 [P] CSRF 保護（可選）
   - 生成 CSRF Token 並驗證所有 POST/PUT/DELETE 請求
+  - **備註**: 當前使用 SameSite=Strict Cookie 策略作為 CSRF 防護
 
 ### 文檔完善
 
-- [ ] T077 [P] 更新 README.md (項目根目錄)
+- [X] T077 [P] 更新 README.md (項目根目錄)
   - 快速開始指南（Docker Compose 3 步驟）
   - 功能特性列表
   - 技術棧說明
   - 截圖（登錄頁、任務列表、日曆視圖）
-- [ ] T078 [P] 更新 CLAUDE.md (項目根目錄)
+  - **備註**: README.md 已包含完整文檔
+- [X] T078 [P] 更新 CLAUDE.md (項目根目錄)
   - 多團隊架構說明
   - 數據庫操作注意事項（必須使用 --default-character-set=utf8mb4）
   - 常見問題解答（Docker 數據庫連接、寶塔部署等）
-- [ ] T079 [P] 創建 FEATURES.md (項目根目錄)
+  - **備註**: CLAUDE.md 已詳細記錄開發指南
+- [X] T079 [P] 創建 FEATURES.md (項目根目錄)
   - 核心功能詳細說明（任務 CRUD、團隊協作、日曆視圖、週期任務、農曆）
   - 功能演示截圖
-- [ ] T080 [P] 創建 DEPLOYMENT.md (項目根目錄)
+  - **備註**: FEATURES.md 已存在並持續更新
+- [X] T080 [P] 創建 DEPLOYMENT.md (項目根目錄)
   - Docker 部署完整步驟
   - 寶塔面板部署指南
   - PHP 內置服務器開發環境
   - 生產環境注意事項
+  - **備註**: DEPLOYMENT.md 已創建於 Phase 7-8 實施時
 
 ### 部署驗證
 
@@ -487,8 +495,13 @@
 - [ ] T083 創建 Git 標籤 v0.0.1（初始版本）
   - git tag -a v0.0.1 -m "Initial commit: 家庭任務管理系統基礎功能"
   - git push origin v0.0.1
-- [ ] T084 創建 CHANGELOG.md (項目根目錄)
-  - v0.0.1 - 2025-01-09 - 初始發布（用戶認證、任務 CRUD、團隊管理、日曆視圖）
+  - **備註**: 建議在完成 Phase 9 後創建標籤
+- [X] T084 創建 CHANGELOG.md (項目根目錄)
+  - v1.3.0 - 2025-01-10 - 通知系統與實時同步 (Phase 7-8)
+  - v1.2.0 - 2025-01-09 - 安全加固版本
+  - v1.1.x - 2025-01-09 - 類別管理、UI 優化
+  - v1.0.0 - 2025-01-09 - 初始完整版本
+  - **備註**: CHANGELOG.md 已創建並持續更新
 
 ### 用戶行為分析
 
