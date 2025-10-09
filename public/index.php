@@ -233,6 +233,13 @@ $isLoggedIn = isset($_SESSION['user_id']);
                         <option value="repeatable">重複任務</option>
                     </select>
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">類別</label>
+                    <select id="task-category" class="mt-1 block w-full rounded-lg border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-sm focus:border-primary focus:ring-primary text-gray-900 dark:text-gray-100">
+                        <option value="">無類別</option>
+                        <!-- Categories will be populated by JavaScript -->
+                    </select>
+                </div>
                 <!-- Recurrence configuration (shown only for recurring tasks) -->
                 <div id="recurrence-options" class="hidden space-y-3">
                     <div>
