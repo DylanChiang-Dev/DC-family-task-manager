@@ -14,6 +14,9 @@ let currentSortBy = 'due_date'; // 排序方式 ('due_date', 'priority', 'create
 let currentSortOrder = 'asc'; // 排序順序 ('asc', 'desc')
 let isTeamDropdownOpen = false;
 let allCategories = []; // 所有類別列表
+let allNotifications = []; // 所有通知列表
+let unreadNotificationCount = 0; // 未讀通知數量
+let notificationPermissionGranted = false; // 瀏覽器通知權限狀態
 
 // ============================================
 // 暗色模式管理
@@ -114,6 +117,261 @@ window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e)
         }
     }
 });
+
+// ============================================
+// 通知系統
+// ============================================
+
+/**
+ * 檢查瀏覽器通知權限狀態
+ */
+function checkNotificationPermission() {
+    if (!('Notification' in window)) {
+        console.warn('此瀏覽器不支持桌面通知');
+        return 'unsupported';
+    }
+
+    notificationPermissionGranted = Notification.permission === 'granted';
+    return Notification.permission;
+}
+
+/**
+ * 請求瀏覽器通知權限
+ */
+async function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        alert('您的瀏覽器不支持桌面通知');
+        return false;
+    }
+
+    if (Notification.permission === 'granted') {
+        notificationPermissionGranted = true;
+        return true;
+    }
+
+    if (Notification.permission !== 'denied') {
+        try {
+            const permission = await Notification.requestPermission();
+            notificationPermissionGranted = permission === 'granted';
+
+            if (notificationPermissionGranted) {
+                showBrowserNotification('通知已啟用', '您將收到任務更新和到期提醒', '/favicon.ico');
+            }
+
+            return notificationPermissionGranted;
+        } catch (error) {
+            console.error('請求通知權限失敗:', error);
+            return false;
+        }
+    }
+
+    alert('通知權限已被禁用,請在瀏覽器設置中手動啟用');
+    return false;
+}
+
+/**
+ * 顯示瀏覽器桌面通知
+ * @param {string} title 通知標題
+ * @param {string} body 通知內容
+ * @param {string} icon 通知圖標URL
+ * @param {number} taskId 關聯任務ID(可選)
+ */
+function showBrowserNotification(title, body, icon = '/favicon.ico', taskId = null) {
+    if (!notificationPermissionGranted) {
+        console.warn('通知權限未授予');
+        return;
+    }
+
+    const notification = new Notification(title, {
+        body: body,
+        icon: icon,
+        badge: icon,
+        tag: taskId ? `task-${taskId}` : `notification-${Date.now()}`,
+        requireInteraction: false,
+        silent: false
+    });
+
+    // 點擊通知時聚焦視窗並跳轉到任務
+    notification.onclick = function(event) {
+        event.preventDefault();
+        window.focus();
+
+        if (taskId) {
+            // 打開任務詳情模態框
+            const task = allTasks.find(t => t.id == taskId);
+            if (task) {
+                openTaskModal(task);
+            }
+        }
+
+        notification.close();
+    };
+
+    // 自動關閉通知 (10 秒)
+    setTimeout(() => {
+        notification.close();
+    }, 10000);
+}
+
+/**
+ * 加載用戶通知列表
+ */
+async function loadNotifications(unreadOnly = false) {
+    try {
+        const url = unreadOnly ? '/api/notifications.php?unread_only=true' : '/api/notifications.php';
+        const response = await fetch(url);
+
+        if (!response.ok) {
+            throw new Error('加載通知失敗');
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            allNotifications = data.notifications || [];
+            unreadNotificationCount = data.unread_count || 0;
+
+            // 更新UI上的未讀通知數量標記
+            updateNotificationBadge();
+
+            return allNotifications;
+        } else {
+            throw new Error(data.message || '加載通知失敗');
+        }
+    } catch (error) {
+        console.error('加載通知失敗:', error);
+        return [];
+    }
+}
+
+/**
+ * 更新通知圖標的未讀數量標記
+ */
+function updateNotificationBadge() {
+    const badge = document.getElementById('notification-badge');
+    if (badge) {
+        if (unreadNotificationCount > 0) {
+            badge.textContent = unreadNotificationCount > 99 ? '99+' : unreadNotificationCount;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
+    }
+}
+
+/**
+ * 標記單個通知為已讀
+ */
+async function markNotificationAsRead(notificationId) {
+    try {
+        const response = await fetch(`/api/notifications.php?action=mark_read&id=${notificationId}`, {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error('標記已讀失敗');
+        }
+
+        // 重新加載通知列表
+        await loadNotifications();
+
+    } catch (error) {
+        console.error('標記已讀失敗:', error);
+    }
+}
+
+/**
+ * 標記所有通知為已讀
+ */
+async function markAllNotificationsAsRead() {
+    try {
+        const response = await fetch('/api/notifications.php?action=mark_all_read', {
+            method: 'POST'
+        });
+
+        if (!response.ok) {
+            throw new Error('標記全部已讀失敗');
+        }
+
+        // 重新加載通知列表
+        await loadNotifications();
+        alert('已標記所有通知為已讀');
+
+    } catch (error) {
+        console.error('標記全部已讀失敗:', error);
+        alert('操作失敗');
+    }
+}
+
+/**
+ * 刪除通知
+ */
+async function deleteNotification(notificationId) {
+    try {
+        const response = await fetch(`/api/notifications.php?id=${notificationId}`, {
+            method: 'DELETE'
+        });
+
+        if (!response.ok) {
+            throw new Error('刪除通知失敗');
+        }
+
+        // 重新加載通知列表
+        await loadNotifications();
+
+    } catch (error) {
+        console.error('刪除通知失敗:', error);
+    }
+}
+
+/**
+ * 渲染通知列表 (UI 待實施)
+ */
+function renderNotificationList() {
+    // TODO: 實施通知列表UI渲染
+    console.log('Notifications:', allNotifications);
+}
+
+/**
+ * 輪詢新通知 (每 30 秒檢查一次)
+ */
+let notificationPollingInterval = null;
+
+function startNotificationPolling() {
+    // 清除現有輪詢
+    if (notificationPollingInterval) {
+        clearInterval(notificationPollingInterval);
+    }
+
+    // 立即加載一次
+    loadNotifications();
+
+    // 每 30 秒輪詢一次
+    notificationPollingInterval = setInterval(async () => {
+        const oldCount = unreadNotificationCount;
+        await loadNotifications();
+
+        // 如果有新通知且瀏覽器通知已啟用,顯示桌面通知
+        if (unreadNotificationCount > oldCount && notificationPermissionGranted) {
+            const newNotifications = allNotifications.filter(n => !n.is_read).slice(0, 3);
+            newNotifications.forEach(notification => {
+                showBrowserNotification(
+                    '新通知',
+                    notification.content,
+                    '/favicon.ico',
+                    notification.task_id
+                );
+            });
+        }
+    }, 30000);
+}
+
+function stopNotificationPolling() {
+    if (notificationPollingInterval) {
+        clearInterval(notificationPollingInterval);
+        notificationPollingInterval = null;
+    }
+}
 
 // ============================================
 // 農曆轉換
@@ -426,6 +684,10 @@ async function initializeApp() {
     await loadUsers();
     await loadCategories(); // 加載類別列表
     await loadTasks();
+
+    // 初始化通知系統
+    checkNotificationPermission();
+    startNotificationPolling();
 }
 
 // Render main layout with calendar and task list
@@ -957,6 +1219,16 @@ function renderHeader() {
                     <div class="flex items-center gap-2 sm:gap-4">
                         ${teamDropdown}
                         <button
+                            onclick="refreshTasks()"
+                            class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors flex-shrink-0"
+                            title="重新載入任務"
+                            aria-label="重新載入任務"
+                        >
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                        <button
                             onclick="toggleThemeMode()"
                             class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-300 transition-colors flex-shrink-0"
                             title="切換主題模式"
@@ -1207,6 +1479,45 @@ async function loadTasks(status = 'all') {
         }
     } catch (error) {
         console.error('Error loading tasks:', error);
+    }
+}
+
+// 重新載入任務列表（手動刷新功能）
+async function refreshTasks() {
+    // 顯示刷新中的視覺反饋
+    const refreshBtn = document.querySelector('[onclick="refreshTasks()"]');
+    if (refreshBtn) {
+        const svg = refreshBtn.querySelector('svg');
+        if (svg) {
+            svg.style.animation = 'spin 1s linear infinite';
+        }
+        refreshBtn.disabled = true;
+    }
+
+    try {
+        // 重新載入當前篩選狀態的任務
+        await loadTasks(currentFilter);
+
+        // 重新載入其他相關數據
+        await loadUsers();
+        await loadCategories();
+
+        // 重新渲染日曆
+        renderCalendar();
+
+        console.log('任務列表已重新載入');
+    } catch (error) {
+        console.error('重新載入任務時發生錯誤:', error);
+        alert('重新載入失敗，請稍後再試');
+    } finally {
+        // 恢復刷新按鈕狀態
+        if (refreshBtn) {
+            const svg = refreshBtn.querySelector('svg');
+            if (svg) {
+                svg.style.animation = '';
+            }
+            refreshBtn.disabled = false;
+        }
     }
 }
 

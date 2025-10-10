@@ -5,6 +5,70 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [v1.3.0] - 2025-01-10
+
+### 🔔 Notifications & Real-time Sync (通知系統與實時同步)
+
+**Phase 7: 任務通知與提醒系統**
+
+- **通知 API** (`public/api/notifications.php`)
+  - GET: 獲取用戶通知列表 (支持未讀篩選)
+  - POST mark_read: 標記單個通知已讀
+  - POST mark_all_read: 批量標記所有通知已讀
+  - DELETE: 刪除通知
+  - 包含未讀數量統計
+
+- **通知生成服務** (`lib/NotificationService.php`)
+  - 任務分配通知 (sendTaskAssigned)
+  - 狀態變更通知 (sendStatusChanged)
+  - 任務刪除通知 (sendTaskDeleted)
+  - 到期提醒通知 (sendDueReminder)
+  - Cron 任務支持 (checkAndSendDueReminders)
+
+- **瀏覽器推送通知** (Web Push API)
+  - 檢查/請求通知權限
+  - 顯示桌面通知 (10秒自動關閉)
+  - 點擊通知跳轉任務詳情
+  - 每30秒自動輪詢新通知
+  - 自動更新未讀數量標記
+
+- **郵件服務框架** (`lib/MailService.php`)
+  - SMTP 郵件發送基礎
+  - 到期提醒郵件模板
+  - 任務分配郵件模板
+  - 需配置 SMTP 後啟用
+
+**Phase 8: 實時數據同步**
+
+- 手動刷新按鈕 (頂部導航欄)
+- 通知輪詢機制 (每30秒自動檢查)
+- 自動推送桌面通知
+
+### 🗄️ Database (數據庫)
+
+- **新增遷移**: `20250110140000_add_created_by_to_notifications.sql`
+  - 為 notifications 表添加 created_by 欄位
+  - 追蹤通知觸發者
+
+### 🔗 Integration (集成)
+
+- **任務 API 集成通知**
+  - 創建任務時: 通知被分配成員
+  - 更新任務時: 通知狀態變更/分配變更
+  - 刪除任務時: 通知相關成員
+  - 智能去重 (不通知自己)
+
+### 📦 Files Changed
+
+- **新增**: `public/api/notifications.php` - 通知 API
+- **新增**: `lib/NotificationService.php` - 通知服務
+- **新增**: `lib/MailService.php` - 郵件服務
+- **新增**: `database/migrations/20250110140000_add_created_by_to_notifications.sql`
+- **修改**: `public/api/tasks.php` - 集成通知觸發
+- **修改**: `public/js/app.js` - 前端通知功能 (~260行新增)
+
+---
+
 ## [v1.2.0] - 2025-01-09
 
 ### 🔐 Security (安全加固)
