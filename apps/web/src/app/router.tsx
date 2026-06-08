@@ -4,6 +4,7 @@ import { AppLayout } from "@/components/AppLayout";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { CategoriesPage } from "@/features/categories/CategoriesPage";
+import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { TaskListPage } from "@/features/tasks/TaskListPage";
 import { TaskDetailPage } from "@/features/tasks/TaskDetailPage";
 
@@ -20,6 +21,7 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
           { path: "/tasks", element: <Navigate to="/" replace /> },
           { path: "/tasks/:id", element: <TaskDetailPage /> },
           { path: "/categories", element: <CategoriesPage /> },
+          { path: "/notifications", element: <NotificationsPage /> },
         ],
       },
     ],
