@@ -6,15 +6,32 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "ftm"
-database_id = "PLACEHOLDER_RUN_D1_CREATE"
+database_id = "98a7d90d-edad-46ea-9806-b9d09b3145e1"
 migrations_dir = "src/db/migrations"
 
 [[kv_namespaces]]
 binding = "SESSIONS"
-id = "PLACEHOLDER_RUN_KV_CREATE"
+id = "569ea27912b8430bab8602a231fe20b2"
 
 [triggers]
 crons = ["0 1 * * *"]
 
 [vars]
 ENVIRONMENT = "development"
+
+[env.production]
+[env.production.vars]
+ENVIRONMENT = "production"
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "ftm"
+database_id = "98a7d90d-edad-46ea-9806-b9d09b3145e1"
+migrations_dir = "src/db/migrations"
+
+[[env.production.kv_namespaces]]
+binding = "SESSIONS"
+id = "569ea27912b8430bab8602a231fe20b2"
+
+[env.production.triggers]
+crons = ["0 1 * * *"]

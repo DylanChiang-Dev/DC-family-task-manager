@@ -11,7 +11,7 @@ import { profileRoutes } from "./routes/profile";
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-const ALLOWED_ORIGINS = [
+const DEV_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:3000",
   "http://127.0.0.1:5173",
@@ -20,9 +20,14 @@ const ALLOWED_ORIGINS = [
 app.use(
   "*",
   cors({
-    origin: (origin) => {
+    origin: (origin, c) => {
       if (!origin) return "";
-      if (ALLOWED_ORIGINS.includes(origin)) return origin;
+      const extra = (c.env.ALLOWED_ORIGINS ?? "")
+        .split(",")
+        .map((s: string) => s.trim())
+        .filter(Boolean);
+      const allowed = [...DEV_ORIGINS, ...extra];
+      if (allowed.includes(origin)) return origin;
       return "";
     },
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
