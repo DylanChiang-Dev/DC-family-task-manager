@@ -3,6 +3,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { AppLayout } from "@/components/AppLayout";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
+import { CategoriesPage } from "@/features/categories/CategoriesPage";
 import { TaskListPage } from "@/features/tasks/TaskListPage";
 
 export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter([
@@ -16,6 +17,7 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
         children: [
           { path: "/", element: <TaskListPage /> },
           { path: "/tasks", element: <Navigate to="/" replace /> },
+          { path: "/categories", element: <CategoriesPage /> },
         ],
       },
     ],

@@ -21,6 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { useCategories } from "@/features/categories/hooks";
 import { ApiError } from "@/lib/api-client";
 import { useCreateTask, useUpdateTask } from "./hooks";
 
@@ -36,6 +37,7 @@ export function TaskFormDialog({
   const isEdit = !!task;
   const createMutation = useCreateTask();
   const updateMutation = useUpdateTask();
+  const { data: categories } = useCategories();
 
   const {
     register,
@@ -52,6 +54,7 @@ export function TaskFormDialog({
       status: task?.status ?? "pending",
       taskType: task?.taskType ?? "normal",
       dueDate: task?.dueDate ?? null,
+      categoryId: task?.categoryId ?? null,
     },
   });
 
@@ -60,6 +63,7 @@ export function TaskFormDialog({
       ...values,
       description: values.description || null,
       dueDate: values.dueDate || null,
+      categoryId: values.categoryId || null,
     };
 
     try {
@@ -116,6 +120,25 @@ export function TaskFormDialog({
                 {...register("dueDate", { setValueAs: (v) => v || null })}
               />
             </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>分類</Label>
+            <Select
+              defaultValue={watch("categoryId") ? String(watch("categoryId")) : "none"}
+              onValueChange={(v) => setValue("categoryId", v === "none" ? null : Number(v))}
+            >
+              <SelectTrigger aria-label="分類">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">不分類</SelectItem>
+                {(categories ?? []).map((category) => (
+                  <SelectItem key={category.id} value={String(category.id)}>
+                    {category.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>

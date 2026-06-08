@@ -16,6 +16,9 @@ beforeEach(() => {
     currentTeamId: 1,
     isBootstrapped: true,
   });
+  server.use(
+    http.get(`${BASE}/categories`, () => HttpResponse.json({ success: true, data: [] })),
+  );
 });
 
 describe("TaskFormDialog", () => {
