@@ -350,8 +350,12 @@ authRoutes.post(
       columns: { username: true },
     });
 
+    if (!user) {
+      return c.json(fail("UNAUTHORIZED", "Refresh token 無效或已過期"), 401);
+    }
+
     const accessToken = await signAccessToken(
-      { sub: payload.sub, username: user?.username ?? "" },
+      { sub: payload.sub, username: user.username },
       c.env.JWT_SECRET,
     );
     const jti = generateJti();

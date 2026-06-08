@@ -20,7 +20,16 @@ export function shouldShowRecurringTask(
   if (!config) return false;
 
   const [y, m, d] = dateStr.split("-").map(Number);
-  if (y == null || m == null || d == null) return false;
+  if (
+    y == null ||
+    m == null ||
+    d == null ||
+    Number.isNaN(y) ||
+    Number.isNaN(m) ||
+    Number.isNaN(d)
+  ) {
+    return false;
+  }
 
   const date = new Date(y, m - 1, d);
 

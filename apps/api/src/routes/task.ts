@@ -248,6 +248,22 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
     }
   }
 
+  // 驗證週期任務配置一致性
+  const finalTaskType = body.taskType ?? existing.taskType;
+  let finalRecurrenceConfig = body.recurrenceConfig !== undefined ? body.recurrenceConfig : existing.recurrenceConfig;
+
+  // 如果任務類型變更為非週期任務，且未明確傳入 recurrenceConfig，則自動將其清空
+  if (body.taskType !== undefined && body.taskType !== "recurring" && body.recurrenceConfig === undefined) {
+    finalRecurrenceConfig = null;
+  }
+
+  if (finalTaskType === "recurring" && !finalRecurrenceConfig) {
+    return c.json(fail("VALIDATION_ERROR", "週期任務必須提供週期配置 (recurrenceConfig)"), 400);
+  }
+  if (finalTaskType !== "recurring" && finalRecurrenceConfig) {
+    return c.json(fail("VALIDATION_ERROR", "只有週期任務才能設置週期配置"), 400);
+  }
+
   // L-04: 使用 Partial 類型代替 Record<string, unknown> 增強類型安全
   const updateData: Partial<typeof tasks.$inferInsert> = { updatedAt: new Date() };
   const changes: Record<string, unknown> = {};
@@ -291,6 +307,10 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
   if (body.taskType !== undefined && body.taskType !== existing.taskType) {
     updateData.taskType = body.taskType;
     changes.taskType = body.taskType;
+    if (body.taskType !== "recurring" && body.recurrenceConfig === undefined && existing.recurrenceConfig !== null) {
+      updateData.recurrenceConfig = null;
+      changes.recurrenceConfig = null;
+    }
   }
   if (body.recurrenceConfig !== undefined) {
     updateData.recurrenceConfig = body.recurrenceConfig;
