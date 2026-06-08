@@ -1,6 +1,7 @@
 // WebCrypto PBKDF2 密碼哈希（Workers 原生支持）
 
-const ITERATIONS = 600_000;
+// CF Workers WebCrypto PBKDF2 limit is 100,000 iterations
+const ITERATIONS = 100_000;
 const KEY_LEN_BITS = 256;
 const SALT_LEN_BYTES = 16;
 
