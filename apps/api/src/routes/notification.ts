@@ -29,11 +29,11 @@ notificationRoutes.get("/", async (c) => {
     .orderBy(desc(notifications.createdAt))
     .limit(50);
 
-  // Count total unread
-  const unreadRows = await db
-    .select()
-    .from(notifications)
-    .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+  // M-01: 使用 COUNT 而非全量查詢
+  const unreadCount = await db.$count(
+    notifications,
+    and(eq(notifications.userId, userId), eq(notifications.isRead, false)),
+  );
 
   // Batch-load creator names
   const creatorIds = [...new Set(rows.map((n) => n.createdBy).filter(Boolean))] as number[];
@@ -60,7 +60,7 @@ notificationRoutes.get("/", async (c) => {
         isRead: n.isRead,
         createdAt: n.createdAt.getTime(),
       })),
-      unreadCount: unreadRows.length,
+      unreadCount,
     }),
   );
 });

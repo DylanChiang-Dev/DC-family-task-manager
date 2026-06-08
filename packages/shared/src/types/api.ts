@@ -1,4 +1,4 @@
-import type { TaskPriority, TaskStatus, TaskType, TeamRole, HistoryAction } from "../constants/enums";
+import type { TaskPriority, TaskStatus, TaskType, TeamRole, HistoryAction, NotificationType } from "../constants/enums";
 import type { RecurrenceConfig } from "../schemas/recurrence";
 
 // ── API 響應包裝類型 ──
@@ -75,6 +75,7 @@ export interface TeamDetail {
   name: string;
   inviteCode: string;
   createdBy: number;
+  role: TeamRole;
   createdAt: number;
   updatedAt: number;
 }
@@ -155,7 +156,7 @@ export interface NotificationResponse {
   createdByName: string | null;
   createdByNickname: string | null;
   taskId: number | null;
-  type: string;
+  type: NotificationType;
   content: string;
   isRead: boolean;
   createdAt: number;

@@ -4,7 +4,7 @@ import { createTaskSchema, updateTaskSchema, createCommentSchema } from "@ftm/sh
 import type { TaskResponse, TaskStatus } from "@ftm/shared";
 import type { Env, Variables } from "../types";
 import { createDb } from "../db/client";
-import { users, tasks, taskComments, taskHistory, notifications, categories } from "../db/schema";
+import { users, tasks, taskComments, taskHistory, notifications, categories, teamMembers } from "../db/schema";
 import { eq, and, inArray, desc } from "drizzle-orm";
 import { authMiddleware } from "../middleware/auth";
 import { teamMiddleware } from "../middleware/team";
@@ -66,10 +66,29 @@ function shapeTask(
     taskType: t.taskType,
     recurrenceConfig: t.recurrenceConfig,
     parentTaskId: t.parentTaskId,
-    completedAt: t.completedAt?.getTime?.() ?? null,
+    // L-03: completedAt 在 timestamp_ms mode 下一定是 Date | null，不需雙層可選鏈
+    completedAt: t.completedAt ? t.completedAt.getTime() : null,
     createdAt: t.createdAt.getTime(),
     updatedAt: t.updatedAt.getTime(),
   };
+}
+
+// M-05: 驗證 assigneeId 是否為團隊成員
+async function validateAssignee(db: ReturnType<typeof createDb>, teamId: number, assigneeId: number): Promise<boolean> {
+  const member = await db.query.teamMembers.findFirst({
+    where: and(eq(teamMembers.teamId, teamId), eq(teamMembers.userId, assigneeId)),
+    columns: { id: true },
+  });
+  return !!member;
+}
+
+// M-06: 驗證 categoryId 是否屬於當前團隊
+async function validateCategory(db: ReturnType<typeof createDb>, teamId: number, categoryId: number): Promise<boolean> {
+  const cat = await db.query.categories.findFirst({
+    where: and(eq(categories.id, categoryId), eq(categories.teamId, teamId)),
+    columns: { id: true },
+  });
+  return !!cat;
 }
 
 // ── GET /tasks ──
@@ -132,6 +151,22 @@ taskRoutes.post("/", zValidator("json", createTaskSchema, zodErrorHook), async (
   const userId = c.get("userId")!;
   const body = c.req.valid("json");
   const db = createDb(c.env.DB);
+
+  // M-05: 驗證 assigneeId 是否為團隊成員
+  if (body.assigneeId) {
+    const isValid = await validateAssignee(db, teamId, body.assigneeId);
+    if (!isValid) {
+      return c.json(fail("VALIDATION_ERROR", "指派對象不是團隊成員"), 400);
+    }
+  }
+
+  // M-06: 驗證 categoryId 是否屬於當前團隊
+  if (body.categoryId) {
+    const isValid = await validateCategory(db, teamId, body.categoryId);
+    if (!isValid) {
+      return c.json(fail("VALIDATION_ERROR", "分類不屬於當前團隊"), 400);
+    }
+  }
 
   const [task] = await db
     .insert(tasks)
@@ -197,7 +232,24 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
     return c.json(fail("NOT_FOUND", "任務不存在"), 404);
   }
 
-  const updateData: Record<string, unknown> = { updatedAt: new Date() };
+  // M-05: 驗證 assigneeId
+  if (body.assigneeId !== undefined && body.assigneeId !== null && body.assigneeId !== existing.assigneeId) {
+    const isValid = await validateAssignee(db, teamId, body.assigneeId);
+    if (!isValid) {
+      return c.json(fail("VALIDATION_ERROR", "指派對象不是團隊成員"), 400);
+    }
+  }
+
+  // M-06: 驗證 categoryId
+  if (body.categoryId !== undefined && body.categoryId !== null && body.categoryId !== existing.categoryId) {
+    const isValid = await validateCategory(db, teamId, body.categoryId);
+    if (!isValid) {
+      return c.json(fail("VALIDATION_ERROR", "分類不屬於當前團隊"), 400);
+    }
+  }
+
+  // L-04: 使用 Partial 類型代替 Record<string, unknown> 增強類型安全
+  const updateData: Partial<typeof tasks.$inferInsert> = { updatedAt: new Date() };
   const changes: Record<string, unknown> = {};
 
   if (body.title !== undefined && body.title !== existing.title) {
@@ -226,6 +278,10 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
     if (body.status === "completed") {
       updateData.completedAt = new Date();
       changes.completedAt = Date.now();
+    } else if (existing.status === "completed") {
+      // M-07: 從 completed 改為其他狀態時，清除 completedAt
+      updateData.completedAt = null;
+      changes.completedAt = null;
     }
   }
   if (body.dueDate !== undefined) {
@@ -261,6 +317,7 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
     return c.json(fail("INTERNAL", "更新任務失敗"), 500);
   }
 
+  // M-04: 記錄主要 action，但 changes 物件已包含所有變更欄位
   const action =
     changes.status ? "status_changed" :
     changes.assigneeId ? "assigned" : "updated";
@@ -293,7 +350,7 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
           createdBy: userId,
           taskId,
           type: "status_changed",
-          content: `任務「${body.title ?? existing.title}」狀態已變更為 ${body.status ?? existing.status}`,
+          content: `任務「${body.title ?? existing.title}」狀態已變更為 ${body.status}`,
         });
       }
     }
@@ -308,9 +365,11 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
 });
 
 // ── DELETE /tasks/:id ──
+// L-09: 限制只有 creator 或 admin 才能刪除
 taskRoutes.delete("/:id", async (c) => {
   const teamId = c.get("teamId")!;
   const userId = c.get("userId")!;
+  const memberRole = c.get("memberRole");
   const taskId = Number(c.req.param("id"));
   const db = createDb(c.env.DB);
 
@@ -325,6 +384,13 @@ taskRoutes.delete("/:id", async (c) => {
     return c.json(fail("NOT_FOUND", "任務不存在"), 404);
   }
 
+  // L-09: 只有創建者或 admin 才能刪除任務
+  if (existing.creatorId !== userId && memberRole !== "admin") {
+    return c.json(fail("FORBIDDEN", "只有任務創建者或管理員才能刪除"), 403);
+  }
+
+  // S-03: taskHistory 和 notifications 的 taskId 已改為 SET NULL，
+  // 刪除 task 後相關記錄會保留（taskId 變為 null）
   await db.insert(taskHistory).values({
     taskId,
     userId,

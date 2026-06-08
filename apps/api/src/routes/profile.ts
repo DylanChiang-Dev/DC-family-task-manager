@@ -9,6 +9,7 @@ import { authMiddleware } from "../middleware/auth";
 import { fail, ok } from "../lib/response";
 import { zodErrorHook } from "../lib/zod-hook";
 import { hashPassword, verifyPassword } from "../lib/password";
+import { revokeAllUserSessions } from "../lib/kv-session";
 
 export const profileRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -64,12 +65,18 @@ profileRoutes.patch(
       updateData.email = body.email;
     }
     if (body.newPassword) {
-      // Validate old password
-      const valid = await verifyPassword(body.currentPassword!, user.passwordHash);
+      // S-02: 防禦性檢查，即使 superRefine 已保證
+      if (!body.currentPassword) {
+        return c.json(fail("VALIDATION_ERROR", "修改密碼需要提供當前密碼"), 400);
+      }
+      const valid = await verifyPassword(body.currentPassword, user.passwordHash);
       if (!valid) {
         return c.json(fail("UNAUTHORIZED", "當前密碼錯誤"), 401);
       }
       updateData.passwordHash = await hashPassword(body.newPassword);
+
+      // S-01: 改密碼後吊銷所有 refresh token，強制全端重新登錄
+      await revokeAllUserSessions(c.env.SESSIONS, userId);
     }
 
     if (Object.keys(updateData).length <= 1) {

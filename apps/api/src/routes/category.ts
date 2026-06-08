@@ -118,7 +118,7 @@ categoryRoutes.patch(
       }
     }
 
-    const updateData: Record<string, unknown> = {};
+    const updateData: Partial<typeof categories.$inferInsert> = {};
     if (body.name !== undefined) updateData.name = body.name;
     if (body.color !== undefined) updateData.color = body.color;
 

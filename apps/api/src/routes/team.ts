@@ -20,40 +20,73 @@ export const teamRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 teamRoutes.use("*", authMiddleware);
 
-// ── GET /teams — 我的所有團隊 ──
-teamRoutes.get("/", async (c) => {
-  const userId = c.get("userId")!;
-  const db = createDb(c.env.DB);
+// S-04: 驗證 URL param :id 與 header X-Team-Id 一致的 helper
+function validateTeamIdParam(c: { req: { param: (name: string) => string }; get: (key: string) => unknown; json: (body: unknown, status: number) => Response }): number | Response {
+  const paramId = Number(c.req.param("id"));
+  const headerTeamId = c.get("teamId") as number;
+  if (Number.isNaN(paramId)) {
+    return c.json(fail("VALIDATION_ERROR", "無效的團隊 ID"), 400);
+  }
+  if (paramId !== headerTeamId) {
+    return c.json(fail("VALIDATION_ERROR", "URL 中的團隊 ID 與 X-Team-Id header 不一致"), 400);
+  }
+  return paramId;
+}
 
+// ── 共用：查詢用戶的所有團隊（L-01 抽取重複邏輯）──
+async function loadUserTeams(db: ReturnType<typeof createDb>, userId: number) {
   const memberRows = await db.query.teamMembers.findMany({
     where: eq(teamMembers.userId, userId),
   });
 
-  const teamsList = await Promise.all(
-    memberRows.map(async (m) => {
-      const t = await db.query.teams.findFirst({
-        where: eq(teams.id, m.teamId),
-      });
+  if (memberRows.length === 0) return [];
+
+  // 批量查詢所有相關 team，避免 N+1
+  const teamIds = memberRows.map((m) => m.teamId);
+  const teamRows = await db.query.teams.findMany({
+    where: (t, { inArray }) => inArray(t.id, teamIds),
+  });
+  const teamMap = new Map(teamRows.map((t) => [t.id, t]));
+
+  // M-02: 批量計算 memberCount（一次查詢所有團隊的成員數）
+  const allMembers = await db.query.teamMembers.findMany({
+    where: (tm, { inArray }) => inArray(tm.teamId, teamIds),
+    columns: { teamId: true },
+  });
+  const countMap = new Map<number, number>();
+  for (const m of allMembers) {
+    countMap.set(m.teamId, (countMap.get(m.teamId) ?? 0) + 1);
+  }
+
+  return memberRows
+    .map((m) => {
+      const t = teamMap.get(m.teamId);
       if (!t) return null;
       return {
         id: t.id,
         name: t.name,
         inviteCode: t.inviteCode,
         role: m.role,
-        memberCount: 0,
+        memberCount: countMap.get(t.id) ?? 0,
         createdAt: t.createdAt.getTime(),
       };
-    }),
-  );
+    })
+    .filter(Boolean) as {
+      id: number;
+      name: string;
+      inviteCode: string;
+      role: string;
+      memberCount: number;
+      createdAt: number;
+    }[];
+}
 
-  const filtered = teamsList.filter(Boolean) as NonNullable<(typeof teamsList)[number]>[];
+// ── GET /teams — 我的所有團隊 ──
+teamRoutes.get("/", async (c) => {
+  const userId = c.get("userId")!;
+  const db = createDb(c.env.DB);
 
-  for (const team of filtered) {
-    const members = await db.query.teamMembers.findMany({
-      where: eq(teamMembers.teamId, team.id),
-    });
-    team.memberCount = members.length;
-  }
+  const teamsList = await loadUserTeams(db, userId);
 
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
@@ -61,7 +94,7 @@ teamRoutes.get("/", async (c) => {
 
   return c.json(
     ok({
-      teams: filtered,
+      teams: teamsList,
       currentTeamId: user?.currentTeamId ?? null,
     }),
   );
@@ -201,8 +234,11 @@ teamRoutes.post("/switch", zValidator("json", switchTeamSchema, zodErrorHook), a
 
 // ── GET /teams/:id — 團隊詳情 ──
 teamRoutes.get("/:id", teamMiddleware, async (c) => {
-  const teamId = c.get("teamId")!;
-  const userId = c.get("userId")!;
+  // S-04: 驗證 URL param 與 header 一致
+  const result = validateTeamIdParam(c);
+  if (result instanceof Response) return result;
+  const teamId = result;
+
   const memberRole = c.get("memberRole")!;
   const db = createDb(c.env.DB);
 
@@ -228,7 +264,10 @@ teamRoutes.get("/:id", teamMiddleware, async (c) => {
 
 // ── GET /teams/:id/members — 團隊成員列表 ──
 teamRoutes.get("/:id/members", teamMiddleware, async (c) => {
-  const teamId = c.get("teamId")!;
+  const result = validateTeamIdParam(c);
+  if (result instanceof Response) return result;
+  const teamId = result;
+
   const db = createDb(c.env.DB);
 
   const members = await db.query.teamMembers.findMany({
@@ -236,25 +275,32 @@ teamRoutes.get("/:id/members", teamMiddleware, async (c) => {
     orderBy: (tm, { asc }) => [asc(tm.joinedAt)],
   });
 
-  const result = await Promise.all(
-    members.map(async (m) => {
-      const u = await db.query.users.findFirst({
-        where: eq(users.id, m.userId),
+  const userIds = members.map((m) => m.userId);
+  // 批量查用戶避免 N+1
+  const userRows = userIds.length > 0
+    ? await db.query.users.findMany({
+        where: (u, { inArray }) => inArray(u.id, userIds),
         columns: { id: true, username: true, nickname: true },
-      });
-      return {
-        id: m.id,
-        teamId: m.teamId,
-        userId: m.userId,
-        username: u?.username ?? "",
-        nickname: u?.nickname ?? "",
-        role: m.role,
-        joinedAt: m.joinedAt.getTime(),
-      };
-    }),
-  );
+      })
+    : [];
+  const userMap = new Map(userRows.map((u) => [u.id, u]));
 
-  return c.json(ok(result));
+  return c.json(
+    ok(
+      members.map((m) => {
+        const u = userMap.get(m.userId);
+        return {
+          id: m.id,
+          teamId: m.teamId,
+          userId: m.userId,
+          username: u?.username ?? "",
+          nickname: u?.nickname ?? "",
+          role: m.role,
+          joinedAt: m.joinedAt.getTime(),
+        };
+      }),
+    ),
+  );
 });
 
 // ── PATCH /teams/:id — 更新團隊（改名）─
@@ -264,7 +310,10 @@ teamRoutes.patch(
   requireAdmin,
   zValidator("json", updateTeamSchema, zodErrorHook),
   async (c) => {
-    const teamId = c.get("teamId")!;
+    const result = validateTeamIdParam(c);
+    if (result instanceof Response) return result;
+    const teamId = result;
+
     const body = c.req.valid("json");
     const db = createDb(c.env.DB);
 
@@ -288,7 +337,10 @@ teamRoutes.patch(
 
 // ── POST /teams/:id/invite-code — 重新生成邀請碼 ──
 teamRoutes.post("/:id/invite-code", teamMiddleware, requireAdmin, async (c) => {
-  const teamId = c.get("teamId")!;
+  const result = validateTeamIdParam(c);
+  if (result instanceof Response) return result;
+  const teamId = result;
+
   const db = createDb(c.env.DB);
 
   let newCode = "";
@@ -312,11 +364,15 @@ teamRoutes.post("/:id/invite-code", teamMiddleware, requireAdmin, async (c) => {
   return c.json(ok({ inviteCode: newCode }));
 });
 
-// ── DELETE /teams/:id/members/:userId — 移除成員 ──
-teamRoutes.delete("/:id/members/:userId", teamMiddleware, requireAdmin, async (c) => {
-  const teamId = c.get("teamId")!;
+// ── DELETE /teams/:id/members/:memberId — 移除成員 ──
+// L-06: URL param 改名為 :memberId 避免與登錄 userId 混淆
+teamRoutes.delete("/:id/members/:memberId", teamMiddleware, requireAdmin, async (c) => {
+  const result = validateTeamIdParam(c);
+  if (result instanceof Response) return result;
+  const teamId = result;
+
   const userId = c.get("userId")!;
-  const targetUserId = Number(c.req.param("userId"));
+  const targetUserId = Number(c.req.param("memberId"));
   const db = createDb(c.env.DB);
 
   if (Number.isNaN(targetUserId)) {
@@ -363,7 +419,11 @@ teamRoutes.delete("/:id/members/:userId", teamMiddleware, requireAdmin, async (c
 
 // ── DELETE /teams/:id — 刪除團隊 ──
 teamRoutes.delete("/:id", teamMiddleware, requireAdmin, async (c) => {
-  const teamId = c.get("teamId")!;
+  const result = validateTeamIdParam(c);
+  if (result instanceof Response) return result;
+  const teamId = result;
+
+  const userId = c.get("userId")!;
   const db = createDb(c.env.DB);
 
   // 檢查團隊人數
@@ -373,6 +433,17 @@ teamRoutes.delete("/:id", teamMiddleware, requireAdmin, async (c) => {
   }
 
   await db.delete(teams).where(eq(teams.id, teamId));
+
+  // M-03: 刪除團隊後清除 admin 的 currentTeamId
+  await db
+    .update(users)
+    .set({ currentTeamId: null, updatedAt: new Date() })
+    .where(
+      and(
+        eq(users.id, userId),
+        eq(users.currentTeamId, teamId),
+      ),
+    );
 
   return c.json(ok({ message: "團隊已刪除" }));
 });

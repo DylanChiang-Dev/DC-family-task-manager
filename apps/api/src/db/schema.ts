@@ -180,8 +180,7 @@ export const taskHistory = sqliteTable(
   {
     id: integer("id").primaryKey({ autoIncrement: true }),
     taskId: integer("task_id")
-      .notNull()
-      .references(() => tasks.id, { onDelete: "cascade" }),
+      .references(() => tasks.id, { onDelete: "set null" }),
     userId: integer("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
@@ -209,7 +208,7 @@ export const notifications = sqliteTable(
       onDelete: "set null",
     }),
     taskId: integer("task_id").references(() => tasks.id, {
-      onDelete: "cascade",
+      onDelete: "set null",
     }),
     type: text("type", { enum: [...NOTIFICATION_TYPE] }).notNull(),
     content: text("content").notNull(),

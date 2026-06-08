@@ -25,21 +25,12 @@ import {
 } from "../lib/kv-session";
 import { authMiddleware } from "../middleware/auth";
 import { fail, ok } from "../lib/response";
+import { zodErrorHook } from "../lib/zod-hook";
+
 export const authRoutes = new Hono<{
   Bindings: Env;
   Variables: Variables;
 }>();
-
-// M-09: 統一 Zod 驗證錯誤格式的 hook
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function zodErrorHook(result: { success: boolean; error?: any; data?: unknown }, c: { json: (body: unknown, status: number) => Response }) {
-  if (!result.success) {
-    return c.json(
-      fail("VALIDATION_ERROR", "請求參數驗證失敗", result.error?.flatten?.()),
-      400,
-    );
-  }
-}
 
 // ── POST /auth/register ──
 authRoutes.post(
