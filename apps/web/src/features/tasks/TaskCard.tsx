@@ -1,4 +1,5 @@
 import type { TaskResponse, TaskStatus } from "@ftm/shared";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -38,7 +39,9 @@ export function TaskCard({
     <Card className="flex items-center justify-between gap-3 p-4">
       <div className="min-w-0">
         <div className="flex items-center gap-2">
-          <span className="truncate font-medium">{task.title}</span>
+          <Link className="truncate font-medium underline-offset-4 hover:underline" to={`/tasks/${task.id}`}>
+            {task.title}
+          </Link>
           <Badge variant="secondary">{PRIORITY_LABEL[task.priority]}</Badge>
           {task.categoryName && (
             <Badge style={{ backgroundColor: task.categoryColor ?? undefined }}>

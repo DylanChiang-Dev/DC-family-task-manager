@@ -1,5 +1,8 @@
 import type {
+  CreateCommentInput,
   CreateTaskInput,
+  TaskCommentResponse,
+  TaskHistoryResponse,
   TaskResponse,
   TaskStatus,
   UpdateTaskInput,
@@ -13,6 +16,10 @@ export function fetchTasks(status: TaskStatusFilter) {
   return request<TaskResponse[]>(`/tasks${qs}`);
 }
 
+export function fetchTask(id: number) {
+  return request<TaskResponse>(`/tasks/${id}`);
+}
+
 export function createTask(input: CreateTaskInput) {
   return request<TaskResponse>("/tasks", { method: "POST", body: input });
 }
@@ -23,4 +30,19 @@ export function updateTask(id: number, input: UpdateTaskInput) {
 
 export function deleteTask(id: number) {
   return request<{ message: string }>(`/tasks/${id}`, { method: "DELETE" });
+}
+
+export function fetchTaskComments(id: number) {
+  return request<TaskCommentResponse[]>(`/tasks/${id}/comments`);
+}
+
+export function createTaskComment(id: number, input: CreateCommentInput) {
+  return request<TaskCommentResponse>(`/tasks/${id}/comments`, {
+    method: "POST",
+    body: input,
+  });
+}
+
+export function fetchTaskHistory(id: number) {
+  return request<TaskHistoryResponse[]>(`/tasks/${id}/history`);
 }
