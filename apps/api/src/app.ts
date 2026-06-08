@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import type { Env, Variables } from "./types";
 import { fail, ok } from "./lib/response";
+import { authRoutes } from "./routes/auth";
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -29,8 +30,8 @@ app.get("/api/health", (c) =>
   ),
 );
 
-// ── 業務路由（後續 Phase 逐步掛載）──
-// app.route("/api/auth", authRoutes);
+// ── 業務路由 ──
+app.route("/api/auth", authRoutes);
 // app.route("/api/tasks", taskRoutes);
 // ...
 

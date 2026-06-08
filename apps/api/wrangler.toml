@@ -4,19 +4,16 @@ compatibility_date = "2025-01-01"
 compatibility_flags = ["nodejs_compat"]
 
 # ── D1 數據庫綁定 ──
-# 創建：pnpm --filter @ftm/api exec wrangler d1 create ftm
-# 然後把生成的 database_id 填到下面。
 [[d1_databases]]
 binding = "DB"
 database_name = "ftm"
 database_id = "PLACEHOLDER_RUN_D1_CREATE"
 migrations_dir = "src/db/migrations"
 
-# ── KV：存 refresh token / 限流計數 ──
-# 創建：pnpm --filter @ftm/api exec wrangler kv namespace create SESSIONS
-# [[kv_namespaces]]
-# binding = "SESSIONS"
-# id = "PLACEHOLDER_RUN_KV_CREATE"
+# ── KV：存 refresh token ──
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "PLACEHOLDER_RUN_KV_CREATE"
 
 # ── 定時任務：每日掃描到期任務（Phase 5 啟用）──
 # [triggers]
