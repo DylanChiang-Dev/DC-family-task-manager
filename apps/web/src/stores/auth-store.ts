@@ -9,6 +9,7 @@ interface AuthState {
   isBootstrapped: boolean;
   setAccessToken: (token: string) => void;
   setAuth: (p: { accessToken: string; user: AuthUser; currentTeamId: number | null }) => void;
+  setUser: (user: AuthUser) => void;
   setCurrentTeamId: (id: number) => void;
   setBootstrapped: (v: boolean) => void;
   clearAuth: () => void;
@@ -24,6 +25,7 @@ export const useAuthStore = create<AuthState>()(
       setAccessToken: (token) => set({ accessToken: token }),
       setAuth: ({ accessToken, user, currentTeamId }) =>
         set({ accessToken, user, currentTeamId }),
+      setUser: (user) => set({ user }),
       setCurrentTeamId: (id) => set({ currentTeamId: id }),
       setBootstrapped: (v) => set({ isBootstrapped: v }),
       clearAuth: () => set({ accessToken: null, user: null }),

@@ -6,7 +6,10 @@ import { Toaster } from "@/components/ui/sonner";
 import { router } from "@/app/router";
 import { useBootstrapAuth } from "@/app/useBootstrapAuth";
 import { queryClient } from "@/lib/query-client";
+import { bootstrapTheme } from "@/stores/theme-store";
 import "./index.css";
+
+bootstrapTheme();
 
 function Root() {
   const ready = useBootstrapAuth();
