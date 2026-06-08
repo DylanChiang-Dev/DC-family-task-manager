@@ -1,0 +1,23 @@
+{
+  "name": "family-task-manager",
+  "version": "0.1.0",
+  "private": true,
+  "description": "家庭任務管理系統 — 全 Cloudflare 全棧重構（Hono + React + D1）",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=20",
+    "pnpm": ">=9"
+  },
+  "scripts": {
+    "dev:api": "pnpm --filter @ftm/api dev",
+    "build": "pnpm -r build",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @ftm/api db:generate",
+    "db:migrate:local": "pnpm --filter @ftm/api db:migrate:local",
+    "db:migrate:remote": "pnpm --filter @ftm/api db:migrate:remote"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3"
+  }
+}

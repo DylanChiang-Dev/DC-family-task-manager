@@ -1,18 +1,30 @@
-# Environment files
-.env
-
-# Configuration files (generated during installation)
-config/database.php
-config/config.php
-config/installed.lock
-
-# Composer
-vendor/
-composer.lock
-
-# Node modules (if any)
+# Dependencies
 node_modules/
-package-lock.json
+
+# Build output
+dist/
+build/
+.output/
+
+# Cloudflare / Wrangler
+.wrangler/
+.dev.vars
+.dev.vars.*
+wrangler.toml.bak
+
+# Drizzle / local D1
+apps/api/.wrangler/
+*.sqlite
+*.sqlite-journal
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+logs/
 
 # IDE
 .vscode/
@@ -26,13 +38,6 @@ package-lock.json
 Thumbs.db
 Desktop.ini
 
-# Logs
-*.log
-logs/
-
-# Temporary files
-tmp/
-temp/
-
-# PHP
-.phpunit.result.cache
+# Misc
+.turbo/
+coverage/

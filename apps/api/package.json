@@ -1,0 +1,26 @@
+{
+  "name": "@ftm/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate:local": "wrangler d1 migrations apply ftm --local",
+    "db:migrate:remote": "wrangler d1 migrations apply ftm --remote"
+  },
+  "dependencies": {
+    "@ftm/shared": "workspace:*",
+    "drizzle-orm": "^0.38.3",
+    "hono": "^4.6.16"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20250109.0",
+    "drizzle-kit": "^0.30.1",
+    "typescript": "^5.7.3",
+    "wrangler": "^3.99.0"
+  }
+}
