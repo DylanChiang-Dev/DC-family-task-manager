@@ -48,19 +48,16 @@ export interface RegisterResponse {
   user: AuthUser;
   team: AuthTeam;
   accessToken: string;
-  refreshToken: string;
 }
 
 export interface LoginResponse {
   user: AuthUser;
   team: AuthTeam | null;
   accessToken: string;
-  refreshToken: string;
 }
 
 export interface RefreshResponse {
   accessToken: string;
-  refreshToken: string;
 }
 
 export interface MeResponse {
@@ -70,6 +67,22 @@ export interface MeResponse {
 }
 
 // ── Team 響應 ──
+
+/** GET /teams 回傳的列表項目（含 memberCount） */
+export interface TeamListItem {
+  id: number;
+  name: string;
+  inviteCode: string;
+  role: TeamRole;
+  memberCount: number;
+  createdAt: number;
+}
+
+export interface TeamsListResponse {
+  teams: TeamListItem[];
+  currentTeamId: number | null;
+}
+
 export interface TeamDetail {
   id: number;
   name: string;
@@ -139,7 +152,7 @@ export interface TaskCommentResponse {
 // ── Task History 響應 ──
 export interface TaskHistoryResponse {
   id: number;
-  taskId: number;
+  taskId: number | null;
   userId: number;
   username: string;
   nickname: string;

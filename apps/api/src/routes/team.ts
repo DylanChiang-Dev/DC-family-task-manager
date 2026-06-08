@@ -426,10 +426,16 @@ teamRoutes.delete("/:id", teamMiddleware, requireAdmin, async (c) => {
   const userId = c.get("userId")!;
   const db = createDb(c.env.DB);
 
-  // 檢查團隊人數
+  // 禁止刪除有其他成員的團隊
   const memberCount = await db.$count(teamMembers, eq(teamMembers.teamId, teamId));
   if (memberCount > 1) {
     return c.json(fail("FORBIDDEN", "團隊仍有其他成員，無法刪除"), 403);
+  }
+
+  // 禁止刪除使用者的最後一個團隊
+  const userTeamCount = await db.$count(teamMembers, eq(teamMembers.userId, userId));
+  if (userTeamCount <= 1) {
+    return c.json(fail("FORBIDDEN", "無法刪除唯一團隊"), 403);
   }
 
   await db.delete(teams).where(eq(teams.id, teamId));

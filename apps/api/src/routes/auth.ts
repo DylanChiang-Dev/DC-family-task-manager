@@ -1,10 +1,10 @@
 import { Hono } from "hono";
+import type { Context } from "hono";
 import { zValidator } from "@hono/zod-validator";
+import { setCookie, getCookie, deleteCookie } from "hono/cookie";
 import {
   registerSchema,
   loginSchema,
-  refreshSchema,
-  logoutSchema,
 } from "@ftm/shared";
 import type { Env, Variables } from "../types";
 import { createDb } from "../db/client";
@@ -26,6 +26,26 @@ import {
 import { authMiddleware } from "../middleware/auth";
 import { fail, ok } from "../lib/response";
 import { zodErrorHook } from "../lib/zod-hook";
+
+type AppCtx = Context<{ Bindings: Env; Variables: Variables }>;
+
+const REFRESH_COOKIE = "refreshToken";
+const REFRESH_TTL_SEC = 31 * 24 * 60 * 60;
+
+function setRefreshCookie(c: AppCtx, token: string) {
+  const isProd = c.env.ENVIRONMENT === "production";
+  setCookie(c, REFRESH_COOKIE, token, {
+    httpOnly: true,
+    secure: isProd,
+    sameSite: isProd ? "None" : "Lax",
+    path: "/api/auth",
+    maxAge: REFRESH_TTL_SEC,
+  });
+}
+
+function clearRefreshCookie(c: AppCtx) {
+  deleteCookie(c, REFRESH_COOKIE, { path: "/api/auth" });
+}
 
 export const authRoutes = new Hono<{
   Bindings: Env;
@@ -134,10 +154,9 @@ authRoutes.post(
         c.env.JWT_REFRESH_SECRET,
       );
 
-      // M-04: SESSIONS 現在是必需的，不再做 optional 檢查
       await saveRefreshToken(c.env.SESSIONS, user.id, jti);
+      setRefreshCookie(c, refreshToken);
 
-      // M-08: 使用 DB 返回的 createdAt 而非 Date.now()
       return c.json(
         ok({
           user: {
@@ -155,7 +174,6 @@ authRoutes.post(
             role: "admin" as const,
           },
           accessToken,
-          refreshToken,
         }),
         201,
       );
@@ -163,7 +181,6 @@ authRoutes.post(
       // join 模式 — joinTeam 已在上面驗證過
       const team = joinTeam!;
 
-      // 創建用戶
       const [user] = await db
         .insert(users)
         .values({
@@ -176,7 +193,6 @@ authRoutes.post(
         return c.json(fail("INTERNAL", "創建用戶失敗"), 500);
       }
 
-      // 創建團隊成員 + 更新用戶當前團隊
       await db.insert(teamMembers).values({
         teamId: team.id,
         userId: user.id,
@@ -188,7 +204,6 @@ authRoutes.post(
         .set({ currentTeamId: team.id, updatedAt: new Date() })
         .where(eq(users.id, user.id));
 
-      // 簽發 token
       const accessToken = await signAccessToken(
         { sub: user.id, username: body.username },
         c.env.JWT_SECRET,
@@ -200,6 +215,7 @@ authRoutes.post(
       );
 
       await saveRefreshToken(c.env.SESSIONS, user.id, jti);
+      setRefreshCookie(c, refreshToken);
 
       return c.json(
         ok({
@@ -218,7 +234,6 @@ authRoutes.post(
             role: "member" as const,
           },
           accessToken,
-          refreshToken,
         }),
         201,
       );
@@ -273,6 +288,7 @@ authRoutes.post(
     );
 
     await saveRefreshToken(c.env.SESSIONS, user.id, jti);
+    setRefreshCookie(c, refreshToken);
 
     let teamData: {
       id: number;
@@ -313,81 +329,69 @@ authRoutes.post(
         },
         team: teamData,
         accessToken,
-        refreshToken,
       }),
     );
   },
 );
 
 // ── POST /auth/refresh ──
-authRoutes.post(
-  "/refresh",
-  zValidator("json", refreshSchema, zodErrorHook),
-  async (c) => {
-    const body = c.req.valid("json");
+authRoutes.post("/refresh", async (c) => {
+  const token = getCookie(c, REFRESH_COOKIE);
+  if (!token) {
+    return c.json(fail("UNAUTHORIZED", "未登錄或 session 已過期"), 401);
+  }
 
-    const payload = await verifyRefreshToken(
-      body.refreshToken,
-      c.env.JWT_REFRESH_SECRET,
-    );
-    if (!payload) {
-      return c.json(fail("UNAUTHORIZED", "Refresh token 無效或已過期"), 401);
-    }
+  const payload = await verifyRefreshToken(token, c.env.JWT_REFRESH_SECRET);
+  if (!payload) {
+    clearRefreshCookie(c);
+    return c.json(fail("UNAUTHORIZED", "Refresh token 無效或已過期"), 401);
+  }
 
-    const valid = await validateRefreshToken(
-      c.env.SESSIONS,
-      payload.sub,
-      payload.jti,
-    );
-    if (!valid) {
-      return c.json(fail("UNAUTHORIZED", "Refresh token 已被吊銷"), 401);
-    }
-    await revokeRefreshToken(c.env.SESSIONS, payload.sub, payload.jti);
+  const valid = await validateRefreshToken(c.env.SESSIONS, payload.sub, payload.jti);
+  if (!valid) {
+    clearRefreshCookie(c);
+    return c.json(fail("UNAUTHORIZED", "Refresh token 已被吊銷"), 401);
+  }
+  await revokeRefreshToken(c.env.SESSIONS, payload.sub, payload.jti);
 
-    const db = createDb(c.env.DB);
-    const user = await db.query.users.findFirst({
-      where: eq(users.id, payload.sub),
-      columns: { username: true },
-    });
+  const db = createDb(c.env.DB);
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, payload.sub),
+    columns: { username: true },
+  });
+  if (!user) {
+    clearRefreshCookie(c);
+    return c.json(fail("UNAUTHORIZED", "Refresh token 無效或已過期"), 401);
+  }
 
-    if (!user) {
-      return c.json(fail("UNAUTHORIZED", "Refresh token 無效或已過期"), 401);
-    }
+  const accessToken = await signAccessToken(
+    { sub: payload.sub, username: user.username },
+    c.env.JWT_SECRET,
+  );
+  const jti = generateJti();
+  const newRefreshToken = await signRefreshToken(
+    { sub: payload.sub, jti },
+    c.env.JWT_REFRESH_SECRET,
+  );
 
-    const accessToken = await signAccessToken(
-      { sub: payload.sub, username: user.username },
-      c.env.JWT_SECRET,
-    );
-    const jti = generateJti();
-    const refreshToken = await signRefreshToken(
-      { sub: payload.sub, jti },
-      c.env.JWT_REFRESH_SECRET,
-    );
+  await saveRefreshToken(c.env.SESSIONS, payload.sub, jti);
+  setRefreshCookie(c, newRefreshToken);
 
-    await saveRefreshToken(c.env.SESSIONS, payload.sub, jti);
-
-    return c.json(ok({ accessToken, refreshToken }));
-  },
-);
+  return c.json(ok({ accessToken }));
+});
 
 // ── POST /auth/logout ──
-authRoutes.post(
-  "/logout",
-  zValidator("json", logoutSchema, zodErrorHook),
-  async (c) => {
-    const body = c.req.valid("json");
-
-    const payload = await verifyRefreshToken(
-      body.refreshToken,
-      c.env.JWT_REFRESH_SECRET,
-    );
+authRoutes.post("/logout", async (c) => {
+  const token = getCookie(c, REFRESH_COOKIE);
+  if (token) {
+    const payload = await verifyRefreshToken(token, c.env.JWT_REFRESH_SECRET);
     if (payload) {
       await revokeRefreshToken(c.env.SESSIONS, payload.sub, payload.jti);
     }
-
-    return c.json(ok({ message: "已登出" }));
-  },
-);
+  }
+  clearRefreshCookie(c);
+  return c.json(ok({ message: "已登出" }));
+});
 
 // ── GET /auth/me ──
 authRoutes.get("/me", authMiddleware, async (c) => {

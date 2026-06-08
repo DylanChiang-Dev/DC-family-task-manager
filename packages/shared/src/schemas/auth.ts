@@ -41,20 +41,6 @@ export const loginSchema = z.object({
 
 export type LoginInput = z.infer<typeof loginSchema>;
 
-// ── 刷新 Token ──
-export const refreshSchema = z.object({
-  refreshToken: z.string().min(1),
-});
-
-export type RefreshInput = z.infer<typeof refreshSchema>;
-
-// ── 登出 ──
-export const logoutSchema = z.object({
-  refreshToken: z.string().min(1),
-});
-
-export type LogoutInput = z.infer<typeof logoutSchema>;
-
 // ── 更新個人資料 ──
 export const updateProfileSchema = z
   .object({
