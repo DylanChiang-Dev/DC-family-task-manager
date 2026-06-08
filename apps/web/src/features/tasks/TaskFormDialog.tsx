@@ -1,5 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { createTaskSchema, type CreateTaskInput, type TaskResponse } from "@ftm/shared";
+import {
+  createTaskSchema,
+  type CreateTaskInput,
+  type RecurrenceConfig,
+  type TaskResponse,
+} from "@ftm/shared";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -22,8 +27,70 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useCategories } from "@/features/categories/hooks";
+import { useTeamMembers } from "@/features/teams/hooks";
 import { ApiError } from "@/lib/api-client";
+import { useAuthStore } from "@/stores/auth-store";
 import { useCreateTask, useUpdateTask } from "./hooks";
+
+type Frequency = RecurrenceConfig["frequency"];
+
+function defaultRecurrenceConfig(frequency: Frequency): RecurrenceConfig {
+  switch (frequency) {
+    case "daily":
+      return { frequency: "daily" };
+    case "weekly":
+      return { frequency: "weekly", days: [1] };
+    case "monthly":
+      return { frequency: "monthly", dates: [1] };
+    case "yearly":
+      return { frequency: "yearly", month: 1, date: 1 };
+  }
+}
+
+function serializeRecurrenceConfig(frequency: Frequency, value: string): RecurrenceConfig {
+  if (frequency === "weekly") {
+    const days = value
+      .split(",")
+      .map((item) => Number(item.trim()))
+      .filter((item) => Number.isInteger(item) && item >= 0 && item <= 6);
+    return { frequency, days: days.length > 0 ? days : [1] };
+  }
+
+  if (frequency === "monthly") {
+    const dates = value
+      .split(",")
+      .map((item) => Number(item.trim()))
+      .filter((item) => Number.isInteger(item) && item >= 1 && item <= 31);
+    return { frequency, dates: dates.length > 0 ? dates : [1] };
+  }
+
+  if (frequency === "yearly") {
+    const parts = value.split("-").map((item) => Number(item.trim()));
+    const monthValue = parts[0] ?? 1;
+    const dateValue = parts[1] ?? 1;
+    return {
+      frequency,
+      month: Number.isInteger(monthValue) && monthValue >= 1 && monthValue <= 12 ? monthValue : 1,
+      date: Number.isInteger(dateValue) && dateValue >= 1 && dateValue <= 31 ? dateValue : 1,
+    };
+  }
+
+  return { frequency };
+}
+
+function recurrenceValue(config: RecurrenceConfig | null | undefined) {
+  if (!config) return "1";
+  switch (config.frequency) {
+    case "daily":
+      return "1";
+    case "weekly":
+      return config.days.join(",");
+    case "monthly":
+      return config.dates.join(",");
+    case "yearly":
+      return `${config.month}-${config.date}`;
+  }
+}
 
 export function TaskFormDialog({
   open,
@@ -38,6 +105,8 @@ export function TaskFormDialog({
   const createMutation = useCreateTask();
   const updateMutation = useUpdateTask();
   const { data: categories } = useCategories();
+  const currentTeamId = useAuthStore((s) => s.currentTeamId);
+  const { data: members } = useTeamMembers(currentTeamId ?? Number.NaN);
 
   const {
     register,
@@ -53,10 +122,15 @@ export function TaskFormDialog({
       priority: task?.priority ?? "medium",
       status: task?.status ?? "pending",
       taskType: task?.taskType ?? "normal",
+      recurrenceConfig: task?.recurrenceConfig ?? null,
       dueDate: task?.dueDate ?? null,
       categoryId: task?.categoryId ?? null,
+      assigneeId: task?.assigneeId ?? null,
     },
   });
+  const taskType = watch("taskType");
+  const recurrenceConfig = watch("recurrenceConfig");
+  const recurrenceFrequency = recurrenceConfig?.frequency ?? "daily";
 
   const onSubmit = async (values: CreateTaskInput) => {
     const input: CreateTaskInput = {
@@ -64,6 +138,8 @@ export function TaskFormDialog({
       description: values.description || null,
       dueDate: values.dueDate || null,
       categoryId: values.categoryId || null,
+      assigneeId: values.assigneeId || null,
+      recurrenceConfig: values.taskType === "recurring" ? values.recurrenceConfig : null,
     };
 
     try {
@@ -140,6 +216,92 @@ export function TaskFormDialog({
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-1.5">
+            <Label>指派對象</Label>
+            <Select
+              defaultValue={watch("assigneeId") ? String(watch("assigneeId")) : "none"}
+              onValueChange={(v) => setValue("assigneeId", v === "none" ? null : Number(v))}
+            >
+              <SelectTrigger aria-label="指派對象">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">未指派</SelectItem>
+                {(members ?? []).map((member) => (
+                  <SelectItem key={member.userId} value={String(member.userId)}>
+                    {member.nickname}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1.5">
+              <Label>任務類型</Label>
+              <Select
+                value={taskType}
+                onValueChange={(v) => {
+                  const nextType = v as CreateTaskInput["taskType"];
+                  setValue("taskType", nextType);
+                  setValue(
+                    "recurrenceConfig",
+                    nextType === "recurring" ? defaultRecurrenceConfig("daily") : null,
+                  );
+                }}
+              >
+                <SelectTrigger aria-label="任務類型">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="normal">一般</SelectItem>
+                  <SelectItem value="recurring">週期</SelectItem>
+                  <SelectItem value="repeatable">可重複</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {taskType === "recurring" && (
+              <div className="space-y-1.5">
+                <Label>週期頻率</Label>
+                <Select
+                  value={recurrenceFrequency}
+                  onValueChange={(v) =>
+                    setValue("recurrenceConfig", defaultRecurrenceConfig(v as Frequency))
+                  }
+                >
+                  <SelectTrigger aria-label="週期頻率">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">每日</SelectItem>
+                    <SelectItem value="weekly">每週</SelectItem>
+                    <SelectItem value="monthly">每月</SelectItem>
+                    <SelectItem value="yearly">每年</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+          </div>
+          {taskType === "recurring" && recurrenceFrequency !== "daily" && (
+            <div className="space-y-1.5">
+              <Label htmlFor="recurrenceValue">
+                {recurrenceFrequency === "weekly"
+                  ? "星期（0=日，逗號分隔）"
+                  : recurrenceFrequency === "monthly"
+                    ? "日期（1-31，逗號分隔）"
+                    : "月份-日期"}
+              </Label>
+              <Input
+                id="recurrenceValue"
+                value={recurrenceValue(recurrenceConfig)}
+                onChange={(e) =>
+                  setValue(
+                    "recurrenceConfig",
+                    serializeRecurrenceConfig(recurrenceFrequency, e.target.value),
+                  )
+                }
+              />
+            </div>
+          )}
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               取消

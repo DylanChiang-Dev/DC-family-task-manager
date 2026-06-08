@@ -18,6 +18,15 @@ beforeEach(() => {
   });
   server.use(
     http.get(`${BASE}/categories`, () => HttpResponse.json({ success: true, data: [] })),
+    http.get(`${BASE}/teams/1/members`, () =>
+      HttpResponse.json({
+        success: true,
+        data: [
+          { id: 1, teamId: 1, userId: 1, username: "alice", nickname: "Alice", role: "admin", joinedAt: 0 },
+          { id: 2, teamId: 1, userId: 2, username: "bob", nickname: "Bob", role: "member", joinedAt: 0 },
+        ],
+      }),
+    ),
   );
 });
 
@@ -37,6 +46,38 @@ describe("TaskFormDialog", () => {
     await user.click(screen.getByRole("button", { name: "建立" }));
 
     await waitFor(() => expect(posted).toMatchObject({ title: "倒垃圾" }));
+  });
+
+  it("creates a recurring assigned task", async () => {
+    let posted: unknown = null;
+    server.use(
+      http.post(`${BASE}/tasks`, async ({ request: req }) => {
+        posted = await req.json();
+        return HttpResponse.json({ success: true, data: { id: 1 } }, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderWithProviders(<TaskFormDialog open onOpenChange={() => {}} />);
+    await user.type(screen.getByLabelText("標題"), "每週掃地");
+    await user.click(screen.getByLabelText("指派對象"));
+    await user.click((await screen.findAllByText("Bob")).at(-1)!);
+    await user.click(screen.getByLabelText("任務類型"));
+    await user.click((await screen.findAllByText("週期")).at(-1)!);
+    await user.click(await screen.findByLabelText("週期頻率"));
+    await user.click((await screen.findAllByText("每週")).at(-1)!);
+    await user.clear(screen.getByLabelText("星期（0=日，逗號分隔）"));
+    await user.type(screen.getByLabelText("星期（0=日，逗號分隔）"), "1,3");
+    await user.click(screen.getByRole("button", { name: "建立" }));
+
+    await waitFor(() =>
+      expect(posted).toMatchObject({
+        title: "每週掃地",
+        assigneeId: 2,
+        taskType: "recurring",
+        recurrenceConfig: { frequency: "weekly", days: [1, 3] },
+      }),
+    );
   });
 
   it("shows validation error when title is empty", async () => {

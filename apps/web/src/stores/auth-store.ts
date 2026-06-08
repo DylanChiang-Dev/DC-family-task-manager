@@ -10,7 +10,7 @@ interface AuthState {
   setAccessToken: (token: string) => void;
   setAuth: (p: { accessToken: string; user: AuthUser; currentTeamId: number | null }) => void;
   setUser: (user: AuthUser) => void;
-  setCurrentTeamId: (id: number) => void;
+  setCurrentTeamId: (id: number | null) => void;
   setBootstrapped: (v: boolean) => void;
   clearAuth: () => void;
 }

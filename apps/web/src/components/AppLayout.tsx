@@ -10,6 +10,7 @@ import { useThemeStore } from "@/stores/theme-store";
 const NAV_ITEMS = [
   { to: "/", label: "任務" },
   { to: "/calendar", label: "日曆" },
+  { to: "/teams", label: "團隊" },
   { to: "/categories", label: "分類" },
   { to: "/settings", label: "我的" },
 ];
@@ -17,7 +18,7 @@ const NAV_ITEMS = [
 const MOBILE_NAV_ITEMS = [
   ...NAV_ITEMS.slice(0, 2),
   { to: "/notifications", label: "通知" },
-  ...NAV_ITEMS.slice(2),
+  ...NAV_ITEMS.slice(3),
 ];
 
 export function AppLayout() {

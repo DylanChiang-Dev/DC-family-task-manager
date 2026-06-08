@@ -9,6 +9,8 @@ import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { SettingsPage } from "@/features/profile/SettingsPage";
 import { TaskListPage } from "@/features/tasks/TaskListPage";
 import { TaskDetailPage } from "@/features/tasks/TaskDetailPage";
+import { TeamMembersPage } from "@/features/teams/TeamMembersPage";
+import { TeamsPage } from "@/features/teams/TeamsPage";
 
 export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -23,6 +25,8 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
           { path: "/tasks", element: <Navigate to="/" replace /> },
           { path: "/tasks/:id", element: <TaskDetailPage /> },
           { path: "/calendar", element: <CalendarPage /> },
+          { path: "/teams", element: <TeamsPage /> },
+          { path: "/teams/:id/members", element: <TeamMembersPage /> },
           { path: "/categories", element: <CategoriesPage /> },
           { path: "/notifications", element: <NotificationsPage /> },
           { path: "/settings", element: <SettingsPage /> },
