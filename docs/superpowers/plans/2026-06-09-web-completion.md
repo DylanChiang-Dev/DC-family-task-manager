@@ -31,12 +31,12 @@
 - Test: `apps/web/src/features/categories/CategoriesPage.test.tsx`
 - Modify: `apps/web/src/app/router.tsx`
 
-- [ ] Step 1: Add category API functions for `GET /categories`, `POST /categories`, `PATCH /categories/:id`, `DELETE /categories/:id`.
-- [ ] Step 2: Add query/mutation hooks that invalidate `["categories"]` and `["tasks"]` after changes.
-- [ ] Step 3: Add a management page with list, create form, inline edit, delete confirmation, color input, and backend error display.
-- [ ] Step 4: Add route `/categories`.
-- [ ] Step 5: Run `pnpm --filter @ftm/web test -- categories`.
-- [ ] Step 6: Commit `feat(web): add category management page`.
+- [x] Step 1: Add category API functions for `GET /categories`, `POST /categories`, `PATCH /categories/:id`, `DELETE /categories/:id`.
+- [x] Step 2: Add query/mutation hooks that invalidate `["categories"]` and `["tasks"]` after changes.
+- [x] Step 3: Add a management page with list, create form, inline edit, delete confirmation, color input, and backend error display.
+- [x] Step 4: Add route `/categories`.
+- [x] Step 5: Run `pnpm --filter @ftm/web test -- categories`.
+- [x] Step 6: Commit `feat(web): add category management page`.
 
 ### Task 2: Task Detail, Comments, And History
 
@@ -48,12 +48,12 @@
 - Modify: `apps/web/src/app/router.tsx`
 - Modify: `apps/web/src/features/tasks/TaskCard.tsx`
 
-- [ ] Step 1: Add `fetchTask`, `fetchTaskComments`, `createTaskComment`, and `fetchTaskHistory` API functions.
-- [ ] Step 2: Add corresponding Query hooks and comment mutation invalidation.
-- [ ] Step 3: Add task detail route `/tasks/:id` with summary, comments form/list, and history list.
-- [ ] Step 4: Make task card title/details navigate to `/tasks/:id`.
-- [ ] Step 5: Run `pnpm --filter @ftm/web test -- TaskDetailPage`.
-- [ ] Step 6: Commit `feat(web): add task detail page with comments and history`.
+- [x] Step 1: Add `fetchTask`, `fetchTaskComments`, `createTaskComment`, and `fetchTaskHistory` API functions.
+- [x] Step 2: Add corresponding Query hooks and comment mutation invalidation.
+- [x] Step 3: Add task detail route `/tasks/:id` with summary, comments form/list, and history list.
+- [x] Step 4: Make task card title/details navigate to `/tasks/:id`.
+- [x] Step 5: Run `pnpm --filter @ftm/web test -- TaskDetailPage`.
+- [x] Step 6: Commit `feat(web): add task detail page with comments and history`.
 
 ### Task 3: Notifications Center
 
@@ -66,12 +66,12 @@
 - Modify: `apps/web/src/components/AppLayout.tsx`
 - Modify: `apps/web/src/app/router.tsx`
 
-- [ ] Step 1: Add API functions for list, mark read, mark all read, and delete.
-- [ ] Step 2: Add hooks with unread count query and mutations.
-- [ ] Step 3: Add `/notifications` page with unread-only toggle, mark read, mark all read, delete.
-- [ ] Step 4: Add unread badge to app navigation.
-- [ ] Step 5: Run `pnpm --filter @ftm/web test -- NotificationsPage`.
-- [ ] Step 6: Commit `feat(web): add notification center with unread badge`.
+- [x] Step 1: Add API functions for list, mark read, mark all read, and delete.
+- [x] Step 2: Add hooks with unread count query and mutations.
+- [x] Step 3: Add `/notifications` page with unread-only toggle, mark read, mark all read, delete.
+- [x] Step 4: Add unread badge to app navigation.
+- [x] Step 5: Run `pnpm --filter @ftm/web test -- NotificationsPage`.
+- [x] Step 6: Commit `feat(web): add notification center with unread badge`.
 
 ### Task 4: Calendar, Recurrence, And Lunar Dates
 
@@ -83,11 +83,11 @@
 - Test: `apps/web/src/features/calendar/CalendarPage.test.tsx`
 - Modify: `apps/web/src/app/router.tsx`
 
-- [ ] Step 1: Implement pure recurring expansion using shared `RecurrenceConfig` and existing task types.
-- [ ] Step 2: Port lunar conversion as a typed pure module that returns stable labels for supported dates.
-- [ ] Step 3: Add `/calendar` month view with task dots and selected-day task list.
-- [ ] Step 4: Run `pnpm --filter @ftm/web test -- calendar`.
-- [ ] Step 5: Commit `feat(web): add calendar view with recurring tasks and lunar dates`.
+- [x] Step 1: Implement pure recurring expansion using shared `RecurrenceConfig` and existing task types.
+- [x] Step 2: Port lunar conversion as a typed pure module that returns stable labels for supported dates.
+- [x] Step 3: Add `/calendar` month view with task dots and selected-day task list.
+- [x] Step 4: Run `pnpm --filter @ftm/web test -- calendar`.
+- [x] Step 5: Commit `feat(web): add calendar view with recurring tasks and lunar dates`.
 
 ### Task 5: Navigation, Dark Mode, And PWA
 
@@ -100,20 +100,19 @@
 - Create: `apps/web/public/pwa.svg`
 - Test: `apps/web/src/stores/theme-store.test.ts`
 
-- [ ] Step 1: Add theme store and dark class bootstrap.
-- [ ] Step 2: Add desktop navigation links and mobile bottom tabs for tasks/calendar/notifications/settings/categories.
-- [ ] Step 3: Add `vite-plugin-pwa` with manifest and NetworkFirst API runtime caching.
-- [ ] Step 4: Run `pnpm install`, `pnpm --filter @ftm/web test -- theme-store`, and `pnpm --filter @ftm/web build`.
-- [ ] Step 5: Commit `feat(web): add responsive navigation dark mode and PWA support`.
+- [x] Step 1: Add theme store and dark class bootstrap.
+- [x] Step 2: Add desktop navigation links and mobile bottom tabs for tasks/calendar/notifications/settings/categories.
+- [x] Step 3: Add `vite-plugin-pwa` with manifest and NetworkFirst API runtime caching.
+- [x] Step 4: Run `pnpm install`, `pnpm --filter @ftm/web test -- theme-store`, and `pnpm --filter @ftm/web build`.
+- [x] Step 5: Commit `feat(web): add responsive navigation dark mode and PWA support`.
 
 ### Task 6: Final Verification
 
 **Files:**
 - Modify: implementation files only if verification finds defects.
 
-- [ ] Step 1: Run `pnpm --filter @ftm/web typecheck`.
-- [ ] Step 2: Run `pnpm --filter @ftm/web test`.
-- [ ] Step 3: Run `pnpm --filter @ftm/web build`.
-- [ ] Step 4: Run deployed backend smoke for auth refresh, category CRUD, task CRUD, comments/history, notifications list, and task calendar data.
-- [ ] Step 5: Commit any verification fixes.
-
+- [x] Step 1: Run `pnpm --filter @ftm/web typecheck`.
+- [x] Step 2: Run `pnpm --filter @ftm/web test`.
+- [x] Step 3: Run `pnpm --filter @ftm/web build`.
+- [x] Step 4: Run deployed backend smoke for auth refresh, category CRUD, task CRUD, comments/history, notifications list, and task calendar data.
+- [x] Step 5: Commit any verification fixes.
