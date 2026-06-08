@@ -2,6 +2,9 @@
 // 成功：{ success: true, data }
 // 失敗：{ success: false, error: { code, message, details? } }
 
+// 類型從 shared 統一導入，避免重複定義
+export type { ApiSuccess, ApiError } from "@ftm/shared";
+
 export type ErrorCode =
   | "VALIDATION_ERROR"
   | "UNAUTHORIZED"
@@ -10,21 +13,7 @@ export type ErrorCode =
   | "CONFLICT"
   | "INTERNAL";
 
-export interface ApiSuccess<T> {
-  success: true;
-  data: T;
-}
-
-export interface ApiError {
-  success: false;
-  error: {
-    code: ErrorCode;
-    message: string;
-    details?: unknown;
-  };
-}
-
-export function ok<T>(data: T): ApiSuccess<T> {
+export function ok<T>(data: T): { success: true; data: T } {
   return { success: true, data };
 }
 
@@ -32,6 +21,6 @@ export function fail(
   code: ErrorCode,
   message: string,
   details?: unknown,
-): ApiError {
+): { success: false; error: { code: ErrorCode; message: string; details?: unknown } } {
   return { success: false, error: { code, message, details } };
 }

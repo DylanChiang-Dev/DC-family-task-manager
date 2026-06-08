@@ -4,13 +4,22 @@ const ITERATIONS = 600_000;
 const KEY_LEN_BITS = 256;
 const SALT_LEN_BYTES = 16;
 
-async function encodeBase64(buffer: ArrayBuffer): Promise<string> {
-  const bytes = new Uint8Array(buffer);
+function encodeBase64(bytes: Uint8Array): string {
   let binary = "";
   for (let i = 0; i < bytes.length; i++) {
     binary += String.fromCharCode(bytes[i]!);
   }
   return btoa(binary);
+}
+
+/** 恆定時間字串比較，防止時序攻擊 */
+function constantTimeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 function decodeBase64(base64: string): Uint8Array {
@@ -42,8 +51,8 @@ export async function hashPassword(password: string): Promise<string> {
     key,
     KEY_LEN_BITS,
   );
-  const saltB64 = await encodeBase64(salt.buffer);
-  const hashB64 = await encodeBase64(derived);
+  const saltB64 = encodeBase64(salt);
+  const hashB64 = encodeBase64(new Uint8Array(derived));
   // 格式: iterations$salt$hash
   return `${ITERATIONS}$${saltB64}$${hashB64}`;
 }
@@ -78,6 +87,6 @@ export async function verifyPassword(
     key,
     KEY_LEN_BITS,
   );
-  const hashB64 = await encodeBase64(derived);
-  return hashB64 === expectedHash;
+  const hashB64 = encodeBase64(new Uint8Array(derived));
+  return constantTimeEqual(hashB64, expectedHash);
 }

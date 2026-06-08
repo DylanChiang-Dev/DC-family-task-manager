@@ -16,15 +16,18 @@ import {
 } from "@ftm/shared";
 import type { RecurrenceConfig } from "@ftm/shared";
 
-// ── 公共時間戳列 ──
-const timestamps = {
-  createdAt: integer("created_at", { mode: "timestamp_ms" })
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`),
-  updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-    .notNull()
-    .default(sql`(unixepoch() * 1000)`),
-};
+// ── 公共時間戳列工廠函數 ──
+// Drizzle 的 column builder 不可跨表複用，需要每次都創建新實例
+function timestamps() {
+  return {
+    createdAt: integer("created_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
+      .notNull()
+      .default(sql`(unixepoch() * 1000)`),
+  };
+}
 
 // ── teams ──────────────────────────────
 export const teams = sqliteTable(
@@ -36,16 +39,9 @@ export const teams = sqliteTable(
     createdBy: integer("created_by")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .notNull()
-      .default(sql`(unixepoch() * 1000)`),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .notNull()
-      .default(sql`(unixepoch() * 1000)`),
+    ...timestamps(),
   },
-  (t) => ({
-    inviteCodeIdx: index("idx_invite_code").on(t.inviteCode),
-  }),
+  // L-13: .unique() 已自動創建 unique index，不需額外的普通 index
 );
 
 // ── users ──────────────────────────────
@@ -58,16 +54,9 @@ export const users = sqliteTable(
     nickname: text("nickname").notNull(),
     email: text("email"),
     currentTeamId: integer("current_team_id"),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .notNull()
-      .default(sql`(unixepoch() * 1000)`),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .notNull()
-      .default(sql`(unixepoch() * 1000)`),
+    ...timestamps(),
   },
-  (t) => ({
-    usernameIdx: index("idx_username").on(t.username),
-  }),
+  // L-14: .unique() 已自動創建 unique index，不需額外的普通 index
 );
 
 // ── team_members ───────────────────────
@@ -150,12 +139,7 @@ export const tasks = sqliteTable(
     }).$type<RecurrenceConfig>(),
     parentTaskId: integer("parent_task_id"),
     completedAt: integer("completed_at", { mode: "timestamp_ms" }),
-    createdAt: integer("created_at", { mode: "timestamp_ms" })
-      .notNull()
-      .default(sql`(unixepoch() * 1000)`),
-    updatedAt: integer("updated_at", { mode: "timestamp_ms" })
-      .notNull()
-      .default(sql`(unixepoch() * 1000)`),
+    ...timestamps(),
   },
   (t) => ({
     teamStatusIdx: index("idx_team_status").on(t.teamId, t.status),

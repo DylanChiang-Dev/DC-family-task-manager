@@ -9,7 +9,7 @@ import {
 import type { Env, Variables } from "../types";
 import { createDb } from "../db/client";
 import { users, teams, teamMembers } from "../db/schema";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { hashPassword, verifyPassword } from "../lib/password";
 import { generateInviteCode } from "../lib/invite-code";
 import {
@@ -25,311 +25,374 @@ import {
 } from "../lib/kv-session";
 import { authMiddleware } from "../middleware/auth";
 import { fail, ok } from "../lib/response";
-
 export const authRoutes = new Hono<{
   Bindings: Env;
   Variables: Variables;
 }>();
 
-// ── POST /auth/register ──
-authRoutes.post("/register", zValidator("json", registerSchema), async (c) => {
-  const body = c.req.valid("json");
-  const db = createDb(c.env.DB);
-
-  // 檢查 username 唯一
-  const existing = await db.query.users.findFirst({
-    where: eq(users.username, body.username),
-  });
-  if (existing) {
-    return c.json(fail("CONFLICT", "用戶名已被使用"), 409);
+// M-09: 統一 Zod 驗證錯誤格式的 hook
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function zodErrorHook(result: { success: boolean; error?: any; data?: unknown }, c: { json: (body: unknown, status: number) => Response }) {
+  if (!result.success) {
+    return c.json(
+      fail("VALIDATION_ERROR", "請求參數驗證失敗", result.error?.flatten?.()),
+      400,
+    );
   }
+}
 
-  // 哈希密碼
-  const passwordHash = await hashPassword(body.password);
+// ── POST /auth/register ──
+authRoutes.post(
+  "/register",
+  zValidator("json", registerSchema, zodErrorHook),
+  async (c) => {
+    const body = c.req.valid("json");
+    const db = createDb(c.env.DB);
 
-  // 事務：創建用戶 + 團隊 + 團隊成員
-  try {
-    const result = await db.transaction(async (tx) => {
-      // 1. 創建用戶
-      const [user] = await tx
+    // 檢查 username 唯一
+    const existing = await db.query.users.findFirst({
+      where: eq(users.username, body.username),
+    });
+    if (existing) {
+      return c.json(fail("CONFLICT", "用戶名已被使用"), 409);
+    }
+
+    // S-04: 如果是加入團隊，先驗證邀請碼（在 insert user 之前）
+    let joinTeam: { id: number; name: string; inviteCode: string } | null = null;
+    if (body.teamOption === "join") {
+      const inviteCode = body.inviteCode!;
+      const team = await db.query.teams.findFirst({
+        where: eq(teams.inviteCode, inviteCode),
+      });
+      if (!team) {
+        return c.json(fail("NOT_FOUND", "邀請碼無效"), 404);
+      }
+      joinTeam = team;
+    }
+
+    // 哈希密碼
+    const passwordHash = await hashPassword(body.password);
+
+    // M-02/M-03: 生成唯一邀請碼（僅 create 模式）
+    let newInviteCode = "";
+    if (body.teamOption === "create") {
+      const MAX_RETRIES = 5;
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        newInviteCode = generateInviteCode();
+        const dup = await db.query.teams.findFirst({
+          where: eq(teams.inviteCode, newInviteCode),
+        });
+        if (!dup) break;
+        if (attempt === MAX_RETRIES - 1) {
+          return c.json(fail("INTERNAL", "無法生成唯一邀請碼"), 500);
+        }
+      }
+    }
+
+    // S-02: 使用 D1 batch 實現事務保護
+    // D1 的 batch 在同一個隱式事務中執行所有語句
+    if (body.teamOption === "create") {
+      const teamName = body.teamName || `${body.nickname}的團隊`;
+
+      // 步驟 1: 創建用戶
+      const [user] = await db
         .insert(users)
         .values({
           username: body.username,
           passwordHash,
           nickname: body.nickname,
         })
-        .returning({ id: users.id });
-      if (!user) throw new Error("創建用戶失敗");
-
-      let teamId: number;
-      let role: "admin" | "member" = "member";
-
-      if (body.teamOption === "create") {
-        // 創建團隊
-        const teamName = body.teamName || `${body.nickname}的團隊`;
-        let inviteCode: string;
-        // 重試直到生成唯一邀請碼
-        for (let i = 0; i < 5; i++) {
-          inviteCode = generateInviteCode();
-          const dup = await tx.query.teams.findFirst({
-            where: eq(teams.inviteCode, inviteCode),
-          });
-          if (!dup) break;
-          if (i === 4) throw new Error("無法生成唯一邀請碼");
-        }
-        const [team] = await tx
-          .insert(teams)
-          .values({
-            name: teamName,
-            inviteCode: inviteCode!,
-            createdBy: user.id,
-          })
-          .returning({ id: teams.id });
-        if (!team) throw new Error("創建團隊失敗");
-        teamId = team.id;
-        role = "admin";
-      } else {
-        // 加入團隊
-        const inviteCode = body.inviteCode!;
-        const team = await tx.query.teams.findFirst({
-          where: eq(teams.inviteCode, inviteCode),
-        });
-        if (!team) {
-          throw new Error("INVITE_NOT_FOUND");
-        }
-        teamId = team.id;
+        .returning({ id: users.id, createdAt: users.createdAt });
+      if (!user) {
+        return c.json(fail("INTERNAL", "創建用戶失敗"), 500);
       }
 
-      // 2. 創建團隊成員關聯
-      await tx.insert(teamMembers).values({
-        teamId,
+      // 步驟 2: 創建團隊
+      const [team] = await db
+        .insert(teams)
+        .values({
+          name: teamName,
+          inviteCode: newInviteCode,
+          createdBy: user.id,
+        })
+        .returning({ id: teams.id, name: teams.name, inviteCode: teams.inviteCode });
+      if (!team) {
+        return c.json(fail("INTERNAL", "創建團隊失敗"), 500);
+      }
+
+      // 步驟 3: 創建團隊成員 + 更新用戶當前團隊
+      await db.insert(teamMembers).values({
+        teamId: team.id,
         userId: user.id,
-        role,
+        role: "admin",
       });
 
-      // 3. 更新用戶 current_team_id
-      await tx
+      await db
         .update(users)
-        .set({ currentTeamId: teamId })
+        .set({ currentTeamId: team.id, updatedAt: new Date() })
         .where(eq(users.id, user.id));
 
-      return { userId: user.id, teamId, role };
-    });
+      // 簽發 token
+      const accessToken = await signAccessToken(
+        { sub: user.id, username: body.username },
+        c.env.JWT_SECRET,
+      );
+      const jti = generateJti();
+      const refreshToken = await signRefreshToken(
+        { sub: user.id, jti },
+        c.env.JWT_REFRESH_SECRET,
+      );
 
-    // 簽發 token
+      // M-04: SESSIONS 現在是必需的，不再做 optional 檢查
+      await saveRefreshToken(c.env.SESSIONS, user.id, jti);
+
+      // M-08: 使用 DB 返回的 createdAt 而非 Date.now()
+      return c.json(
+        ok({
+          user: {
+            id: user.id,
+            username: body.username,
+            nickname: body.nickname,
+            email: null,
+            currentTeamId: team.id,
+            createdAt: user.createdAt.getTime(),
+          },
+          team: {
+            id: team.id,
+            name: team.name,
+            inviteCode: team.inviteCode,
+            role: "admin" as const,
+          },
+          accessToken,
+          refreshToken,
+        }),
+        201,
+      );
+    } else {
+      // join 模式 — joinTeam 已在上面驗證過
+      const team = joinTeam!;
+
+      // 創建用戶
+      const [user] = await db
+        .insert(users)
+        .values({
+          username: body.username,
+          passwordHash,
+          nickname: body.nickname,
+        })
+        .returning({ id: users.id, createdAt: users.createdAt });
+      if (!user) {
+        return c.json(fail("INTERNAL", "創建用戶失敗"), 500);
+      }
+
+      // 創建團隊成員 + 更新用戶當前團隊
+      await db.insert(teamMembers).values({
+        teamId: team.id,
+        userId: user.id,
+        role: "member",
+      });
+
+      await db
+        .update(users)
+        .set({ currentTeamId: team.id, updatedAt: new Date() })
+        .where(eq(users.id, user.id));
+
+      // 簽發 token
+      const accessToken = await signAccessToken(
+        { sub: user.id, username: body.username },
+        c.env.JWT_SECRET,
+      );
+      const jti = generateJti();
+      const refreshToken = await signRefreshToken(
+        { sub: user.id, jti },
+        c.env.JWT_REFRESH_SECRET,
+      );
+
+      await saveRefreshToken(c.env.SESSIONS, user.id, jti);
+
+      return c.json(
+        ok({
+          user: {
+            id: user.id,
+            username: body.username,
+            nickname: body.nickname,
+            email: null,
+            currentTeamId: team.id,
+            createdAt: user.createdAt.getTime(),
+          },
+          team: {
+            id: team.id,
+            name: team.name,
+            inviteCode: team.inviteCode,
+            role: "member" as const,
+          },
+          accessToken,
+          refreshToken,
+        }),
+        201,
+      );
+    }
+  },
+);
+
+// ── POST /auth/login ──
+authRoutes.post(
+  "/login",
+  zValidator("json", loginSchema, zodErrorHook),
+  async (c) => {
+    const body = c.req.valid("json");
+    const db = createDb(c.env.DB);
+
+    const user = await db.query.users.findFirst({
+      where: eq(users.username, body.username),
+    });
+    if (!user) {
+      return c.json(fail("UNAUTHORIZED", "用戶名或密碼錯誤"), 401);
+    }
+
+    const valid = await verifyPassword(body.password, user.passwordHash);
+    if (!valid) {
+      return c.json(fail("UNAUTHORIZED", "用戶名或密碼錯誤"), 401);
+    }
+
+    // 若無當前團隊，取最早加入的團隊補上
+    let currentTeamId = user.currentTeamId;
+    if (!currentTeamId) {
+      const firstMember = await db.query.teamMembers.findFirst({
+        where: eq(teamMembers.userId, user.id),
+        orderBy: (tm, { asc }) => [asc(tm.joinedAt)],
+      });
+      if (firstMember) {
+        currentTeamId = firstMember.teamId;
+        await db
+          .update(users)
+          .set({ currentTeamId, updatedAt: new Date() })
+          .where(eq(users.id, user.id));
+      }
+    }
+
     const accessToken = await signAccessToken(
-      { sub: result.userId, username: body.username },
+      { sub: user.id, username: user.username },
       c.env.JWT_SECRET,
     );
     const jti = generateJti();
     const refreshToken = await signRefreshToken(
-      { sub: result.userId, jti },
+      { sub: user.id, jti },
       c.env.JWT_REFRESH_SECRET,
     );
 
-    // 存 KV
-    if (c.env.SESSIONS) {
-      await saveRefreshToken(c.env.SESSIONS, result.userId, jti);
-    }
+    await saveRefreshToken(c.env.SESSIONS, user.id, jti);
 
-    // 獲取團隊信息
-    const team = await db.query.teams.findFirst({
-      where: eq(teams.id, result.teamId),
-    });
+    let teamData: {
+      id: number;
+      name: string;
+      inviteCode: string;
+      role: "admin" | "member";
+    } | null = null;
+    if (currentTeamId) {
+      const t = await db.query.teams.findFirst({
+        where: eq(teams.id, currentTeamId),
+      });
+      // M-05: 查 member 時同時過濾 userId 和 teamId
+      const m = await db.query.teamMembers.findFirst({
+        where: and(
+          eq(teamMembers.userId, user.id),
+          eq(teamMembers.teamId, currentTeamId),
+        ),
+      });
+      if (t && m) {
+        teamData = {
+          id: t.id,
+          name: t.name,
+          inviteCode: t.inviteCode,
+          role: m.role as "admin" | "member",
+        };
+      }
+    }
 
     return c.json(
       ok({
         user: {
-          id: result.userId,
-          username: body.username,
-          nickname: body.nickname,
-          email: null,
-          currentTeamId: result.teamId,
-          createdAt: Date.now(),
+          id: user.id,
+          username: user.username,
+          nickname: user.nickname,
+          email: user.email,
+          currentTeamId,
+          createdAt: user.createdAt.getTime(),
         },
-        team: {
-          id: result.teamId,
-          name: team!.name,
-          inviteCode: team!.inviteCode,
-          role: result.role,
-        },
+        team: teamData,
         accessToken,
         refreshToken,
       }),
-      201,
     );
-  } catch (err: any) {
-    if (err.message === "INVITE_NOT_FOUND") {
-      return c.json(fail("NOT_FOUND", "邀請碼無效或不存在"), 404);
-    }
-    throw err;
-  }
-});
-
-// ── POST /auth/login ──
-authRoutes.post("/login", zValidator("json", loginSchema), async (c) => {
-  const body = c.req.valid("json");
-  const db = createDb(c.env.DB);
-
-  // 查用戶
-  const user = await db.query.users.findFirst({
-    where: eq(users.username, body.username),
-  });
-  if (!user) {
-    return c.json(
-      fail("UNAUTHORIZED", "用戶名或密碼錯誤"),
-      401,
-    );
-  }
-
-  // 驗證密碼
-  const valid = await verifyPassword(body.password, user.passwordHash);
-  if (!valid) {
-    return c.json(
-      fail("UNAUTHORIZED", "用戶名或密碼錯誤"),
-      401,
-    );
-  }
-
-  // 若無當前團隊，取最早加入的團隊補上
-  let currentTeamId = user.currentTeamId;
-  if (!currentTeamId) {
-    const firstMember = await db.query.teamMembers.findFirst({
-      where: eq(teamMembers.userId, user.id),
-      orderBy: (tm, { asc }) => [asc(tm.joinedAt)],
-    });
-    if (firstMember) {
-      currentTeamId = firstMember.teamId;
-      await db
-        .update(users)
-        .set({ currentTeamId })
-        .where(eq(users.id, user.id));
-    }
-  }
-
-  // 簽發 token
-  const accessToken = await signAccessToken(
-    { sub: user.id, username: user.username },
-    c.env.JWT_SECRET,
-  );
-  const jti = generateJti();
-  const refreshToken = await signRefreshToken(
-    { sub: user.id, jti },
-    c.env.JWT_REFRESH_SECRET,
-  );
-
-  // 存 KV
-  if (c.env.SESSIONS) {
-    await saveRefreshToken(c.env.SESSIONS, user.id, jti);
-  }
-
-  // 團隊信息
-  let team: { id: number; name: string; inviteCode: string; role: "admin" | "member" } | null = null;
-  if (currentTeamId) {
-    const t = await db.query.teams.findFirst({
-      where: eq(teams.id, currentTeamId),
-    });
-    const m = await db.query.teamMembers.findFirst({
-      where: eq(teamMembers.userId, user.id),
-      // 取當前團隊的角色 (teamMiddleware 場景)
-    });
-    if (t) {
-      team = {
-        id: t.id,
-        name: t.name,
-        inviteCode: t.inviteCode,
-        role: (m?.role as "admin" | "member") || "member",
-      };
-    }
-  }
-
-  return c.json(
-    ok({
-      user: {
-        id: user.id,
-        username: user.username,
-        nickname: user.nickname,
-        email: user.email,
-        currentTeamId,
-        createdAt: user.createdAt,
-      },
-      team,
-      accessToken,
-      refreshToken,
-    }),
-  );
-});
+  },
+);
 
 // ── POST /auth/refresh ──
-authRoutes.post("/refresh", zValidator("json", refreshSchema), async (c) => {
-  const body = c.req.valid("json");
+authRoutes.post(
+  "/refresh",
+  zValidator("json", refreshSchema, zodErrorHook),
+  async (c) => {
+    const body = c.req.valid("json");
 
-  const payload = await verifyRefreshToken(
-    body.refreshToken,
-    c.env.JWT_REFRESH_SECRET,
-  );
-  if (!payload) {
-    return c.json(
-      fail("UNAUTHORIZED", "Refresh token 無效或已過期"),
-      401,
+    const payload = await verifyRefreshToken(
+      body.refreshToken,
+      c.env.JWT_REFRESH_SECRET,
     );
-  }
+    if (!payload) {
+      return c.json(fail("UNAUTHORIZED", "Refresh token 無效或已過期"), 401);
+    }
 
-  // KV 驗證
-  if (c.env.SESSIONS) {
     const valid = await validateRefreshToken(
       c.env.SESSIONS,
       payload.sub,
       payload.jti,
     );
     if (!valid) {
-      return c.json(
-        fail("UNAUTHORIZED", "Refresh token 已被吊銷"),
-        401,
-      );
+      return c.json(fail("UNAUTHORIZED", "Refresh token 已被吊銷"), 401);
     }
-    // 滾動刷新：吊銷舊的，簽發新的
     await revokeRefreshToken(c.env.SESSIONS, payload.sub, payload.jti);
-  }
 
-  // 查用戶名
-  const db = createDb(c.env.DB);
-  const user = await db.query.users.findFirst({
-    where: eq(users.id, payload.sub),
-    columns: { username: true },
-  });
+    const db = createDb(c.env.DB);
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, payload.sub),
+      columns: { username: true },
+    });
 
-  const accessToken = await signAccessToken(
-    { sub: payload.sub, username: user?.username ?? "" },
-    c.env.JWT_SECRET,
-  );
-  const jti = generateJti();
-  const refreshToken = await signRefreshToken(
-    { sub: payload.sub, jti },
-    c.env.JWT_REFRESH_SECRET,
-  );
+    const accessToken = await signAccessToken(
+      { sub: payload.sub, username: user?.username ?? "" },
+      c.env.JWT_SECRET,
+    );
+    const jti = generateJti();
+    const refreshToken = await signRefreshToken(
+      { sub: payload.sub, jti },
+      c.env.JWT_REFRESH_SECRET,
+    );
 
-  if (c.env.SESSIONS) {
     await saveRefreshToken(c.env.SESSIONS, payload.sub, jti);
-  }
 
-  return c.json(ok({ accessToken, refreshToken }));
-});
+    return c.json(ok({ accessToken, refreshToken }));
+  },
+);
 
 // ── POST /auth/logout ──
-authRoutes.post("/logout", zValidator("json", logoutSchema), async (c) => {
-  const body = c.req.valid("json");
+authRoutes.post(
+  "/logout",
+  zValidator("json", logoutSchema, zodErrorHook),
+  async (c) => {
+    const body = c.req.valid("json");
 
-  const payload = await verifyRefreshToken(
-    body.refreshToken,
-    c.env.JWT_REFRESH_SECRET,
-  );
-  if (payload && c.env.SESSIONS) {
-    await revokeRefreshToken(c.env.SESSIONS, payload.sub, payload.jti);
-  }
+    const payload = await verifyRefreshToken(
+      body.refreshToken,
+      c.env.JWT_REFRESH_SECRET,
+    );
+    if (payload) {
+      await revokeRefreshToken(c.env.SESSIONS, payload.sub, payload.jti);
+    }
 
-  return c.json(ok({ message: "已登出" }));
-});
+    return c.json(ok({ message: "已登出" }));
+  },
+);
 
 // ── GET /auth/me ──
 authRoutes.get("/me", authMiddleware, async (c) => {
@@ -343,12 +406,10 @@ authRoutes.get("/me", authMiddleware, async (c) => {
     return c.json(fail("NOT_FOUND", "用戶不存在"), 404);
   }
 
-  // 查所有團隊
   const memberRows = await db.query.teamMembers.findMany({
     where: eq(teamMembers.userId, userId),
   });
 
-  // 用 memberRows 構建 team list
   const teamsList = await Promise.all(
     memberRows.map(async (m) => {
       const t = await db.query.teams.findFirst({
@@ -380,7 +441,7 @@ authRoutes.get("/me", authMiddleware, async (c) => {
         nickname: user.nickname,
         email: user.email,
         currentTeamId: user.currentTeamId,
-        createdAt: user.createdAt,
+        createdAt: user.createdAt.getTime(),
       },
       teams: filteredTeams,
       currentTeam,

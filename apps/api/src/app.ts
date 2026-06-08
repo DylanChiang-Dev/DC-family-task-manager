@@ -6,19 +6,27 @@ import { authRoutes } from "./routes/auth";
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// ── 全局中間件 ──
+// 允許的前端來源白名單
+const ALLOWED_ORIGINS = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+];
+
 app.use(
   "*",
   cors({
-    // 開發期放行本地前端；生產環境收緊為實際 Pages 域名。
-    origin: (origin) => origin ?? "*",
+    origin: (origin) => {
+      if (!origin) return "";
+      if (ALLOWED_ORIGINS.includes(origin)) return origin;
+      return "";
+    },
     allowMethods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allowHeaders: ["Content-Type", "Authorization", "X-Team-Id"],
     credentials: true,
   }),
 );
 
-// ── 健康檢查 ──
 app.get("/api/health", (c) =>
   c.json(
     ok({
@@ -30,15 +38,13 @@ app.get("/api/health", (c) =>
   ),
 );
 
-// ── 業務路由 ──
 app.route("/api/auth", authRoutes);
-// app.route("/api/tasks", taskRoutes);
-// ...
 
-// ── 404 與統一錯誤處理 ──
 app.notFound((c) => c.json(fail("NOT_FOUND", "Route not found"), 404));
 
 app.onError((err, c) => {
-  console.error("[api error]", err);
-  return c.json(fail("INTERNAL", "Internal server error"), 500);
+  const isDev = c.env.ENVIRONMENT === "development";
+  const msg = err instanceof Error ? err.message : String(err);
+  console.error("[api error]", msg, err instanceof Error ? err.stack : "");
+  return c.json(fail("INTERNAL", isDev ? msg : "Internal Server Error"), 500);
 });

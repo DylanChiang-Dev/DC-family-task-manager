@@ -50,8 +50,12 @@ export async function revokeAllUserSessions(
   userId: number,
 ): Promise<void> {
   const prefix = `${SESSION_PREFIX}${userId}:`;
-  const list = await kv.list({ prefix });
-  for (const key of list.keys) {
-    await kv.delete(key.name);
-  }
+  let cursor: string | undefined;
+  do {
+    const list = await kv.list({ prefix, cursor });
+    if (list.keys.length > 0) {
+      await Promise.all(list.keys.map((key) => kv.delete(key.name)));
+    }
+    cursor = list.list_complete ? undefined : (list.cursor ?? undefined);
+  } while (cursor);
 }

@@ -56,11 +56,21 @@ export const logoutSchema = z.object({
 export type LogoutInput = z.infer<typeof logoutSchema>;
 
 // ── 更新個人資料 ──
-export const updateProfileSchema = z.object({
-  nickname: z.string().trim().min(1).max(30).optional(),
-  email: z.string().email().max(255).nullable().optional(),
-  currentPassword: z.string().min(1).optional(),
-  newPassword: z.string().min(6).max(128).optional(),
-});
+export const updateProfileSchema = z
+  .object({
+    nickname: z.string().trim().min(1).max(30).optional(),
+    email: z.string().email().max(255).nullable().optional(),
+    currentPassword: z.string().min(1).optional(),
+    newPassword: z.string().min(6).max(128).optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.newPassword && !data.currentPassword) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "修改密碼需要提供當前密碼",
+        path: ["currentPassword"],
+      });
+    }
+  });
 
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

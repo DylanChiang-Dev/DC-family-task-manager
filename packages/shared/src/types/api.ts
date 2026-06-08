@@ -1,5 +1,13 @@
 // ── API 響應包裝類型 ──
 
+export type ErrorCode =
+  | "VALIDATION_ERROR"
+  | "UNAUTHORIZED"
+  | "FORBIDDEN"
+  | "NOT_FOUND"
+  | "CONFLICT"
+  | "INTERNAL";
+
 export interface ApiSuccess<T> {
   success: true;
   data: T;
@@ -8,7 +16,7 @@ export interface ApiSuccess<T> {
 export interface ApiError {
   success: false;
   error: {
-    code: string;
+    code: ErrorCode;
     message: string;
     details?: unknown;
   };
