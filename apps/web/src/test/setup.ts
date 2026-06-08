@@ -3,6 +3,8 @@ import { cleanup } from "@testing-library/react";
 import { afterAll, afterEach, beforeAll } from "vitest";
 import { server } from "./msw-server";
 
+import.meta.env.VITE_API_BASE_URL = "http://localhost:8787/api";
+
 if (!globalThis.localStorage) {
   const store = new Map<string, string>();
   Object.defineProperty(globalThis, "localStorage", {
