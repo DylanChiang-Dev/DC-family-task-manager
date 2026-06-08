@@ -3,10 +3,14 @@ import { cors } from "hono/cors";
 import type { Env, Variables } from "./types";
 import { fail, ok } from "./lib/response";
 import { authRoutes } from "./routes/auth";
+import { teamRoutes } from "./routes/team";
+import { taskRoutes } from "./routes/task";
+import { categoryRoutes } from "./routes/category";
+import { notificationRoutes } from "./routes/notification";
+import { profileRoutes } from "./routes/profile";
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
-// 允許的前端來源白名單
 const ALLOWED_ORIGINS = [
   "http://localhost:5173",
   "http://localhost:3000",
@@ -38,7 +42,17 @@ app.get("/api/health", (c) =>
   ),
 );
 
+// Public routes
 app.route("/api/auth", authRoutes);
+
+// Authenticated routes (no team context needed)
+app.route("/api/notifications", notificationRoutes);
+app.route("/api/profile", profileRoutes);
+
+// Team-scoped routes
+app.route("/api/teams", teamRoutes);
+app.route("/api/tasks", taskRoutes);
+app.route("/api/categories", categoryRoutes);
 
 app.notFound((c) => c.json(fail("NOT_FOUND", "Route not found"), 404));
 
