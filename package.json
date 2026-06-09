@@ -11,6 +11,7 @@
   },
   "scripts": {
     "dev:api": "pnpm --filter @ftm/api dev",
+    "dev:web:prod": "VITE_API_BASE_URL=https://ftm-api.dylan-chiang.workers.dev/api pnpm --filter @ftm/web dev --host 0.0.0.0",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck",
     "db:generate": "pnpm --filter @ftm/api db:generate",
