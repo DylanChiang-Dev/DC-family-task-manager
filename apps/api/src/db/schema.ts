@@ -150,6 +150,27 @@ export const tasks = sqliteTable(
   }),
 );
 
+// ── schedule_blocks ─────────────────────
+export const scheduleBlocks = sqliteTable(
+  "schedule_blocks",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: text("title").notNull(),
+    location: text("location"),
+    startDate: text("start_date").notNull(),
+    endDate: text("end_date").notNull(),
+    color: text("color").notNull().default("#0EA5E9"),
+    note: text("note"),
+    ...timestamps(),
+  },
+  (t) => ({
+    userRangeIdx: index("idx_schedule_user_start_end").on(t.userId, t.startDate, t.endDate),
+  }),
+);
+
 // ── task_comments ──────────────────────
 export const taskComments = sqliteTable(
   "task_comments",
