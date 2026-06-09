@@ -102,22 +102,42 @@ function calendarCountTone(count: number) {
   return "border-sky-200 bg-sky-500 text-white shadow-sky-200/70";
 }
 
+function calendarStatusDotTone(status: TaskStatus) {
+  if (status === "in_progress") return "bg-blue-500";
+  if (status === "completed") return "bg-emerald-500";
+  if (status === "cancelled") return "bg-muted-foreground/50";
+  return "bg-muted-foreground/70";
+}
+
+function calendarTaskTitle(task: CalendarTask) {
+  return [
+    task.title,
+    STATUS_LABEL[task.status],
+    task.isRecurringInstance ? "週期" : null,
+    task.categoryName,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function renderCalendarTask(task: CalendarTask) {
   return (
     <div
       key={`${task.id}-${task.dueDate}-${task.isRecurringInstance ? "r" : "n"}`}
-      className="min-w-0 rounded-md border border-border bg-muted/70 px-2 py-1 text-foreground shadow-sm"
+      className={`min-w-0 rounded-md border border-border bg-muted/70 px-1.5 py-0.5 text-foreground shadow-sm ${
+        task.status === "cancelled" ? "opacity-65" : ""
+      }`}
       style={calendarTaskStyle(task)}
-      title={task.title}
+      title={calendarTaskTitle(task)}
     >
-      <div className="flex min-w-0 items-center gap-1">
+      <div className="flex min-w-0 items-center gap-1.5">
+        <span
+          className={`h-1.5 w-1.5 shrink-0 rounded-full ${calendarStatusDotTone(task.status)}`}
+          aria-label={STATUS_LABEL[task.status]}
+        />
         <span className="truncate text-xs font-medium leading-tight">{task.title}</span>
         {task.priority === "high" && <span className="shrink-0 rounded bg-background/70 px-1 text-[10px]">高</span>}
-      </div>
-      <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] leading-none opacity-75">
-        <span className="truncate">{STATUS_LABEL[task.status]}</span>
-        {task.isRecurringInstance && <span className="shrink-0">週期</span>}
-        {task.categoryName && <span className="truncate">{task.categoryName}</span>}
+        {task.isRecurringInstance && <span className="shrink-0 text-[10px] leading-none opacity-70">↻</span>}
       </div>
     </div>
   );

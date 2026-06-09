@@ -119,10 +119,12 @@ describe("DashboardPage", () => {
     const firstCalendarDay = within(calendar).getByRole("button", { name: dateKey(0) });
 
     await waitFor(() => expect(firstCalendarDay).toHaveTextContent("今天高優先任務"));
-    const taskChip = within(firstCalendarDay).getByTitle("今天高優先任務");
+    const taskChip = within(firstCalendarDay).getByTitle("今天高優先任務 · 待處理 · 家務");
 
     expect(taskChip).toHaveStyle({ borderColor: "#22c55e80" });
     expect(taskChip).toHaveStyle({ backgroundColor: "#22c55e1F" });
+    expect(within(taskChip).queryByText("家務")).not.toBeInTheDocument();
+    expect(within(taskChip).queryByText("待處理")).not.toBeInTheDocument();
   });
 
   it("changes the selected-day task list when a date is clicked", async () => {
