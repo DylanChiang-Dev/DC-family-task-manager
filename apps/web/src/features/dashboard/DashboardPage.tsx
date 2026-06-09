@@ -1,0 +1,456 @@
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
+import type { TaskResponse, TaskStatus } from "@ftm/shared";
+import { toast } from "sonner";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ApiError } from "@/lib/api-client";
+import { solarToLunar } from "@/lib/lunar";
+import { TaskFormDialog } from "@/features/tasks/TaskFormDialog";
+import { useDeleteTask, useTasks, useUpdateTask } from "@/features/tasks/hooks";
+import {
+  type CalendarTask,
+  expandRecurringTasks,
+  formatDateKey,
+} from "@/features/calendar/recurrence";
+
+const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
+const STATUS_LABEL: Record<TaskStatus, string> = {
+  pending: "待處理",
+  in_progress: "進行中",
+  completed: "已完成",
+  cancelled: "已取消",
+};
+const PRIORITY_LABEL: Record<TaskResponse["priority"], string> = {
+  high: "高",
+  medium: "中",
+  low: "低",
+};
+const PRIORITY_WEIGHT: Record<TaskResponse["priority"], number> = {
+  high: 3,
+  medium: 2,
+  low: 1,
+};
+const STATUS_WEIGHT: Record<TaskStatus, number> = {
+  in_progress: 4,
+  pending: 3,
+  completed: 2,
+  cancelled: 1,
+};
+
+function monthBounds(month: Date) {
+  const first = new Date(month.getFullYear(), month.getMonth(), 1);
+  const start = new Date(first);
+  start.setDate(first.getDate() - first.getDay());
+  const end = new Date(start);
+  end.setDate(start.getDate() + 41);
+  return { first, start, end };
+}
+
+function sortDashboardTasks(a: CalendarTask, b: CalendarTask) {
+  const priority = PRIORITY_WEIGHT[b.priority] - PRIORITY_WEIGHT[a.priority];
+  if (priority !== 0) return priority;
+  const status = STATUS_WEIGHT[b.status] - STATUS_WEIGHT[a.status];
+  if (status !== 0) return status;
+  return (a.dueDate ?? "9999-12-31").localeCompare(b.dueDate ?? "9999-12-31");
+}
+
+function isActiveTask(task: CalendarTask) {
+  return task.status !== "completed" && task.status !== "cancelled";
+}
+
+function compactDateLabel(dateKey: string) {
+  const [, month, day] = dateKey.split("-");
+  return `${Number(month)}/${Number(day)}`;
+}
+
+function DashboardTaskCard({
+  task,
+  onStatusChange,
+  onEdit,
+  onDelete,
+}: {
+  task: CalendarTask;
+  onStatusChange: (status: TaskStatus) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <Card className="border-border/80 p-3 shadow-none">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <div className="flex flex-wrap items-center gap-2">
+            <Link className="truncate font-medium underline-offset-4 hover:underline" to={`/tasks/${task.id}`}>
+              {task.title}
+            </Link>
+            <Badge variant={task.priority === "high" ? "default" : "secondary"}>
+              {PRIORITY_LABEL[task.priority]}
+            </Badge>
+            {task.isRecurringInstance && <Badge variant="outline">週期</Badge>}
+            {task.categoryName && (
+              <Badge style={{ backgroundColor: task.categoryColor ?? undefined }}>
+                {task.categoryName}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {task.assigneeNickname ? `指派給 ${task.assigneeNickname}` : "未指派"}
+            {task.dueDate ? ` · ${task.dueDate}` : ""}
+          </p>
+        </div>
+        <Select value={task.status} onValueChange={(v) => onStatusChange(v as TaskStatus)}>
+          <SelectTrigger className="h-8 w-24 text-xs" aria-label="狀態">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {(Object.keys(STATUS_LABEL) as TaskStatus[]).map((status) => (
+              <SelectItem key={status} value={status}>
+                {STATUS_LABEL[status]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="mt-3 flex justify-end gap-2">
+        <Button variant="ghost" size="sm" onClick={onEdit}>
+          編輯
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onDelete}>
+          刪除
+        </Button>
+      </div>
+    </Card>
+  );
+}
+
+export function DashboardPage() {
+  const today = useMemo(() => new Date(), []);
+  const todayKey = formatDateKey(today);
+  const [month, setMonth] = useState(() => new Date(today));
+  const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [showMobileMonth, setShowMobileMonth] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [editing, setEditing] = useState<TaskResponse | null>(null);
+  const { data: tasks, isLoading } = useTasks("all");
+  const updateMutation = useUpdateTask();
+  const deleteMutation = useDeleteTask();
+
+  const { first, start, end } = monthBounds(month);
+  const calendarTasks = useMemo(
+    () => expandRecurringTasks(tasks ?? [], start, end),
+    [tasks, start.getTime(), end.getTime()],
+  );
+  const monthTasks = useMemo(
+    () =>
+      calendarTasks
+        .filter((task) => {
+          if (!task.dueDate) return false;
+          const due = new Date(`${task.dueDate}T00:00:00`);
+          return due.getFullYear() === first.getFullYear() && due.getMonth() === first.getMonth();
+        })
+        .sort(sortDashboardTasks),
+    [calendarTasks, first],
+  );
+  const cells = useMemo(
+    () =>
+      Array.from({ length: 42 }, (_, index) => {
+        const date = new Date(start);
+        date.setDate(start.getDate() + index);
+        const key = formatDateKey(date);
+        const lunar = solarToLunar(date.getFullYear(), date.getMonth() + 1, date.getDate());
+        return {
+          date,
+          key,
+          lunar,
+          tasks: calendarTasks.filter((task) => task.dueDate === key).sort(sortDashboardTasks),
+          isCurrentMonth: date.getMonth() === first.getMonth(),
+        };
+      }),
+    [calendarTasks, first, start],
+  );
+  const selectedTasks = useMemo(
+    () => calendarTasks.filter((task) => task.dueDate === selectedDate).sort(sortDashboardTasks),
+    [calendarTasks, selectedDate],
+  );
+  const todayTasks = useMemo(
+    () => calendarTasks.filter((task) => task.dueDate === todayKey).sort(sortDashboardTasks),
+    [calendarTasks, todayKey],
+  );
+  const overdueTasks = useMemo(
+    () =>
+      calendarTasks
+        .filter((task) => task.dueDate && task.dueDate < todayKey && isActiveTask(task))
+        .sort(sortDashboardTasks),
+    [calendarTasks, todayKey],
+  );
+  const inProgressTasks = useMemo(
+    () => calendarTasks.filter((task) => task.status === "in_progress").sort(sortDashboardTasks),
+    [calendarTasks],
+  );
+  const upcomingTasks = useMemo(
+    () =>
+      monthTasks
+        .filter((task) => task.dueDate && task.dueDate > selectedDate && isActiveTask(task))
+        .slice(0, 6),
+    [monthTasks, selectedDate],
+  );
+  const mobileDates = useMemo(
+    () =>
+      Array.from({ length: 14 }, (_, index) => {
+        const date = new Date(today);
+        date.setDate(today.getDate() + index);
+        const key = formatDateKey(date);
+        return {
+          key,
+          day: date.getDate(),
+          weekday: WEEKDAYS[date.getDay()],
+          tasks: calendarTasks.filter((task) => task.dueDate === key),
+        };
+      }),
+    [calendarTasks, today],
+  );
+
+  const selectedLabel = selectedDate === todayKey ? "今天" : selectedDate;
+  const selectedDateObject = new Date(`${selectedDate}T00:00:00`);
+  const selectedLunar = solarToLunar(
+    selectedDateObject.getFullYear(),
+    selectedDateObject.getMonth() + 1,
+    selectedDateObject.getDate(),
+  );
+
+  const shiftMonth = (delta: number) => {
+    const next = new Date(month);
+    next.setMonth(month.getMonth() + delta);
+    setMonth(next);
+  };
+
+  const onStatusChange = (task: CalendarTask, status: TaskStatus) => {
+    updateMutation.mutate(
+      { id: task.id, input: { status } },
+      { onError: (e) => toast.error(e instanceof ApiError ? e.message : "更新失敗") },
+    );
+  };
+
+  const onDelete = (task: CalendarTask) => {
+    if (!confirm(`確定刪除任務「${task.title}」？`)) return;
+    deleteMutation.mutate(task.id, {
+      onError: (e) => toast.error(e instanceof ApiError ? e.message : "刪除失敗"),
+    });
+  };
+
+  const renderTaskList = (items: CalendarTask[], emptyText: string) => {
+    if (isLoading) return <p className="text-sm text-muted-foreground">載入中...</p>;
+    if (items.length === 0) return <p className="py-6 text-sm text-muted-foreground">{emptyText}</p>;
+    return (
+      <div className="space-y-3">
+        {items.map((task) => (
+          <DashboardTaskCard
+            key={`${task.id}-${task.dueDate}-${task.isRecurringInstance ? "r" : "n"}`}
+            task={task}
+            onStatusChange={(status) => onStatusChange(task, status)}
+            onEdit={() => setEditing((tasks ?? []).find((item) => item.id === task.id) ?? task)}
+            onDelete={() => onDelete(task)}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <section className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">家庭工作台</p>
+          <h1 className="text-2xl font-semibold tracking-normal">今天要做什麼，一眼看清</h1>
+        </div>
+        <Button className="sm:w-auto" onClick={() => setCreating(true)}>
+          新增任務
+        </Button>
+      </section>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
+        <section className="space-y-4 lg:order-1">
+          <Card className="hidden p-4 sm:block">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">
+                  {first.getFullYear()} 年 {first.getMonth() + 1} 月
+                </h2>
+                <p className="text-sm text-muted-foreground">點選日期查看當天任務</p>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => shiftMonth(-1)}>
+                  上月
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => shiftMonth(1)}>
+                  下月
+                </Button>
+              </div>
+            </div>
+            <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
+              {WEEKDAYS.map((day) => (
+                <div key={day} className="py-2">
+                  {day}
+                </div>
+              ))}
+            </div>
+            <div className="grid grid-cols-7 gap-1">
+              {cells.map((cell) => (
+                <button
+                  key={cell.key}
+                  className={`min-h-24 rounded-lg border p-2 text-left transition ${
+                    cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
+                  } ${cell.isCurrentMonth ? "opacity-100" : "opacity-40"}`}
+                  onClick={() => setSelectedDate(cell.key)}
+                >
+                  <div className="flex items-start justify-between gap-1">
+                    <span className="font-medium">{cell.date.getDate()}</span>
+                    {cell.tasks.length > 0 && (
+                      <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
+                        {cell.tasks.length}
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-xs text-muted-foreground">{cell.lunar.day}</div>
+                  <div className="mt-1 space-y-1">
+                    {cell.tasks.slice(0, 2).map((task) => (
+                      <div
+                        key={`${task.id}-${cell.key}-${task.isRecurringInstance ? "r" : "n"}`}
+                        className="truncate rounded bg-muted px-1 text-xs"
+                      >
+                        {task.title}
+                      </div>
+                    ))}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </Card>
+
+          <Card className="p-3 sm:hidden" aria-label="行動日期條">
+            <div className="mb-3 flex items-center justify-between">
+              <div>
+                <h2 className="font-semibold">接下來 14 天</h2>
+                <p className="text-sm text-muted-foreground">左右滑動選日期</p>
+              </div>
+              <Button variant="outline" size="sm" onClick={() => setShowMobileMonth((v) => !v)}>
+                {showMobileMonth ? "收起月曆" : "展開本月日曆"}
+              </Button>
+            </div>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {mobileDates.map((item) => (
+                <button
+                  key={item.key}
+                  className={`min-w-16 rounded-lg border px-3 py-2 text-center ${
+                    item.key === selectedDate ? "border-primary bg-primary/10" : "border-border"
+                  }`}
+                  onClick={() => setSelectedDate(item.key)}
+                >
+                  <div className="text-xs text-muted-foreground">{item.weekday}</div>
+                  <div className="font-semibold">{item.day}</div>
+                  <div className="text-[11px] text-muted-foreground">{item.tasks.length} 件</div>
+                </button>
+              ))}
+            </div>
+          </Card>
+
+          {showMobileMonth && (
+            <Card className="p-3 sm:hidden" aria-label="手機本月日曆">
+              <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
+                {WEEKDAYS.map((day) => (
+                  <div key={day} className="py-2">
+                    {day}
+                  </div>
+                ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {cells.map((cell) => (
+                  <button
+                    key={cell.key}
+                    className={`min-h-14 rounded-md border p-1 text-left text-xs ${
+                      cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border"
+                    } ${cell.isCurrentMonth ? "opacity-100" : "opacity-40"}`}
+                    onClick={() => setSelectedDate(cell.key)}
+                  >
+                    <div className="font-medium">{cell.date.getDate()}</div>
+                    {cell.tasks.length > 0 && <div className="text-[10px]">{cell.tasks.length} 件</div>}
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
+        </section>
+
+        <aside className="space-y-4 lg:order-2">
+          <div className="grid grid-cols-2 gap-3" aria-label="工作台概覽">
+            <Card className="p-3">
+              <p className="text-sm text-muted-foreground">今天</p>
+              <p className="text-2xl font-semibold">{todayTasks.length}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-sm text-muted-foreground">逾期</p>
+              <p className="text-2xl font-semibold">{overdueTasks.length}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-sm text-muted-foreground">進行中</p>
+              <p className="text-2xl font-semibold">{inProgressTasks.length}</p>
+            </Card>
+            <Card className="p-3">
+              <p className="text-sm text-muted-foreground">本月</p>
+              <p className="text-2xl font-semibold">{monthTasks.length}</p>
+            </Card>
+          </div>
+
+          <Card className="space-y-3 p-4">
+            <div>
+              <h2 className="font-semibold">{selectedLabel}</h2>
+              <p className="text-sm text-muted-foreground">
+                {compactDateLabel(selectedDate)} · {selectedLunar.day}
+              </p>
+            </div>
+            {renderTaskList(selectedTasks, "這天沒有任務")}
+          </Card>
+
+          {overdueTasks.length > 0 && (
+            <Card className="space-y-3 p-4" aria-label="逾期未完成任務">
+              <div>
+                <h2 className="font-semibold">逾期未完成</h2>
+                <p className="text-sm text-muted-foreground">先處理這些最有影響</p>
+              </div>
+              {renderTaskList(overdueTasks.slice(0, 4), "沒有逾期任務")}
+            </Card>
+          )}
+
+          <Card className="space-y-3 p-4">
+            <div>
+              <h2 className="font-semibold">本月接下來</h2>
+              <p className="text-sm text-muted-foreground">
+                {first.getMonth() + 1} 月剩餘安排
+              </p>
+            </div>
+            {renderTaskList(upcomingTasks, "本月接下來沒有任務")}
+          </Card>
+        </aside>
+      </div>
+
+      {creating && <TaskFormDialog open onOpenChange={(o) => !o && setCreating(false)} />}
+      {editing && (
+        <TaskFormDialog
+          open
+          task={editing}
+          onOpenChange={(o) => {
+            if (!o) setEditing(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}

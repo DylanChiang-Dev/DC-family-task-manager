@@ -8,17 +8,16 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useThemeStore } from "@/stores/theme-store";
 
 const NAV_ITEMS = [
-  { to: "/", label: "任務" },
-  { to: "/calendar", label: "日曆" },
+  { to: "/", label: "工作台" },
   { to: "/teams", label: "團隊" },
   { to: "/categories", label: "分類" },
   { to: "/settings", label: "我的" },
 ];
 
 const MOBILE_NAV_ITEMS = [
-  ...NAV_ITEMS.slice(0, 2),
+  ...NAV_ITEMS.slice(0, 1),
   { to: "/notifications", label: "通知" },
-  ...NAV_ITEMS.slice(3),
+  ...NAV_ITEMS.slice(1),
 ];
 
 export function AppLayout() {
@@ -52,7 +51,7 @@ export function AppLayout() {
           </Button>
         </div>
       </header>
-      <main className="mx-auto max-w-3xl p-4">
+      <main className="mx-auto max-w-7xl p-4">
         <Outlet />
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background sm:hidden">

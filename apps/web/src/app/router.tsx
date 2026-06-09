@@ -4,10 +4,9 @@ import { AppLayout } from "@/components/AppLayout";
 import { LoginPage } from "@/features/auth/LoginPage";
 import { RegisterPage } from "@/features/auth/RegisterPage";
 import { CategoriesPage } from "@/features/categories/CategoriesPage";
-import { CalendarPage } from "@/features/calendar/CalendarPage";
+import { DashboardPage } from "@/features/dashboard/DashboardPage";
 import { NotificationsPage } from "@/features/notifications/NotificationsPage";
 import { SettingsPage } from "@/features/profile/SettingsPage";
-import { TaskListPage } from "@/features/tasks/TaskListPage";
 import { TaskDetailPage } from "@/features/tasks/TaskDetailPage";
 import { TeamMembersPage } from "@/features/teams/TeamMembersPage";
 import { TeamsPage } from "@/features/teams/TeamsPage";
@@ -21,10 +20,10 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
       {
         element: <AppLayout />,
         children: [
-          { path: "/", element: <TaskListPage /> },
+          { path: "/", element: <DashboardPage /> },
           { path: "/tasks", element: <Navigate to="/" replace /> },
           { path: "/tasks/:id", element: <TaskDetailPage /> },
-          { path: "/calendar", element: <CalendarPage /> },
+          { path: "/calendar", element: <Navigate to="/" replace /> },
           { path: "/teams", element: <TeamsPage /> },
           { path: "/teams/:id/members", element: <TeamMembersPage /> },
           { path: "/categories", element: <CategoriesPage /> },

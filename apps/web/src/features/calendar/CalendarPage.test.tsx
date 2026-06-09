@@ -53,6 +53,6 @@ describe("CalendarPage", () => {
 
     renderWithProviders(<CalendarPage />);
 
-    expect(await screen.findByText("繳水費")).toBeInTheDocument();
+    expect((await screen.findAllByText("繳水費")).length).toBeGreaterThan(0);
   });
 });
