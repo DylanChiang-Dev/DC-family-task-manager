@@ -46,13 +46,20 @@ const STATUS_WEIGHT: Record<TaskStatus, number> = {
   cancelled: 1,
 };
 
-function monthBounds(month: Date) {
-  const first = new Date(month.getFullYear(), month.getMonth(), 1);
-  const start = new Date(first);
-  start.setDate(first.getDate() - first.getDay());
+function calendarWindow(anchor: Date) {
+  const start = new Date(anchor);
+  start.setHours(0, 0, 0, 0);
   const end = new Date(start);
   end.setDate(start.getDate() + 41);
-  return { first, start, end };
+  return { start, end };
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function minDate(...dates: Date[]) {
+  return dates.reduce((earliest, date) => (date < earliest ? date : earliest));
 }
 
 function sortDashboardTasks(a: CalendarTask, b: CalendarTask) {
@@ -174,7 +181,7 @@ function DashboardTaskCard({
 export function DashboardPage() {
   const today = useMemo(() => new Date(), []);
   const todayKey = formatDateKey(today);
-  const [month, setMonth] = useState(() => new Date(today));
+  const [anchorDate, setAnchorDate] = useState(() => new Date(today));
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [showMobileMonth, setShowMobileMonth] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -183,10 +190,19 @@ export function DashboardPage() {
   const updateMutation = useUpdateTask();
   const deleteMutation = useDeleteTask();
 
-  const { first, start, end } = monthBounds(month);
+  const { start, end } = calendarWindow(anchorDate);
+  const first = startOfMonth(start);
+  const taskStart = useMemo(() => {
+    const dueDates =
+      tasks
+        ?.map((task) => task.dueDate)
+        .filter((dueDate): dueDate is string => Boolean(dueDate))
+        .map((dueDate) => new Date(`${dueDate}T00:00:00`)) ?? [];
+    return minDate(start, ...dueDates);
+  }, [tasks, start.getTime()]);
   const calendarTasks = useMemo(
-    () => expandRecurringTasks(tasks ?? [], start, end),
-    [tasks, start.getTime(), end.getTime()],
+    () => expandRecurringTasks(tasks ?? [], taskStart, end),
+    [tasks, taskStart.getTime(), end.getTime()],
   );
   const monthTasks = useMemo(
     () =>
@@ -209,10 +225,14 @@ export function DashboardPage() {
           date,
           key,
           tasks: calendarTasks.filter((task) => task.dueDate === key).sort(sortDashboardTasks),
-          isCurrentMonth: date.getMonth() === first.getMonth(),
+          isPast: key < todayKey,
         };
       }),
-    [calendarTasks, first, start],
+    [calendarTasks, start, todayKey],
+  );
+  const rollingWeekdays = useMemo(
+    () => Array.from({ length: 7 }, (_, index) => WEEKDAYS[(start.getDay() + index) % 7]),
+    [start],
   );
   const selectedTasks = useMemo(
     () => calendarTasks.filter((task) => task.dueDate === selectedDate).sort(sortDashboardTasks),
@@ -264,10 +284,11 @@ export function DashboardPage() {
     selectedDateObject.getDate(),
   );
 
-  const shiftMonth = (delta: number) => {
-    const next = new Date(month);
-    next.setMonth(month.getMonth() + delta);
-    setMonth(next);
+  const shiftWindow = (delta: number) => {
+    const next = new Date(anchorDate);
+    next.setDate(anchorDate.getDate() + delta * 42);
+    setAnchorDate(next);
+    setSelectedDate(formatDateKey(next));
   };
 
   const onStatusChange = (task: CalendarTask, status: TaskStatus) => {
@@ -331,26 +352,26 @@ export function DashboardPage() {
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="min-w-0 space-y-4 lg:order-1">
-          <Card className="hidden p-4 sm:flex sm:flex-col lg:min-h-[calc(100svh-13rem)]">
+          <Card className="hidden p-4 sm:flex sm:flex-col lg:min-h-[calc(100svh-13rem)]" aria-label="未來 6 週日曆">
             <div className="mb-3 flex shrink-0 items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold">
-                  {first.getFullYear()} 年 {first.getMonth() + 1} 月
+                  {compactDateLabel(formatDateKey(start))} - {compactDateLabel(formatDateKey(end))}
                 </h2>
-                <p className="text-sm text-muted-foreground">點選日期查看當天任務</p>
+                <p className="text-sm text-muted-foreground">從今天開始，向後查看 6 週安排</p>
               </div>
               <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={() => shiftMonth(-1)}>
-                  上月
+                <Button variant="outline" size="sm" onClick={() => shiftWindow(-1)}>
+                  前 6 週
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => shiftMonth(1)}>
-                  下月
+                <Button variant="outline" size="sm" onClick={() => shiftWindow(1)}>
+                  後 6 週
                 </Button>
               </div>
             </div>
             <div className="grid shrink-0 grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
-              {WEEKDAYS.map((day) => (
-                <div key={day} className="py-2">
+              {rollingWeekdays.map((day, index) => (
+                <div key={`${day}-${index}`} className="py-2">
                   {day}
                 </div>
               ))}
@@ -359,9 +380,10 @@ export function DashboardPage() {
               {cells.map((cell) => (
                 <button
                   key={cell.key}
+                  aria-label={cell.key}
                   className={`flex min-h-24 flex-col items-stretch justify-start rounded-lg border p-2 text-left transition lg:min-h-0 ${
                     cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
-                  } ${cell.isCurrentMonth ? "opacity-100" : "opacity-40"}`}
+                  } ${cell.isPast ? "opacity-50" : "opacity-100"}`}
                   onClick={() => setSelectedDate(cell.key)}
                 >
                   <div className="flex shrink-0 items-start justify-between gap-1">
@@ -394,7 +416,7 @@ export function DashboardPage() {
                 <p className="text-sm text-muted-foreground">左右滑動選日期</p>
               </div>
               <Button variant="outline" size="sm" onClick={() => setShowMobileMonth((v) => !v)}>
-                {showMobileMonth ? "收起月曆" : "展開本月日曆"}
+                {showMobileMonth ? "收起日曆" : "展開 6 週日曆"}
               </Button>
             </div>
             <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
@@ -415,10 +437,10 @@ export function DashboardPage() {
           </Card>
 
           {showMobileMonth && (
-            <Card className="p-3 sm:hidden" aria-label="手機本月日曆">
+            <Card className="p-3 sm:hidden" aria-label="手機 6 週日曆">
               <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
-                {WEEKDAYS.map((day) => (
-                  <div key={day} className="py-2">
+                {rollingWeekdays.map((day, index) => (
+                  <div key={`${day}-${index}`} className="py-2">
                     {day}
                   </div>
                 ))}
@@ -427,9 +449,10 @@ export function DashboardPage() {
                 {cells.map((cell) => (
                   <button
                     key={cell.key}
+                    aria-label={cell.key}
                     className={`min-h-14 rounded-md border p-1 text-left text-xs ${
                       cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border"
-                    } ${cell.isCurrentMonth ? "opacity-100" : "opacity-40"}`}
+                    } ${cell.isPast ? "opacity-50" : "opacity-100"}`}
                     onClick={() => setSelectedDate(cell.key)}
                   >
                     <div className="font-medium">{cell.date.getDate()}</div>

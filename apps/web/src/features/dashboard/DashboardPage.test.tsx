@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
-import { screen, within } from "@testing-library/react";
+import { screen, waitFor, within } from "@testing-library/react";
 import type { TaskResponse } from "@ftm/shared";
 import { server } from "@/test/msw-server";
 import { renderWithProviders } from "@/test/test-utils";
@@ -88,6 +88,16 @@ describe("DashboardPage", () => {
     expect((await screen.findAllByText("每日閱讀")).length).toBeGreaterThan(0);
   });
 
+  it("starts the desktop calendar window from today", async () => {
+    renderWithProviders(<DashboardPage />);
+
+    expect(await screen.findByText("家庭工作台")).toBeInTheDocument();
+    const calendar = screen.getByLabelText("未來 6 週日曆");
+    const firstCalendarDay = within(calendar).getByRole("button", { name: dateKey(0) });
+
+    await waitFor(() => expect(firstCalendarDay).toHaveTextContent("今天高優先任務"));
+  });
+
   it("changes the selected-day task list when a date is clicked", async () => {
     const user = userEvent.setup();
     renderWithProviders(<DashboardPage />);
@@ -128,8 +138,8 @@ describe("DashboardPage", () => {
     expect(await screen.findByLabelText("行動日期條")).toBeInTheDocument();
     expect(screen.queryByLabelText("手機本月日曆")).not.toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "展開本月日曆" }));
+    await user.click(screen.getByRole("button", { name: "展開 6 週日曆" }));
 
-    expect(screen.getByLabelText("手機本月日曆")).toBeInTheDocument();
+    expect(screen.getByLabelText("手機 6 週日曆")).toBeInTheDocument();
   });
 });
