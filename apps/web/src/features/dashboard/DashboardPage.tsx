@@ -118,48 +118,54 @@ function DashboardTaskCard({
   onDelete: () => void;
 }) {
   return (
-    <Card className="border-border/80 p-3 shadow-none">
-      <div className="flex items-start justify-between gap-3">
+    <Card className="border-border/80 p-2 shadow-none">
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 space-y-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <Link className="truncate font-medium underline-offset-4 hover:underline" to={`/tasks/${task.id}`}>
+          <div className="flex min-w-0 flex-wrap items-center gap-1.5">
+            <Link className="min-w-0 truncate text-sm font-medium underline-offset-4 hover:underline" to={`/tasks/${task.id}`}>
               {task.title}
             </Link>
-            <Badge variant={task.priority === "high" ? "default" : "secondary"}>
+            <Badge className="px-1.5 py-0 text-[10px]" variant={task.priority === "high" ? "default" : "secondary"}>
               {PRIORITY_LABEL[task.priority]}
             </Badge>
-            {task.isRecurringInstance && <Badge variant="outline">週期</Badge>}
+            {task.isRecurringInstance && (
+              <Badge className="px-1.5 py-0 text-[10px]" variant="outline">
+                週期
+              </Badge>
+            )}
             {task.categoryName && (
-              <Badge style={{ backgroundColor: task.categoryColor ?? undefined }}>
+              <Badge className="px-1.5 py-0 text-[10px]" style={{ backgroundColor: task.categoryColor ?? undefined }}>
                 {task.categoryName}
               </Badge>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="truncate text-xs text-muted-foreground">
             {task.assigneeNickname ? `指派給 ${task.assigneeNickname}` : "未指派"}
             {task.dueDate ? ` · ${task.dueDate}` : ""}
           </p>
         </div>
-        <Select value={task.status} onValueChange={(v) => onStatusChange(v as TaskStatus)}>
-          <SelectTrigger className="h-8 w-24 text-xs" aria-label="狀態">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {(Object.keys(STATUS_LABEL) as TaskStatus[]).map((status) => (
-              <SelectItem key={status} value={status}>
-                {STATUS_LABEL[status]}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="mt-3 flex justify-end gap-2">
-        <Button variant="ghost" size="sm" onClick={onEdit}>
-          編輯
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onDelete}>
-          刪除
-        </Button>
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <Select value={task.status} onValueChange={(v) => onStatusChange(v as TaskStatus)}>
+            <SelectTrigger className="h-7 w-[86px] text-xs" aria-label="狀態">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {(Object.keys(STATUS_LABEL) as TaskStatus[]).map((status) => (
+                <SelectItem key={status} value={status}>
+                  {STATUS_LABEL[status]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <div className="flex gap-1">
+            <Button className="h-6 px-2 text-xs" variant="ghost" size="sm" onClick={onEdit}>
+              編輯
+            </Button>
+            <Button className="h-6 px-2 text-xs" variant="ghost" size="sm" onClick={onDelete}>
+              刪除
+            </Button>
+          </div>
+        </div>
       </div>
     </Card>
   );
@@ -282,7 +288,7 @@ export function DashboardPage() {
     if (isLoading) return <p className="text-sm text-muted-foreground">載入中...</p>;
     if (items.length === 0) return <p className="py-6 text-sm text-muted-foreground">{emptyText}</p>;
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         {items.map((task) => (
           <DashboardTaskCard
             key={`${task.id}-${task.dueDate}-${task.isRecurringInstance ? "r" : "n"}`}
@@ -298,17 +304,32 @@ export function DashboardPage() {
 
   return (
     <div className="w-full min-w-0 space-y-4">
-      <section className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+      <section className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm xl:flex-row xl:items-center xl:justify-between">
         <div>
           <p className="text-sm text-muted-foreground">家庭工作台</p>
           <h1 className="text-2xl font-semibold tracking-normal">今天要做什麼，一眼看清</h1>
         </div>
-        <Button className="sm:w-auto" onClick={() => setCreating(true)}>
-          新增任務
-        </Button>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between xl:justify-end">
+          <div className="grid grid-cols-4 gap-2 text-right" aria-label="工作台概覽">
+            {[
+              ["今天", todayTasks.length],
+              ["逾期", overdueTasks.length],
+              ["進行中", inProgressTasks.length],
+              ["本月", monthTasks.length],
+            ].map(([label, count]) => (
+              <div key={label} className="rounded-md border bg-background/70 px-2.5 py-1.5">
+                <p className="text-[11px] leading-none text-muted-foreground">{label}</p>
+                <p className="mt-1 text-base font-semibold leading-none">{count}</p>
+              </div>
+            ))}
+          </div>
+          <Button className="sm:w-auto" onClick={() => setCreating(true)}>
+            新增任務
+          </Button>
+        </div>
       </section>
 
-      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)] 2xl:grid-cols-[minmax(0,1.35fr)_minmax(400px,0.65fr)]">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="min-w-0 space-y-4 lg:order-1">
           <Card className="hidden p-4 sm:flex sm:flex-col lg:min-h-[calc(100svh-13rem)]">
             <div className="mb-3 flex shrink-0 items-center justify-between">
@@ -420,52 +441,48 @@ export function DashboardPage() {
           )}
         </section>
 
-        <aside className="min-w-0 space-y-4 lg:order-2">
-          <div className="grid grid-cols-2 gap-3" aria-label="工作台概覽">
-            <Card className="p-3">
-              <p className="text-sm text-muted-foreground">今天</p>
-              <p className="text-2xl font-semibold">{todayTasks.length}</p>
-            </Card>
-            <Card className="p-3">
-              <p className="text-sm text-muted-foreground">逾期</p>
-              <p className="text-2xl font-semibold">{overdueTasks.length}</p>
-            </Card>
-            <Card className="p-3">
-              <p className="text-sm text-muted-foreground">進行中</p>
-              <p className="text-2xl font-semibold">{inProgressTasks.length}</p>
-            </Card>
-            <Card className="p-3">
-              <p className="text-sm text-muted-foreground">本月</p>
-              <p className="text-2xl font-semibold">{monthTasks.length}</p>
-            </Card>
-          </div>
-
-          <Card className="space-y-3 p-4">
-            <div>
+        <aside className="min-w-0 space-y-3 lg:order-2">
+          <Card className="space-y-2 p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
               <h2 className="font-semibold">{selectedLabel}</h2>
               <p className="text-sm text-muted-foreground">
                 {compactDateLabel(selectedDate)} · {selectedLunar.day}
               </p>
+              </div>
+              <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                {selectedTasks.length} 件
+              </span>
             </div>
             {renderTaskList(selectedTasks, "這天沒有任務")}
           </Card>
 
           {overdueTasks.length > 0 && (
-            <Card className="space-y-3 p-4" aria-label="逾期未完成任務">
-              <div>
+            <Card className="space-y-2 p-3" aria-label="逾期未完成任務">
+              <div className="flex items-start justify-between gap-2">
+                <div>
                 <h2 className="font-semibold">逾期未完成</h2>
                 <p className="text-sm text-muted-foreground">先處理這些最有影響</p>
+                </div>
+                <span className="rounded-full bg-destructive/10 px-2 py-1 text-xs text-destructive">
+                  {overdueTasks.length} 件
+                </span>
               </div>
               {renderTaskList(overdueTasks.slice(0, 4), "沒有逾期任務")}
             </Card>
           )}
 
-          <Card className="space-y-3 p-4">
-            <div>
+          <Card className="space-y-2 p-3">
+            <div className="flex items-start justify-between gap-2">
+              <div>
               <h2 className="font-semibold">本月接下來</h2>
               <p className="text-sm text-muted-foreground">
                 {first.getMonth() + 1} 月剩餘安排
               </p>
+              </div>
+              <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+                {upcomingTasks.length} 件
+              </span>
             </div>
             {renderTaskList(upcomingTasks, "本月接下來沒有任務")}
           </Card>
