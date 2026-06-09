@@ -72,6 +72,34 @@ function compactDateLabel(dateKey: string) {
   return `${Number(month)}/${Number(day)}`;
 }
 
+function calendarTaskTone(task: CalendarTask) {
+  if (task.status === "completed") return "border-emerald-200 bg-emerald-50 text-emerald-950";
+  if (task.status === "cancelled") return "border-muted bg-muted/60 text-muted-foreground";
+  if (task.status === "in_progress") return "border-blue-200 bg-blue-50 text-blue-950";
+  if (task.priority === "high") return "border-rose-200 bg-rose-50 text-rose-950";
+  return "border-border bg-muted/70 text-foreground";
+}
+
+function renderCalendarTask(task: CalendarTask) {
+  return (
+    <div
+      key={`${task.id}-${task.dueDate}-${task.isRecurringInstance ? "r" : "n"}`}
+      className={`min-w-0 rounded-md border px-2 py-1 shadow-sm ${calendarTaskTone(task)}`}
+      title={task.title}
+    >
+      <div className="flex min-w-0 items-center gap-1">
+        <span className="truncate text-xs font-medium leading-tight">{task.title}</span>
+        {task.priority === "high" && <span className="shrink-0 rounded bg-background/70 px-1 text-[10px]">高</span>}
+      </div>
+      <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] leading-none opacity-75">
+        <span className="truncate">{STATUS_LABEL[task.status]}</span>
+        {task.isRecurringInstance && <span className="shrink-0">週期</span>}
+        {task.categoryName && <span className="truncate">{task.categoryName}</span>}
+      </div>
+    </div>
+  );
+}
+
 function DashboardTaskCard({
   task,
   onStatusChange,
@@ -165,11 +193,9 @@ export function DashboardPage() {
         const date = new Date(start);
         date.setDate(start.getDate() + index);
         const key = formatDateKey(date);
-        const lunar = solarToLunar(date.getFullYear(), date.getMonth() + 1, date.getDate());
         return {
           date,
           key,
-          lunar,
           tasks: calendarTasks.filter((task) => task.dueDate === key).sort(sortDashboardTasks),
           isCurrentMonth: date.getMonth() === first.getMonth(),
         };
@@ -319,16 +345,13 @@ export function DashboardPage() {
                       </span>
                     )}
                   </div>
-                  <div className="text-xs text-muted-foreground">{cell.lunar.day}</div>
-                  <div className="mt-1 space-y-1">
-                    {cell.tasks.slice(0, 2).map((task) => (
-                      <div
-                        key={`${task.id}-${cell.key}-${task.isRecurringInstance ? "r" : "n"}`}
-                        className="truncate rounded bg-muted px-1 text-xs"
-                      >
-                        {task.title}
+                  <div className="mt-2 space-y-1 overflow-hidden">
+                    {cell.tasks.slice(0, 5).map((task) => renderCalendarTask(task))}
+                    {cell.tasks.length > 5 && (
+                      <div className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                        +{cell.tasks.length - 5} 個任務
                       </div>
-                    ))}
+                    )}
                   </div>
                 </button>
               ))}
