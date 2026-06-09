@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import type { TaskResponse, TaskStatus } from "@ftm/shared";
 import { toast } from "sonner";
@@ -79,12 +79,21 @@ function compactDateLabel(dateKey: string) {
   return `${Number(month)}/${Number(day)}`;
 }
 
-function calendarTaskTone(task: CalendarTask) {
-  if (task.status === "completed") return "border-emerald-200 bg-emerald-50 text-emerald-950";
-  if (task.status === "cancelled") return "border-muted bg-muted/60 text-muted-foreground";
-  if (task.status === "in_progress") return "border-blue-200 bg-blue-50 text-blue-950";
-  if (task.priority === "high") return "border-rose-200 bg-rose-50 text-rose-950";
-  return "border-border bg-muted/70 text-foreground";
+function colorWithAlpha(color: string, alpha: string) {
+  if (/^#[0-9a-fA-F]{6}$/.test(color)) return `${color}${alpha}`;
+  if (/^#[0-9a-fA-F]{3}$/.test(color)) {
+    const [, r, g, b] = color;
+    return `#${r}${r}${g}${g}${b}${b}${alpha}`;
+  }
+  return `color-mix(in srgb, ${color} 16%, white)`;
+}
+
+function calendarTaskStyle(task: CalendarTask): CSSProperties | undefined {
+  if (!task.categoryColor) return undefined;
+  return {
+    backgroundColor: colorWithAlpha(task.categoryColor, "1F"),
+    borderColor: colorWithAlpha(task.categoryColor, "80"),
+  };
 }
 
 function calendarCountTone(count: number) {
@@ -97,7 +106,8 @@ function renderCalendarTask(task: CalendarTask) {
   return (
     <div
       key={`${task.id}-${task.dueDate}-${task.isRecurringInstance ? "r" : "n"}`}
-      className={`min-w-0 rounded-md border px-2 py-1 shadow-sm ${calendarTaskTone(task)}`}
+      className="min-w-0 rounded-md border border-border bg-muted/70 px-2 py-1 text-foreground shadow-sm"
+      style={calendarTaskStyle(task)}
       title={task.title}
     >
       <div className="flex min-w-0 items-center gap-1">

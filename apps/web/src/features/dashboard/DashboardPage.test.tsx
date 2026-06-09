@@ -45,8 +45,22 @@ function task(overrides: Partial<TaskResponse> & Pick<TaskResponse, "id" | "titl
 }
 
 const tasks = [
-  task({ id: 1, title: "今天高優先任務", priority: "high", dueDate: dateKey(0) }),
-  task({ id: 2, title: "明天採買", priority: "medium", dueDate: dateKey(1) }),
+  task({
+    id: 1,
+    title: "今天高優先任務",
+    priority: "high",
+    dueDate: dateKey(0),
+    categoryName: "家務",
+    categoryColor: "#22c55e",
+  }),
+  task({
+    id: 2,
+    title: "明天採買",
+    priority: "medium",
+    dueDate: dateKey(1),
+    categoryName: "採買",
+    categoryColor: "#f59e0b",
+  }),
   task({ id: 3, title: "逾期未完成", priority: "high", dueDate: dateKey(-1) }),
   task({ id: 4, title: "逾期已完成", status: "completed", dueDate: dateKey(-2) }),
   task({ id: 5, title: "逾期已取消", status: "cancelled", dueDate: dateKey(-3) }),
@@ -96,6 +110,19 @@ describe("DashboardPage", () => {
     const firstCalendarDay = within(calendar).getByRole("button", { name: dateKey(0) });
 
     await waitFor(() => expect(firstCalendarDay).toHaveTextContent("今天高優先任務"));
+  });
+
+  it("uses category colors for calendar task chips", async () => {
+    renderWithProviders(<DashboardPage />);
+
+    const calendar = await screen.findByLabelText("未來 6 週日曆");
+    const firstCalendarDay = within(calendar).getByRole("button", { name: dateKey(0) });
+
+    await waitFor(() => expect(firstCalendarDay).toHaveTextContent("今天高優先任務"));
+    const taskChip = within(firstCalendarDay).getByTitle("今天高優先任務");
+
+    expect(taskChip).toHaveStyle({ borderColor: "#22c55e80" });
+    expect(taskChip).toHaveStyle({ backgroundColor: "#22c55e1F" });
   });
 
   it("changes the selected-day task list when a date is clicked", async () => {
