@@ -16,10 +16,10 @@
 
 | 計劃 | 範圍 | 狀態 |
 |------|------|------|
-| **Phase 2（本份）** | 腳手架 + 認證（cookie refresh）+ 團隊切換 + 任務 CRUD | 待執行 |
-| Phase 3 | 分類管理、任務評論、通知中心 + 紅點、任務歷史 | 後續撰寫 |
-| Phase 4 | 日曆月視圖、週期任務虛擬實例展開、農曆模組（JS→TS） | 後續撰寫 |
-| Phase 6 | PWA（manifest + SW + 離線讀）、暗色模式、行動端導航、打磨 | 後續撰寫 |
+| **Phase 2（本份）** | 腳手架 + 認證（cookie refresh）+ 團隊切換 + 任務 CRUD | 已完成 |
+| Phase 3 | 分類管理、任務評論、通知中心 + 紅點、任務歷史 | 已完成（見 `2026-06-09-web-completion.md`） |
+| Phase 4 | 日曆月視圖、週期任務虛擬實例展開、農曆模組（JS→TS） | 已完成（見 `2026-06-09-web-completion.md`） |
+| Phase 6 | PWA（manifest + SW + 離線讀）、暗色模式、行動端導航、打磨 | 已完成（見 `2026-06-09-web-completion.md`） |
 
 > Phase 5（定時任務/郵件）後端已完成，前端只需在 Phase 3 的通知中心呈現 `due_reminder` 通知，不另立計劃。
 
@@ -96,7 +96,7 @@ apps/web/
 - Create: `apps/web/src/main.tsx`, `apps/web/src/index.css`, `apps/web/src/vite-env.d.ts`
 - Create: `apps/web/.env.development`, `apps/web/.env.production`
 
-- [ ] **Step 1: 建立 package.json**
+- [x] **Step 1: 建立 package.json**
 
 `apps/web/package.json`：
 ```json
@@ -143,7 +143,7 @@ apps/web/
 }
 ```
 
-- [ ] **Step 2: 建立 index.html**
+- [x] **Step 2: 建立 index.html**
 
 `apps/web/index.html`：
 ```html
@@ -161,7 +161,7 @@ apps/web/
 </html>
 ```
 
-- [ ] **Step 3: 建立 tsconfig 三件組**
+- [x] **Step 3: 建立 tsconfig 三件組**
 
 `apps/web/tsconfig.json`：
 ```json
@@ -210,7 +210,7 @@ apps/web/
 }
 ```
 
-- [ ] **Step 4: 建立 vite.config.ts（含 Vitest 設定）**
+- [x] **Step 4: 建立 vite.config.ts（含 Vitest 設定）**
 
 `apps/web/vite.config.ts`：
 ```ts
@@ -240,7 +240,7 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 5: 建立進入點與環境檔**
+- [x] **Step 5: 建立進入點與環境檔**
 
 `apps/web/src/index.css`：
 ```css
@@ -286,17 +286,17 @@ VITE_API_BASE_URL=http://localhost:8787/api
 VITE_API_BASE_URL=https://ftm-api.dylan-chiang.workers.dev/api
 ```
 
-- [ ] **Step 6: 安裝依賴**
+- [x] **Step 6: 安裝依賴**
 
 Run: `cd /Users/dc/Documents/DylanChiang-Dev/DC-family-task-manager && pnpm install`
 Expected: 安裝完成，`apps/web/node_modules` 建立，`@ftm/shared` 以 workspace symlink 連結。
 
-- [ ] **Step 7: 驗證 dev server 啟動**
+- [x] **Step 7: 驗證 dev server 啟動**
 
 Run: `pnpm --filter @ftm/web dev` （啟動後手動開 http://localhost:5173 應顯示 "FTM web bootstrap OK"，確認後 Ctrl-C）
 Expected: Vite 正常啟動於 5173，無編譯錯誤。
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add apps/web pnpm-lock.yaml
@@ -313,13 +313,13 @@ git commit -m "feat(web): scaffold Vite + React + TS app with workspace wiring"
 - Create: `apps/web/src/components/ui/*`（CLI 產生）
 - Modify: `apps/web/src/index.css`（shadcn 注入主題變數）
 
-- [ ] **Step 1: 執行 shadcn init**
+- [x] **Step 1: 執行 shadcn init**
 
 Run: `cd apps/web && pnpm dlx shadcn@latest init`
 互動選項：style = `new-york`、base color = `slate`、CSS variables = yes。
 Expected: 產生 `components.json`、`src/lib/utils.ts`，並改寫 `src/index.css` 注入 `@theme` 變數與 `tw-animate-css`。
 
-- [ ] **Step 2: 加入本階段需要的元件**
+- [x] **Step 2: 加入本階段需要的元件**
 
 Run:
 ```bash
@@ -327,12 +327,12 @@ cd apps/web && pnpm dlx shadcn@latest add button input label card dialog select 
 ```
 Expected: `src/components/ui/` 出現對應元件檔；`sonner`（toast）安裝。
 
-- [ ] **Step 3: 驗證 typecheck**
+- [x] **Step 3: 驗證 typecheck**
 
 Run: `pnpm --filter @ftm/web typecheck`
 Expected: 無錯誤（shadcn 元件依賴 `@/lib/utils` 的 `cn` 已就緒）。
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add apps/web
@@ -350,7 +350,7 @@ git commit -m "feat(web): init Tailwind v4 + shadcn/ui with base components"
 - Create: `apps/web/src/lib/query-client.ts`
 - Test: `apps/web/src/test/smoke.test.tsx`
 
-- [ ] **Step 1: 建立 MSW server 與測試 setup**
+- [x] **Step 1: 建立 MSW server 與測試 setup**
 
 `apps/web/src/test/msw-server.ts`：
 ```ts
@@ -374,7 +374,7 @@ afterEach(() => {
 afterAll(() => server.close());
 ```
 
-- [ ] **Step 2: 建立 QueryClient 與 render helper**
+- [x] **Step 2: 建立 QueryClient 與 render helper**
 
 `apps/web/src/lib/query-client.ts`：
 ```ts
@@ -418,7 +418,7 @@ export function renderWithProviders(
 export * from "@testing-library/react";
 ```
 
-- [ ] **Step 3: 寫 smoke 測試**
+- [x] **Step 3: 寫 smoke 測試**
 
 `apps/web/src/test/smoke.test.tsx`：
 ```tsx
@@ -434,12 +434,12 @@ describe("test infra", () => {
 });
 ```
 
-- [ ] **Step 4: 執行測試**
+- [x] **Step 4: 執行測試**
 
 Run: `pnpm --filter @ftm/web test`
 Expected: 1 passed。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web
@@ -454,7 +454,7 @@ git commit -m "test(web): set up Vitest + RTL + MSW infra"
 - Create: `apps/web/src/stores/auth-store.ts`
 - Test: `apps/web/src/stores/auth-store.test.ts`
 
-- [ ] **Step 1: 寫失敗測試**
+- [x] **Step 1: 寫失敗測試**
 
 `apps/web/src/stores/auth-store.test.ts`：
 ```ts
@@ -499,12 +499,12 @@ describe("auth-store", () => {
 });
 ```
 
-- [ ] **Step 2: 執行測試確認失敗**
+- [x] **Step 2: 執行測試確認失敗**
 
 Run: `pnpm --filter @ftm/web test -- auth-store`
 Expected: FAIL（找不到 `./auth-store`）。
 
-- [ ] **Step 3: 實作 store**
+- [x] **Step 3: 實作 store**
 
 `apps/web/src/stores/auth-store.ts`：
 ```ts
@@ -547,12 +547,12 @@ export const useAuthStore = create<AuthState>()(
 );
 ```
 
-- [ ] **Step 4: 執行測試確認通過**
+- [x] **Step 4: 執行測試確認通過**
 
 Run: `pnpm --filter @ftm/web test -- auth-store`
 Expected: 3 passed。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/stores
@@ -567,7 +567,7 @@ git commit -m "feat(web): add Zustand auth store (memory token + persisted team)
 - Create: `apps/web/src/lib/api-client.ts`
 - Test: `apps/web/src/lib/api-client.test.ts`
 
-- [ ] **Step 1: 寫失敗測試（MSW 模擬 401→refresh→重放）**
+- [x] **Step 1: 寫失敗測試（MSW 模擬 401→refresh→重放）**
 
 `apps/web/src/lib/api-client.test.ts`：
 ```ts
@@ -660,12 +660,12 @@ describe("api-client", () => {
 });
 ```
 
-- [ ] **Step 2: 執行測試確認失敗**
+- [x] **Step 2: 執行測試確認失敗**
 
 Run: `pnpm --filter @ftm/web test -- api-client`
 Expected: FAIL（找不到 `./api-client`）。
 
-- [ ] **Step 3: 實作 api-client**
+- [x] **Step 3: 實作 api-client**
 
 `apps/web/src/lib/api-client.ts`：
 ```ts
@@ -755,12 +755,12 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 }
 ```
 
-- [ ] **Step 4: 執行測試確認通過**
+- [x] **Step 4: 執行測試確認通過**
 
 Run: `pnpm --filter @ftm/web test -- api-client`
 Expected: 4 passed。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/lib/api-client.ts apps/web/src/lib/api-client.test.ts
@@ -776,7 +776,7 @@ git commit -m "feat(web): add API client with cookie-based 401 refresh + replay"
 - Create: `apps/web/src/features/auth/hooks.ts`
 - Test: `apps/web/src/features/auth/api.test.ts`
 
-- [ ] **Step 1: 寫失敗測試**
+- [x] **Step 1: 寫失敗測試**
 
 `apps/web/src/features/auth/api.test.ts`：
 ```ts
@@ -828,12 +828,12 @@ describe("auth api", () => {
 });
 ```
 
-- [ ] **Step 2: 執行測試確認失敗**
+- [x] **Step 2: 執行測試確認失敗**
 
 Run: `pnpm --filter @ftm/web test -- auth/api`
 Expected: FAIL（找不到 `./api`）。
 
-- [ ] **Step 3: 實作 auth api**
+- [x] **Step 3: 實作 auth api**
 
 `apps/web/src/features/auth/api.ts`：
 ```ts
@@ -863,7 +863,7 @@ export function fetchMe() {
 }
 ```
 
-- [ ] **Step 4: 實作 auth hooks**
+- [x] **Step 4: 實作 auth hooks**
 
 `apps/web/src/features/auth/hooks.ts`：
 ```ts
@@ -909,12 +909,12 @@ export function useLogout() {
 }
 ```
 
-- [ ] **Step 5: 執行測試確認通過**
+- [x] **Step 5: 執行測試確認通過**
 
 Run: `pnpm --filter @ftm/web test -- auth/api`
 Expected: 2 passed。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/features/auth
@@ -929,7 +929,7 @@ git commit -m "feat(web): add auth api functions and react-query hooks"
 - Create: `apps/web/src/features/auth/LoginPage.tsx`
 - Test: `apps/web/src/features/auth/LoginPage.test.tsx`
 
-- [ ] **Step 1: 寫失敗測試**
+- [x] **Step 1: 寫失敗測試**
 
 `apps/web/src/features/auth/LoginPage.test.tsx`：
 ```tsx
@@ -989,12 +989,12 @@ describe("LoginPage", () => {
 });
 ```
 
-- [ ] **Step 2: 執行測試確認失敗**
+- [x] **Step 2: 執行測試確認失敗**
 
 Run: `pnpm --filter @ftm/web test -- LoginPage`
 Expected: FAIL（找不到 `./LoginPage`）。
 
-- [ ] **Step 3: 實作 LoginPage**
+- [x] **Step 3: 實作 LoginPage**
 
 `apps/web/src/features/auth/LoginPage.tsx`：
 ```tsx
@@ -1059,12 +1059,12 @@ export function LoginPage() {
 }
 ```
 
-- [ ] **Step 4: 執行測試確認通過**
+- [x] **Step 4: 執行測試確認通過**
 
 Run: `pnpm --filter @ftm/web test -- LoginPage`
 Expected: 2 passed。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/features/auth/LoginPage.tsx apps/web/src/features/auth/LoginPage.test.tsx
@@ -1079,7 +1079,7 @@ git commit -m "feat(web): add login page with RHF + zod validation"
 - Create: `apps/web/src/features/auth/RegisterPage.tsx`
 - Test: `apps/web/src/features/auth/RegisterPage.test.tsx`
 
-- [ ] **Step 1: 寫失敗測試**
+- [x] **Step 1: 寫失敗測試**
 
 `apps/web/src/features/auth/RegisterPage.test.tsx`：
 ```tsx
@@ -1139,12 +1139,12 @@ describe("RegisterPage", () => {
 });
 ```
 
-- [ ] **Step 2: 執行測試確認失敗**
+- [x] **Step 2: 執行測試確認失敗**
 
 Run: `pnpm --filter @ftm/web test -- RegisterPage`
 Expected: FAIL（找不到 `./RegisterPage`）。
 
-- [ ] **Step 3: 實作 RegisterPage**
+- [x] **Step 3: 實作 RegisterPage**
 
 `apps/web/src/features/auth/RegisterPage.tsx`：
 ```tsx
@@ -1243,12 +1243,12 @@ export function RegisterPage() {
 }
 ```
 
-- [ ] **Step 4: 執行測試確認通過**
+- [x] **Step 4: 執行測試確認通過**
 
 Run: `pnpm --filter @ftm/web test -- RegisterPage`
 Expected: 2 passed。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/features/auth/RegisterPage.tsx apps/web/src/features/auth/RegisterPage.test.tsx
@@ -1266,7 +1266,7 @@ git commit -m "feat(web): add register page with create/join team branching"
 - Modify: `apps/web/src/main.tsx`
 - Test: `apps/web/src/components/ProtectedRoute.test.tsx`
 
-- [ ] **Step 1: 寫守衛失敗測試**
+- [x] **Step 1: 寫守衛失敗測試**
 
 `apps/web/src/components/ProtectedRoute.test.tsx`：
 ```tsx
@@ -1306,12 +1306,12 @@ describe("ProtectedRoute", () => {
 });
 ```
 
-- [ ] **Step 2: 執行測試確認失敗**
+- [x] **Step 2: 執行測試確認失敗**
 
 Run: `pnpm --filter @ftm/web test -- ProtectedRoute`
 Expected: FAIL（找不到 `./ProtectedRoute`）。
 
-- [ ] **Step 3: 實作 ProtectedRoute**
+- [x] **Step 3: 實作 ProtectedRoute**
 
 `apps/web/src/components/ProtectedRoute.tsx`：
 ```tsx
@@ -1327,7 +1327,7 @@ export function ProtectedRoute() {
 }
 ```
 
-- [ ] **Step 4: 實作 bootstrap hook**
+- [x] **Step 4: 實作 bootstrap hook**
 
 `apps/web/src/app/useBootstrapAuth.ts`：
 ```ts
@@ -1374,7 +1374,7 @@ export function useBootstrapAuth() {
 }
 ```
 
-- [ ] **Step 5: 實作 router 與 main.tsx**
+- [x] **Step 5: 實作 router 與 main.tsx**
 
 `apps/web/src/app/router.tsx`：
 ```tsx
@@ -1436,12 +1436,12 @@ createRoot(document.getElementById("root")!).render(
 
 > 註：`AppLayout`、`TaskListPage` 於 Task 10、13 建立。本步驟 `main.tsx`/`router.tsx` 在那些檔案就緒前無法通過 typecheck，故先只跑 ProtectedRoute 單元測試，整合 typecheck 留待 Task 15。
 
-- [ ] **Step 6: 執行守衛測試確認通過**
+- [x] **Step 6: 執行守衛測試確認通過**
 
 Run: `pnpm --filter @ftm/web test -- ProtectedRoute`
 Expected: 2 passed。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/web/src/components/ProtectedRoute.tsx apps/web/src/components/ProtectedRoute.test.tsx apps/web/src/app
@@ -1455,7 +1455,7 @@ git commit -m "feat(web): add route guard, router and cookie-based auth bootstra
 **Files:**
 - Create: `apps/web/src/components/AppLayout.tsx`
 
-- [ ] **Step 1: 實作 AppLayout（無獨立測試，於 Task 15 整合驗證）**
+- [x] **Step 1: 實作 AppLayout（無獨立測試，於 Task 15 整合驗證）**
 
 `apps/web/src/components/AppLayout.tsx`：
 ```tsx
@@ -1491,7 +1491,7 @@ export function AppLayout() {
 }
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add apps/web/src/components/AppLayout.tsx
@@ -1508,7 +1508,7 @@ git commit -m "feat(web): add app shell layout with team switcher and logout"
 - Create: `apps/web/src/features/teams/TeamSwitcher.tsx`
 - Test: `apps/web/src/features/teams/TeamSwitcher.test.tsx`
 
-- [ ] **Step 1: 寫失敗測試**
+- [x] **Step 1: 寫失敗測試**
 
 `apps/web/src/features/teams/TeamSwitcher.test.tsx`：
 ```tsx
@@ -1556,12 +1556,12 @@ describe("TeamSwitcher", () => {
 });
 ```
 
-- [ ] **Step 2: 執行測試確認失敗**
+- [x] **Step 2: 執行測試確認失敗**
 
 Run: `pnpm --filter @ftm/web test -- TeamSwitcher`
 Expected: FAIL（找不到 `./TeamSwitcher`）。
 
-- [ ] **Step 3: 實作 teams api**
+- [x] **Step 3: 實作 teams api**
 
 `apps/web/src/features/teams/api.ts`：
 ```ts
@@ -1580,7 +1580,7 @@ export function switchTeam(teamId: number) {
 }
 ```
 
-- [ ] **Step 4: 實作 teams hooks**
+- [x] **Step 4: 實作 teams hooks**
 
 `apps/web/src/features/teams/hooks.ts`：
 ```ts
@@ -1606,7 +1606,7 @@ export function useSwitchTeam() {
 }
 ```
 
-- [ ] **Step 5: 實作 TeamSwitcher**
+- [x] **Step 5: 實作 TeamSwitcher**
 
 `apps/web/src/features/teams/TeamSwitcher.tsx`：
 ```tsx
@@ -1653,12 +1653,12 @@ export function TeamSwitcher() {
 }
 ```
 
-- [ ] **Step 6: 執行測試確認通過**
+- [x] **Step 6: 執行測試確認通過**
 
 Run: `pnpm --filter @ftm/web test -- TeamSwitcher`
 Expected: 1 passed。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add apps/web/src/features/teams
@@ -1674,7 +1674,7 @@ git commit -m "feat(web): add teams api, hooks and team switcher"
 - Create: `apps/web/src/features/tasks/hooks.ts`
 - Test: `apps/web/src/features/tasks/api.test.ts`
 
-- [ ] **Step 1: 寫失敗測試**
+- [x] **Step 1: 寫失敗測試**
 
 `apps/web/src/features/tasks/api.test.ts`：
 ```ts
@@ -1727,12 +1727,12 @@ describe("tasks api", () => {
 });
 ```
 
-- [ ] **Step 2: 執行測試確認失敗**
+- [x] **Step 2: 執行測試確認失敗**
 
 Run: `pnpm --filter @ftm/web test -- tasks/api`
 Expected: FAIL（找不到 `./api`）。
 
-- [ ] **Step 3: 實作 tasks api**
+- [x] **Step 3: 實作 tasks api**
 
 `apps/web/src/features/tasks/api.ts`：
 ```ts
@@ -1764,7 +1764,7 @@ export function deleteTask(id: number) {
 }
 ```
 
-- [ ] **Step 4: 實作 tasks hooks**
+- [x] **Step 4: 實作 tasks hooks**
 
 `apps/web/src/features/tasks/hooks.ts`：
 ```ts
@@ -1813,12 +1813,12 @@ export function useDeleteTask() {
 }
 ```
 
-- [ ] **Step 5: 執行測試確認通過**
+- [x] **Step 5: 執行測試確認通過**
 
 Run: `pnpm --filter @ftm/web test -- tasks/api`
 Expected: 3 passed。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/features/tasks/api.ts apps/web/src/features/tasks/api.test.ts apps/web/src/features/tasks/hooks.ts
@@ -1834,7 +1834,7 @@ git commit -m "feat(web): add tasks api and react-query hooks with team-scoped k
 - Create: `apps/web/src/features/tasks/TaskListPage.tsx`
 - Test: `apps/web/src/features/tasks/TaskListPage.test.tsx`
 
-- [ ] **Step 1: 寫失敗測試**
+- [x] **Step 1: 寫失敗測試**
 
 `apps/web/src/features/tasks/TaskListPage.test.tsx`：
 ```tsx
@@ -1880,12 +1880,12 @@ describe("TaskListPage", () => {
 });
 ```
 
-- [ ] **Step 2: 執行測試確認失敗**
+- [x] **Step 2: 執行測試確認失敗**
 
 Run: `pnpm --filter @ftm/web test -- TaskListPage`
 Expected: FAIL（找不到 `./TaskListPage`）。
 
-- [ ] **Step 3: 實作 TaskCard**
+- [x] **Step 3: 實作 TaskCard**
 
 `apps/web/src/features/tasks/TaskCard.tsx`：
 ```tsx
@@ -1957,7 +1957,7 @@ export function TaskCard({
 }
 ```
 
-- [ ] **Step 4: 實作 TaskListPage**
+- [x] **Step 4: 實作 TaskListPage**
 
 `apps/web/src/features/tasks/TaskListPage.tsx`：
 ```tsx
@@ -2059,12 +2059,12 @@ export function TaskListPage() {
 
 > 註：`TaskFormDialog` 於 Task 14 建立。本 Task 的測試只渲染列表/空狀態，不開啟對話框，故可先通過；整合 typecheck 於 Task 15。
 
-- [ ] **Step 5: 執行測試確認通過**
+- [x] **Step 5: 執行測試確認通過**
 
 Run: `pnpm --filter @ftm/web test -- TaskListPage`
 Expected: 2 passed。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/src/features/tasks/TaskCard.tsx apps/web/src/features/tasks/TaskListPage.tsx apps/web/src/features/tasks/TaskListPage.test.tsx
@@ -2079,7 +2079,7 @@ git commit -m "feat(web): add task list page with status filter and quick status
 - Create: `apps/web/src/features/tasks/TaskFormDialog.tsx`
 - Test: `apps/web/src/features/tasks/TaskFormDialog.test.tsx`
 
-- [ ] **Step 1: 寫失敗測試**
+- [x] **Step 1: 寫失敗測試**
 
 `apps/web/src/features/tasks/TaskFormDialog.test.tsx`：
 ```tsx
@@ -2123,12 +2123,12 @@ describe("TaskFormDialog", () => {
 });
 ```
 
-- [ ] **Step 2: 執行測試確認失敗**
+- [x] **Step 2: 執行測試確認失敗**
 
 Run: `pnpm --filter @ftm/web test -- TaskFormDialog`
 Expected: FAIL（找不到 `./TaskFormDialog`）。
 
-- [ ] **Step 3: 實作 TaskFormDialog**
+- [x] **Step 3: 實作 TaskFormDialog**
 
 `apps/web/src/features/tasks/TaskFormDialog.tsx`：
 ```tsx
@@ -2256,12 +2256,12 @@ export function TaskFormDialog({
 
 > 註：`createTaskSchema` 的 `dueDate` 為 `YYYY-MM-DD` regex、nullable optional；空字串需在送出前轉 `null`。若測試顯示空 `dueDate` 觸發 regex 錯誤，於 `onSubmit` 開頭加：`if (!values.dueDate) values.dueDate = null;`
 
-- [ ] **Step 4: 執行測試確認通過**
+- [x] **Step 4: 執行測試確認通過**
 
 Run: `pnpm --filter @ftm/web test -- TaskFormDialog`
 Expected: 2 passed。若 `dueDate` 空字串造成 create 測試失敗，套用上方註記的轉換後重跑。
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add apps/web/src/features/tasks/TaskFormDialog.tsx apps/web/src/features/tasks/TaskFormDialog.test.tsx
@@ -2276,29 +2276,29 @@ git commit -m "feat(web): add task create/edit dialog with RHF + zod"
 - Create: `apps/web/public/_redirects`（Cloudflare Pages SPA 路由 fallback）
 - Modify: 視 typecheck 結果修正細節
 
-- [ ] **Step 1: 建立 Pages SPA fallback**
+- [x] **Step 1: 建立 Pages SPA fallback**
 
 `apps/web/public/_redirects`：
 ```
 /*    /index.html   200
 ```
 
-- [ ] **Step 2: 全量 typecheck**
+- [x] **Step 2: 全量 typecheck**
 
 Run: `pnpm --filter @ftm/web typecheck`
 Expected: 無錯誤。若報 `verbatimModuleSyntax` 相關的 type-only import 錯誤，將該 import 改為 `import type`。
 
-- [ ] **Step 3: 全量測試**
+- [x] **Step 3: 全量測試**
 
 Run: `pnpm --filter @ftm/web test`
 Expected: 全部 passed（auth-store 3、api-client 4、auth/api 2、LoginPage 2、RegisterPage 2、ProtectedRoute 2、TeamSwitcher 1、tasks/api 3、TaskListPage 2、TaskFormDialog 2、smoke 1）。
 
-- [ ] **Step 4: 生產建置**
+- [x] **Step 4: 生產建置**
 
 Run: `pnpm --filter @ftm/web build`
 Expected: `tsc -b` 通過且 `vite build` 產出 `apps/web/dist`。
 
-- [ ] **Step 5: 手動端到端驗證（對接已部署後端）**
+- [x] **Step 5: 手動端到端驗證（對接已部署後端）**
 
 先啟動前端 dev（連線生產 API）：
 ```bash
@@ -2317,7 +2317,7 @@ Expected: 全部行為正常。確認後 Ctrl-C。
 
 > ⚠️ 跨站 cookie：dev 連生產 API 時前端為 `http://localhost:5173`、API 為 `https://...workers.dev`，屬跨站。後端生產環境 cookie 為 `SameSite=None; Secure`，且 CORS `ALLOWED_ORIGINS` 需包含 `http://localhost:5173`（dev 已在 `DEV_ORIGINS` 內）。若 refresh 不生效，改用本地後端 `pnpm dev:api` + 預設 `.env.development` 測試（同站 localhost）。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/web/public/_redirects
