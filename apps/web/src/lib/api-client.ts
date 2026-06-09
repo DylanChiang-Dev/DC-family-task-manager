@@ -1,7 +1,8 @@
 import type { ApiResponse } from "@ftm/shared";
 import { useAuthStore } from "@/stores/auth-store";
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "/api";
+const API_BASE =
+  import.meta.env.VITE_API_BASE_URL || "https://ftm-api.dylan-chiang.workers.dev/api";
 
 export class ApiError extends Error {
   code: string;

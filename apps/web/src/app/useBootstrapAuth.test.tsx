@@ -54,4 +54,34 @@ describe("useBootstrapAuth", () => {
     expect(useAuthStore.getState().user?.username).toBe("alice");
     expect(useAuthStore.getState().accessToken).toBe("persisted-token");
   });
+
+  it("finishes bootstrapping when a persisted token is expired", async () => {
+    useAuthStore.setState({
+      accessToken: "expired-token",
+      user: null,
+      currentTeamId: 5,
+      isBootstrapped: false,
+    });
+
+    server.use(
+      http.get(`${BASE}/auth/me`, () =>
+        HttpResponse.json(
+          { success: false, error: { code: "UNAUTHORIZED", message: "expired" } },
+          { status: 401 },
+        ),
+      ),
+      http.post(`${BASE}/auth/refresh`, () =>
+        HttpResponse.json(
+          { success: false, error: { code: "UNAUTHORIZED", message: "revoked" } },
+          { status: 401 },
+        ),
+      ),
+    );
+
+    const { result } = renderHook(() => useBootstrapAuth());
+
+    await waitFor(() => expect(result.current).toBe(true));
+    expect(useAuthStore.getState().accessToken).toBeNull();
+    expect(useAuthStore.getState().user).toBeNull();
+  });
 });
