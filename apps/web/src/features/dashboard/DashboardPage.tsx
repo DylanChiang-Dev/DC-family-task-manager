@@ -442,15 +442,15 @@ export function DashboardPage() {
         </section>
 
         <aside className="min-w-0 space-y-3 lg:order-2">
-          <Card className="space-y-2 p-3">
+          <Card className="space-y-2 border-sky-100 bg-sky-50/70 p-3">
             <div className="flex items-start justify-between gap-2">
               <div>
-              <h2 className="font-semibold">{selectedLabel}</h2>
-              <p className="text-sm text-muted-foreground">
-                {compactDateLabel(selectedDate)} · {selectedLunar.day}
-              </p>
+                <h2 className="font-semibold">{selectedLabel}</h2>
+                <p className="text-sm text-muted-foreground">
+                  {compactDateLabel(selectedDate)} · {selectedLunar.day}
+                </p>
               </div>
-              <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+              <span className="rounded-full bg-sky-100 px-2 py-1 text-xs text-sky-700">
                 {selectedTasks.length} 件
               </span>
             </div>
@@ -458,13 +458,13 @@ export function DashboardPage() {
           </Card>
 
           {overdueTasks.length > 0 && (
-            <Card className="space-y-2 p-3" aria-label="逾期未完成任務">
+            <Card className="space-y-2 border-rose-100 bg-rose-50/70 p-3" aria-label="逾期未完成任務">
               <div className="flex items-start justify-between gap-2">
                 <div>
-                <h2 className="font-semibold">逾期未完成</h2>
-                <p className="text-sm text-muted-foreground">先處理這些最有影響</p>
+                  <h2 className="font-semibold">逾期未完成</h2>
+                  <p className="text-sm text-muted-foreground">先處理這些最有影響</p>
                 </div>
-                <span className="rounded-full bg-destructive/10 px-2 py-1 text-xs text-destructive">
+                <span className="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-700">
                   {overdueTasks.length} 件
                 </span>
               </div>
@@ -472,15 +472,15 @@ export function DashboardPage() {
             </Card>
           )}
 
-          <Card className="space-y-2 p-3">
+          <Card className="space-y-2 border-emerald-100 bg-emerald-50/70 p-3">
             <div className="flex items-start justify-between gap-2">
               <div>
-              <h2 className="font-semibold">本月接下來</h2>
-              <p className="text-sm text-muted-foreground">
-                {first.getMonth() + 1} 月剩餘安排
-              </p>
+                <h2 className="font-semibold">本月接下來</h2>
+                <p className="text-sm text-muted-foreground">
+                  {first.getMonth() + 1} 月剩餘安排
+                </p>
               </div>
-              <span className="rounded-full bg-muted px-2 py-1 text-xs text-muted-foreground">
+              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700">
                 {upcomingTasks.length} 件
               </span>
             </div>
