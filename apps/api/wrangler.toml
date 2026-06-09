@@ -20,8 +20,11 @@ crons = ["0 1 * * *"]
 ENVIRONMENT = "development"
 
 [env.production]
+name = "ftm-api"
+
 [env.production.vars]
 ENVIRONMENT = "production"
+ALLOWED_ORIGINS = "https://dc-family-task-manager.pages.dev"
 
 [[env.production.d1_databases]]
 binding = "DB"
