@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/select";
 import { ApiError } from "@/lib/api-client";
 import { solarToLunar } from "@/lib/lunar";
+import { ScheduleBlockDialog } from "@/features/schedule-blocks/ScheduleBlockDialog";
+import { useDeleteScheduleBlock, useScheduleBlocks } from "@/features/schedule-blocks/hooks";
 import { TaskFormDialog } from "@/features/tasks/TaskFormDialog";
 import { useDeleteTask, useTasks, useUpdateTask } from "@/features/tasks/hooks";
 import {
@@ -21,6 +23,7 @@ import {
   expandRecurringTasks,
   formatDateKey,
 } from "@/features/calendar/recurrence";
+import type { ScheduleBlockResponse } from "@ftm/shared";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 const STATUS_LABEL: Record<TaskStatus, string> = {
@@ -96,6 +99,21 @@ function calendarTaskStyle(task: CalendarTask): CSSProperties | undefined {
   };
 }
 
+function scheduleBlockStyle(block: ScheduleBlockResponse): CSSProperties {
+  return {
+    backgroundColor: colorWithAlpha(block.color, "1F"),
+    borderColor: colorWithAlpha(block.color, "80"),
+  };
+}
+
+function blockOverlapsDate(block: ScheduleBlockResponse, dateKey: string) {
+  return block.startDate <= dateKey && block.endDate >= dateKey;
+}
+
+function scheduleLabel(block: ScheduleBlockResponse) {
+  return block.location || block.title;
+}
+
 function calendarCountTone(count: number) {
   if (count >= 3) return "border-rose-200 bg-rose-500 text-white shadow-rose-200/70";
   if (count === 2) return "border-amber-200 bg-amber-400 text-amber-950 shadow-amber-200/70";
@@ -139,6 +157,22 @@ function renderCalendarTask(task: CalendarTask) {
         {task.priority === "high" && <span className="shrink-0 rounded bg-background/70 px-1 text-[10px]">高</span>}
         {task.isRecurringInstance && <span className="shrink-0 text-[10px] leading-none opacity-70">↻</span>}
       </div>
+    </div>
+  );
+}
+
+function renderScheduleStrip(blocks: ScheduleBlockResponse[]) {
+  if (blocks.length === 0) return null;
+  const first = blocks[0]!;
+  const extra = blocks.length > 1 ? ` +${blocks.length - 1}` : "";
+  return (
+    <div
+      className="truncate rounded-md border px-1.5 py-0.5 text-[10px] font-medium text-foreground"
+      style={scheduleBlockStyle(first)}
+      title={`${first.title} · ${first.startDate} - ${first.endDate}`}
+    >
+      {scheduleLabel(first)}
+      {extra}
     </div>
   );
 }
@@ -216,11 +250,15 @@ export function DashboardPage() {
   const [showMobileMonth, setShowMobileMonth] = useState(false);
   const [creating, setCreating] = useState(false);
   const [editing, setEditing] = useState<TaskResponse | null>(null);
+  const [creatingSchedule, setCreatingSchedule] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<ScheduleBlockResponse | null>(null);
   const { data: tasks, isLoading } = useTasks("all");
   const updateMutation = useUpdateTask();
   const deleteMutation = useDeleteTask();
 
   const { start, end } = calendarWindow(anchorDate);
+  const { data: scheduleBlocks = [] } = useScheduleBlocks(formatDateKey(start), formatDateKey(end));
+  const deleteScheduleMutation = useDeleteScheduleBlock();
   const first = startOfMonth(start);
   const taskStart = useMemo(() => {
     const dueDates =
@@ -255,10 +293,11 @@ export function DashboardPage() {
           date,
           key,
           tasks: calendarTasks.filter((task) => task.dueDate === key).sort(sortDashboardTasks),
+          scheduleBlocks: scheduleBlocks.filter((block) => blockOverlapsDate(block, key)),
           isPast: key < todayKey,
         };
       }),
-    [calendarTasks, start, todayKey],
+    [calendarTasks, scheduleBlocks, start, todayKey],
   );
   const rollingWeekdays = useMemo(
     () => Array.from({ length: 7 }, (_, index) => WEEKDAYS[(start.getDay() + index) % 7]),
@@ -267,6 +306,10 @@ export function DashboardPage() {
   const selectedTasks = useMemo(
     () => calendarTasks.filter((task) => task.dueDate === selectedDate).sort(sortDashboardTasks),
     [calendarTasks, selectedDate],
+  );
+  const selectedScheduleBlocks = useMemo(
+    () => scheduleBlocks.filter((block) => blockOverlapsDate(block, selectedDate)),
+    [scheduleBlocks, selectedDate],
   );
   const todayTasks = useMemo(
     () => calendarTasks.filter((task) => task.dueDate === todayKey).sort(sortDashboardTasks),
@@ -335,6 +378,13 @@ export function DashboardPage() {
     });
   };
 
+  const onDeleteSchedule = (block: ScheduleBlockResponse) => {
+    if (!confirm(`確定刪除行程「${block.title}」？`)) return;
+    deleteScheduleMutation.mutate(block.id, {
+      onError: (e) => toast.error(e instanceof ApiError ? e.message : "刪除行程失敗"),
+    });
+  };
+
   const renderTaskList = (items: CalendarTask[], emptyText: string) => {
     if (isLoading) return <p className="text-sm text-muted-foreground">載入中...</p>;
     if (items.length === 0) return <p className="py-6 text-sm text-muted-foreground">{emptyText}</p>;
@@ -374,9 +424,14 @@ export function DashboardPage() {
               </div>
             ))}
           </div>
-          <Button className="sm:w-auto" onClick={() => setCreating(true)}>
-            新增任務
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="sm:w-auto" onClick={() => setCreatingSchedule(true)}>
+              新增行程
+            </Button>
+            <Button className="sm:w-auto" onClick={() => setCreating(true)}>
+              新增任務
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -434,6 +489,9 @@ export function DashboardPage() {
                       </div>
                     )}
                   </div>
+                  {cell.scheduleBlocks.length > 0 && (
+                    <div className="mt-auto pt-1">{renderScheduleStrip(cell.scheduleBlocks)}</div>
+                  )}
                 </button>
               ))}
             </div>
@@ -487,6 +545,9 @@ export function DashboardPage() {
                   >
                     <div className="font-medium">{cell.date.getDate()}</div>
                     {cell.tasks.length > 0 && <div className="text-[10px]">{cell.tasks.length} 件</div>}
+                    {cell.scheduleBlocks.length > 0 && (
+                      <div className="mt-1">{renderScheduleStrip(cell.scheduleBlocks)}</div>
+                    )}
                   </button>
                 ))}
               </div>
@@ -507,6 +568,39 @@ export function DashboardPage() {
                 {selectedTasks.length} 件
               </span>
             </div>
+            {selectedScheduleBlocks.length > 0 && (
+              <div className="space-y-1" aria-label="當日行程">
+                {selectedScheduleBlocks.map((block) => (
+                  <div key={block.id} className="rounded-md border bg-background/70 p-2 text-xs">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{scheduleLabel(block)}</p>
+                        <p className="text-muted-foreground">
+                          {block.startDate} - {block.endDate}
+                        </p>
+                        {block.note && <p className="mt-1 text-muted-foreground">{block.note}</p>}
+                      </div>
+                      <div className="flex shrink-0 gap-1">
+                        <Button
+                          variant="ghost"
+                          className="h-6 px-2 text-xs"
+                          onClick={() => setEditingSchedule(block)}
+                        >
+                          編輯
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="h-6 px-2 text-xs"
+                          onClick={() => onDeleteSchedule(block)}
+                        >
+                          刪除
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             {renderTaskList(selectedTasks, "這天沒有任務")}
           </Card>
 
@@ -543,12 +637,29 @@ export function DashboardPage() {
       </div>
 
       {creating && <TaskFormDialog open onOpenChange={(o) => !o && setCreating(false)} />}
+      {creatingSchedule && (
+        <ScheduleBlockDialog
+          open
+          defaultDate={selectedDate}
+          onOpenChange={(o) => !o && setCreatingSchedule(false)}
+        />
+      )}
       {editing && (
         <TaskFormDialog
           open
           task={editing}
           onOpenChange={(o) => {
             if (!o) setEditing(null);
+          }}
+        />
+      )}
+      {editingSchedule && (
+        <ScheduleBlockDialog
+          open
+          block={editingSchedule}
+          defaultDate={selectedDate}
+          onOpenChange={(o) => {
+            if (!o) setEditingSchedule(null);
           }}
         />
       )}

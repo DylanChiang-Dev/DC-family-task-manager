@@ -16,7 +16,10 @@ beforeEach(() => {
     currentTeamId: 1,
     isBootstrapped: true,
   });
-  server.use(http.get(`${BASE}/tasks`, () => HttpResponse.json({ success: true, data: [] })));
+  server.use(
+    http.get(`${BASE}/tasks`, () => HttpResponse.json({ success: true, data: [] })),
+    http.get(`${BASE}/schedule-blocks`, () => HttpResponse.json({ success: true, data: [] })),
+  );
 });
 
 describe("router", () => {

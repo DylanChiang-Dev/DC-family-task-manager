@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { screen, waitFor, within } from "@testing-library/react";
-import type { TaskResponse } from "@ftm/shared";
+import type { ScheduleBlockResponse, TaskResponse } from "@ftm/shared";
 import { server } from "@/test/msw-server";
 import { renderWithProviders } from "@/test/test-utils";
 import { useAuthStore } from "@/stores/auth-store";
@@ -74,6 +74,21 @@ const tasks = [
   }),
 ];
 
+const scheduleBlocks: ScheduleBlockResponse[] = [
+  {
+    id: 1,
+    userId: 1,
+    title: "廣州出差",
+    location: "廣州",
+    startDate: dateKey(1),
+    endDate: dateKey(3),
+    color: "#0EA5E9",
+    note: "客戶拜訪",
+    createdAt: 0,
+    updatedAt: 0,
+  },
+];
+
 beforeEach(() => {
   useAuthStore.setState({
     accessToken: "tok",
@@ -83,6 +98,9 @@ beforeEach(() => {
   });
   server.use(
     http.get(`${BASE}/tasks`, () => HttpResponse.json({ success: true, data: tasks })),
+    http.get(`${BASE}/schedule-blocks`, () =>
+      HttpResponse.json({ success: true, data: scheduleBlocks }),
+    ),
     http.get(`${BASE}/categories`, () => HttpResponse.json({ success: true, data: [] })),
     http.get(`${BASE}/teams/1/members`, () => HttpResponse.json({ success: true, data: [] })),
   );
@@ -142,6 +160,45 @@ describe("DashboardPage", () => {
     await user.click(tomorrowButton!);
 
     expect((await screen.findAllByText("明天採買")).length).toBeGreaterThan(0);
+  });
+
+  it("renders multi-day schedule blocks separately from tasks", async () => {
+    renderWithProviders(<DashboardPage />);
+
+    const calendar = await screen.findByLabelText("未來 6 週日曆");
+    const startDay = within(calendar).getByRole("button", { name: dateKey(1) });
+    const middleDay = within(calendar).getByRole("button", { name: dateKey(2) });
+
+    await waitFor(() => expect(startDay).toHaveTextContent("廣州"));
+    expect(middleDay).toHaveTextContent("廣州");
+
+    const overview = screen.getByLabelText("工作台概覽");
+    expect(within(overview).getByText("今天")).toBeInTheDocument();
+    expect(within(overview).getByText("2")).toBeInTheDocument();
+  });
+
+  it("opens the schedule block dialog with the selected date", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<DashboardPage />);
+
+    await user.click(await screen.findByRole("button", { name: "新增行程" }));
+
+    expect(screen.getByRole("dialog", { name: "新增行程" })).toBeInTheDocument();
+    expect(screen.getByLabelText("開始日期")).toHaveValue(dateKey(0));
+    expect(screen.getByLabelText("結束日期")).toHaveValue(dateKey(0));
+  });
+
+  it("shows selected-date schedule blocks in the side panel", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<DashboardPage />);
+
+    const calendar = await screen.findByLabelText("未來 6 週日曆");
+    await user.click(within(calendar).getByRole("button", { name: dateKey(1) }));
+
+    const section = await screen.findByLabelText("當日行程");
+    expect(within(section).getByText("廣州")).toBeInTheDocument();
+    expect(within(section).getByText(`${dateKey(1)} - ${dateKey(3)}`)).toBeInTheDocument();
+    expect(within(section).getByText("客戶拜訪")).toBeInTheDocument();
   });
 
   it("excludes completed and cancelled tasks from overdue list", async () => {
