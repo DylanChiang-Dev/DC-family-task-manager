@@ -8,6 +8,7 @@ import { taskRoutes } from "./routes/task";
 import { categoryRoutes } from "./routes/category";
 import { notificationRoutes } from "./routes/notification";
 import { profileRoutes } from "./routes/profile";
+import { scheduleBlockRoutes } from "./routes/schedule-block";
 
 export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -53,6 +54,7 @@ app.route("/api/auth", authRoutes);
 // Authenticated routes (no team context needed)
 app.route("/api/notifications", notificationRoutes);
 app.route("/api/profile", profileRoutes);
+app.route("/api/schedule-blocks", scheduleBlockRoutes);
 
 // Team-scoped routes
 app.route("/api/teams", teamRoutes);
