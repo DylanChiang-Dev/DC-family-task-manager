@@ -80,6 +80,12 @@ function calendarTaskTone(task: CalendarTask) {
   return "border-border bg-muted/70 text-foreground";
 }
 
+function calendarCountTone(count: number) {
+  if (count >= 3) return "border-rose-200 bg-rose-500 text-white shadow-rose-200/70";
+  if (count === 2) return "border-amber-200 bg-amber-400 text-amber-950 shadow-amber-200/70";
+  return "border-sky-200 bg-sky-500 text-white shadow-sky-200/70";
+}
+
 function renderCalendarTask(task: CalendarTask) {
   return (
     <div
@@ -340,7 +346,9 @@ export function DashboardPage() {
                   <div className="flex shrink-0 items-start justify-between gap-1">
                     <span className="font-medium">{cell.date.getDate()}</span>
                     {cell.tasks.length > 0 && (
-                      <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
+                      <span
+                        className={`min-w-6 rounded-full border px-1.5 text-center text-[10px] font-semibold shadow-sm ${calendarCountTone(cell.tasks.length)}`}
+                      >
                         {cell.tasks.length}
                       </span>
                     )}
