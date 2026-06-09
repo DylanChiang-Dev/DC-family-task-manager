@@ -13,6 +13,20 @@ export function useBootstrapAuth() {
 
     void (async () => {
       try {
+        const existingToken = useAuthStore.getState().accessToken;
+        if (existingToken) {
+          const me = await fetchMe();
+          if (cancelled) return;
+
+          const accessToken = useAuthStore.getState().accessToken ?? existingToken;
+          useAuthStore.getState().setAuth({
+            accessToken,
+            user: me.user,
+            currentTeamId: me.currentTeam?.id ?? me.user.currentTeamId,
+          });
+          return;
+        }
+
         const res = await fetch(`${API_BASE}/auth/refresh`, {
           method: "POST",
           credentials: "include",

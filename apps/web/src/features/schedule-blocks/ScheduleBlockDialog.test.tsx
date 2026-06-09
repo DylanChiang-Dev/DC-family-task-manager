@@ -25,6 +25,7 @@ describe("ScheduleBlockDialog", () => {
 
     await user.type(screen.getByLabelText("標題"), "廣州出差");
     await user.type(screen.getByLabelText("地點"), "廣州");
+    await user.click(screen.getByRole("button", { name: "#22C55E" }));
     await user.click(screen.getByRole("button", { name: "新增行程" }));
 
     await waitFor(() =>
@@ -33,6 +34,7 @@ describe("ScheduleBlockDialog", () => {
         location: "廣州",
         startDate: "2026-06-10",
         endDate: "2026-06-10",
+        color: "#22C55E",
       }),
     );
   });

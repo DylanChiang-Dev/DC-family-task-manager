@@ -32,7 +32,11 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "ftm-auth",
-      partialize: (s) => ({ currentTeamId: s.currentTeamId }),
+      partialize: (s) => ({
+        accessToken: s.accessToken,
+        user: s.user,
+        currentTeamId: s.currentTeamId,
+      }),
     },
   ),
 );

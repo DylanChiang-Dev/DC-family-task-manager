@@ -3,6 +3,7 @@ import type { CategoryResponse } from "@ftm/shared";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { ColorSwatchPicker } from "@/components/ui/color-swatch-picker";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/lib/api-client";
@@ -66,22 +67,16 @@ export function CategoriesPage() {
         <p className="text-sm text-muted-foreground">分類會顯示在任務卡片與任務表單中。</p>
       </div>
 
-      <Card className="grid gap-3 p-4 sm:grid-cols-[1fr_auto_auto]">
+      <Card className="space-y-3 p-4">
         <div className="space-y-1.5">
           <Label htmlFor="categoryName">分類名稱</Label>
           <Input id="categoryName" value={name} onChange={(e) => setName(e.target.value)} />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="categoryColor">顏色</Label>
-          <Input
-            id="categoryColor"
-            className="w-24"
-            type="color"
-            value={color}
-            onChange={(e) => setColor(e.target.value)}
-          />
+          <Label>顏色</Label>
+          <ColorSwatchPicker value={color} onChange={setColor} />
         </div>
-        <Button className="self-end" onClick={submitCreate} disabled={createMutation.isPending}>
+        <Button onClick={submitCreate} disabled={createMutation.isPending}>
           新增分類
         </Button>
       </Card>
@@ -95,18 +90,15 @@ export function CategoriesPage() {
             return (
               <Card key={category.id} className="flex items-center justify-between gap-3 p-4">
                 {isEditing && editing ? (
-                  <div className="grid flex-1 gap-3 sm:grid-cols-[1fr_auto]">
+                  <div className="flex flex-1 flex-col gap-2">
                     <Input
                       aria-label="編輯分類名稱"
                       value={editing.name}
                       onChange={(e) => setEditing({ ...editing, name: e.target.value })}
                     />
-                    <Input
-                      aria-label="編輯分類顏色"
-                      className="w-24"
-                      type="color"
+                    <ColorSwatchPicker
                       value={editing.color}
-                      onChange={(e) => setEditing({ ...editing, color: e.target.value })}
+                      onChange={(c) => setEditing({ ...editing, color: c })}
                     />
                   </div>
                 ) : (

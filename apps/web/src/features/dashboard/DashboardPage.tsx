@@ -110,6 +110,21 @@ function blockOverlapsDate(block: ScheduleBlockResponse, dateKey: string) {
   return block.startDate <= dateKey && block.endDate >= dateKey;
 }
 
+function getWeekBlockSpans(
+  weekCells: { key: string }[],
+  allBlocks: ScheduleBlockResponse[],
+): { block: ScheduleBlockResponse; colStart: number; colEnd: number }[] {
+  const weekStartKey = weekCells[0]!.key;
+  const weekEndKey = weekCells[6]!.key;
+  return allBlocks
+    .filter((b) => b.startDate <= weekEndKey && b.endDate >= weekStartKey)
+    .map((b) => {
+      const colStart = b.startDate <= weekStartKey ? 0 : weekCells.findIndex((c) => c.key === b.startDate);
+      const colEnd = b.endDate >= weekEndKey ? 6 : weekCells.findIndex((c) => c.key === b.endDate);
+      return { block: b, colStart: colStart < 0 ? 0 : colStart, colEnd: colEnd < 0 ? 6 : colEnd };
+    });
+}
+
 function scheduleLabel(block: ScheduleBlockResponse) {
   return block.location || block.title;
 }
@@ -161,21 +176,6 @@ function renderCalendarTask(task: CalendarTask) {
   );
 }
 
-function renderScheduleStrip(blocks: ScheduleBlockResponse[]) {
-  if (blocks.length === 0) return null;
-  const first = blocks[0]!;
-  const extra = blocks.length > 1 ? ` +${blocks.length - 1}` : "";
-  return (
-    <div
-      className="truncate rounded-md border px-1.5 py-0.5 text-[10px] font-medium text-foreground"
-      style={scheduleBlockStyle(first)}
-      title={`${first.title} · ${first.startDate} - ${first.endDate}`}
-    >
-      {scheduleLabel(first)}
-      {extra}
-    </div>
-  );
-}
 
 function DashboardTaskCard({
   task,
@@ -293,7 +293,6 @@ export function DashboardPage() {
           date,
           key,
           tasks: calendarTasks.filter((task) => task.dueDate === key).sort(sortDashboardTasks),
-          scheduleBlocks: scheduleBlocks.filter((block) => blockOverlapsDate(block, key)),
           isPast: key < todayKey,
         };
       }),
@@ -461,39 +460,66 @@ export function DashboardPage() {
                 </div>
               ))}
             </div>
-            <div className="grid flex-1 grid-cols-7 grid-rows-6 gap-1">
-              {cells.map((cell) => (
-                <button
-                  key={cell.key}
-                  aria-label={cell.key}
-                  className={`flex min-h-24 flex-col items-stretch justify-start rounded-lg border p-2 text-left transition lg:min-h-0 ${
-                    cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
-                  } ${cell.isPast ? "opacity-50" : "opacity-100"}`}
-                  onClick={() => setSelectedDate(cell.key)}
-                >
-                  <div className="flex shrink-0 items-start justify-between gap-1">
-                    <span className="font-medium">{cell.date.getDate()}</span>
-                    {cell.tasks.length > 0 && (
-                      <span
-                        className={`min-w-6 rounded-full border px-1.5 text-center text-[10px] font-semibold shadow-sm ${calendarCountTone(cell.tasks.length)}`}
-                      >
-                        {cell.tasks.length}
-                      </span>
-                    )}
+            <div className="flex flex-1 flex-col gap-1">
+              {Array.from({ length: 6 }, (_, weekIndex) => {
+                const weekCells = cells.slice(weekIndex * 7, (weekIndex + 1) * 7);
+                const weekSpans = getWeekBlockSpans(weekCells, scheduleBlocks);
+                return (
+                  <div key={weekIndex} className="flex flex-1 flex-col min-h-0">
+                    <div className="grid min-h-0 flex-1 grid-cols-7 gap-1">
+                      {weekCells.map((cell) => (
+                        <button
+                          key={cell.key}
+                          aria-label={cell.key}
+                          className={`flex min-h-24 flex-col items-stretch justify-start rounded-lg border p-2 text-left transition lg:min-h-0 ${
+                            cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
+                          } ${cell.isPast ? "opacity-50" : "opacity-100"}`}
+                          onClick={() => setSelectedDate(cell.key)}
+                        >
+                          <div className="flex shrink-0 items-start justify-between gap-1">
+                            <span className="font-medium">{cell.date.getDate()}</span>
+                            {cell.tasks.length > 0 && (
+                              <span
+                                className={`min-w-6 rounded-full border px-1.5 text-center text-[10px] font-semibold shadow-sm ${calendarCountTone(cell.tasks.length)}`}
+                              >
+                                {cell.tasks.length}
+                              </span>
+                            )}
+                          </div>
+                          <div className="mt-2 min-h-0 flex-1 space-y-1 overflow-hidden">
+                            {cell.tasks.slice(0, 5).map((task) => renderCalendarTask(task))}
+                            {cell.tasks.length > 5 && (
+                              <div className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
+                                +{cell.tasks.length - 5} 個任務
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                    {weekSpans.map((span) => {
+                      const isStart = span.block.startDate >= weekCells[0]!.key;
+                      const isEnd = span.block.endDate <= weekCells[6]!.key;
+                      return (
+                        <div key={span.block.id} className="mt-0.5 grid grid-cols-7 gap-1 h-5">
+                          <button
+                            type="button"
+                            className={`truncate border px-1.5 text-[10px] font-medium leading-5 text-left cursor-pointer hover:brightness-95 transition-[filter] ${isStart ? "rounded-l-md" : "border-l-0"} ${isEnd ? "rounded-r-md" : "border-r-0"}`}
+                            style={{
+                              gridColumn: `${span.colStart + 1} / ${span.colEnd + 2}`,
+                              ...scheduleBlockStyle(span.block),
+                            }}
+                            title={`${span.block.title} · ${span.block.startDate} - ${span.block.endDate}`}
+                            onClick={() => setEditingSchedule(span.block)}
+                          >
+                            {isStart && scheduleLabel(span.block)}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
-                  <div className="mt-2 min-h-0 flex-1 space-y-1 overflow-hidden">
-                    {cell.tasks.slice(0, 5).map((task) => renderCalendarTask(task))}
-                    {cell.tasks.length > 5 && (
-                      <div className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                        +{cell.tasks.length - 5} 個任務
-                      </div>
-                    )}
-                  </div>
-                  {cell.scheduleBlocks.length > 0 && (
-                    <div className="mt-auto pt-1">{renderScheduleStrip(cell.scheduleBlocks)}</div>
-                  )}
-                </button>
-              ))}
+                );
+              })}
             </div>
           </Card>
 
@@ -533,23 +559,50 @@ export function DashboardPage() {
                   </div>
                 ))}
               </div>
-              <div className="grid grid-cols-7 gap-1">
-                {cells.map((cell) => (
-                  <button
-                    key={cell.key}
-                    aria-label={cell.key}
-                    className={`min-h-14 rounded-md border p-1 text-left text-xs ${
-                      cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border"
-                    } ${cell.isPast ? "opacity-50" : "opacity-100"}`}
-                    onClick={() => setSelectedDate(cell.key)}
-                  >
-                    <div className="font-medium">{cell.date.getDate()}</div>
-                    {cell.tasks.length > 0 && <div className="text-[10px]">{cell.tasks.length} 件</div>}
-                    {cell.scheduleBlocks.length > 0 && (
-                      <div className="mt-1">{renderScheduleStrip(cell.scheduleBlocks)}</div>
-                    )}
-                  </button>
-                ))}
+              <div className="flex flex-col gap-1">
+                {Array.from({ length: 6 }, (_, weekIndex) => {
+                  const weekCells = cells.slice(weekIndex * 7, (weekIndex + 1) * 7);
+                  const weekSpans = getWeekBlockSpans(weekCells, scheduleBlocks);
+                  return (
+                    <div key={weekIndex}>
+                      <div className="grid grid-cols-7 gap-1">
+                        {weekCells.map((cell) => (
+                          <button
+                            key={cell.key}
+                            aria-label={cell.key}
+                            className={`min-h-14 rounded-md border p-1 text-left text-xs ${
+                              cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border"
+                            } ${cell.isPast ? "opacity-50" : "opacity-100"}`}
+                            onClick={() => setSelectedDate(cell.key)}
+                          >
+                            <div className="font-medium">{cell.date.getDate()}</div>
+                            {cell.tasks.length > 0 && <div className="text-[10px]">{cell.tasks.length} 件</div>}
+                          </button>
+                        ))}
+                      </div>
+                      {weekSpans.map((span) => {
+                        const isStart = span.block.startDate >= weekCells[0]!.key;
+                        const isEnd = span.block.endDate <= weekCells[6]!.key;
+                        return (
+                          <div key={span.block.id} className="mt-0.5 grid grid-cols-7 gap-1 h-4">
+                            <button
+                              type="button"
+                              className={`truncate border px-1 text-[9px] font-medium leading-4 text-left cursor-pointer hover:brightness-95 transition-[filter] ${isStart ? "rounded-l" : "border-l-0"} ${isEnd ? "rounded-r" : "border-r-0"}`}
+                              style={{
+                                gridColumn: `${span.colStart + 1} / ${span.colEnd + 2}`,
+                                ...scheduleBlockStyle(span.block),
+                              }}
+                              title={`${span.block.title} · ${span.block.startDate} - ${span.block.endDate}`}
+                              onClick={() => setEditingSchedule(span.block)}
+                            >
+                              {isStart && scheduleLabel(span.block)}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
               </div>
             </Card>
           )}
@@ -661,6 +714,7 @@ export function DashboardPage() {
           onOpenChange={(o) => {
             if (!o) setEditingSchedule(null);
           }}
+          onDelete={() => onDeleteSchedule(editingSchedule)}
         />
       )}
     </div>

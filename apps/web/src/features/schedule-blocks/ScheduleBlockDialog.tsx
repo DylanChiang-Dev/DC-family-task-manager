@@ -4,9 +4,10 @@ import {
   type CreateScheduleBlockInput,
   type ScheduleBlockResponse,
 } from "@ftm/shared";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ColorSwatchPicker } from "@/components/ui/color-swatch-picker";
 import {
   Dialog,
   DialogContent,
@@ -26,11 +27,13 @@ export function ScheduleBlockDialog({
   onOpenChange,
   block,
   defaultDate,
+  onDelete,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   block?: ScheduleBlockResponse | null;
   defaultDate: string;
+  onDelete?: () => void;
 }) {
   const isEdit = !!block;
   const createMutation = useCreateScheduleBlock();
@@ -39,6 +42,7 @@ export function ScheduleBlockDialog({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<CreateScheduleBlockInput>({
     resolver: zodResolver(createScheduleBlockSchema),
@@ -101,21 +105,43 @@ export function ScheduleBlockDialog({
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="scheduleColor">顏色</Label>
-            <Input id="scheduleColor" type="color" {...register("color")} />
+            <Label>顏色</Label>
+            <Controller
+              control={control}
+              name="color"
+              render={({ field }) => (
+                <ColorSwatchPicker value={field.value} onChange={field.onChange} />
+              )}
+            />
             {errors.color && <p className="text-sm text-destructive">{errors.color.message}</p>}
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="scheduleNote">備註</Label>
             <Textarea id="scheduleNote" {...register("note")} />
           </div>
-          <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
-              取消
-            </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isEdit ? "儲存行程" : "新增行程"}
-            </Button>
+          <DialogFooter className="gap-2 sm:justify-between">
+            {isEdit && onDelete ? (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={() => {
+                  onOpenChange(false);
+                  onDelete();
+                }}
+              >
+                刪除行程
+              </Button>
+            ) : (
+              <span />
+            )}
+            <div className="flex gap-2">
+              <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
+                取消
+              </Button>
+              <Button type="submit" disabled={isSubmitting}>
+                {isEdit ? "儲存行程" : "新增行程"}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

@@ -16,7 +16,8 @@
     "@ftm/shared": "workspace:*",
     "@hono/zod-validator": "^0.8.0",
     "drizzle-orm": "^0.38.3",
-    "hono": "^4.6.16"
+    "hono": "^4.6.16",
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20250109.0",
