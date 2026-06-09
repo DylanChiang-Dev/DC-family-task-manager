@@ -265,7 +265,7 @@ export function DashboardPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="w-full min-w-0 space-y-4">
       <section className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="text-sm text-muted-foreground">家庭工作台</p>
@@ -276,8 +276,8 @@ export function DashboardPage() {
         </Button>
       </section>
 
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)]">
-        <section className="space-y-4 lg:order-1">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)] 2xl:grid-cols-[minmax(0,1.35fr)_minmax(400px,0.65fr)]">
+        <section className="min-w-0 space-y-4 lg:order-1">
           <Card className="hidden p-4 sm:block">
             <div className="mb-3 flex items-center justify-between">
               <div>
@@ -345,7 +345,7 @@ export function DashboardPage() {
                 {showMobileMonth ? "收起月曆" : "展開本月日曆"}
               </Button>
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-1">
+            <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
               {mobileDates.map((item) => (
                 <button
                   key={item.key}
@@ -389,7 +389,7 @@ export function DashboardPage() {
           )}
         </section>
 
-        <aside className="space-y-4 lg:order-2">
+        <aside className="min-w-0 space-y-4 lg:order-2">
           <div className="grid grid-cols-2 gap-3" aria-label="工作台概覽">
             <Card className="p-3">
               <p className="text-sm text-muted-foreground">今天</p>

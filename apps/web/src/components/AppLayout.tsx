@@ -28,9 +28,9 @@ export function AppLayout() {
 
   return (
     <div className="min-h-svh pb-16 sm:pb-0">
-      <header className="flex items-center justify-between border-b px-4 py-3">
-        <div className="flex items-center gap-3">
-          <span className="font-semibold">家庭任務</span>
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+          <span className="shrink-0 font-semibold">家庭任務</span>
           <nav className="hidden items-center gap-1 sm:flex">
             {NAV_ITEMS.map((item) => (
               <Link key={item.to} className="rounded-md px-2 py-1 text-sm hover:bg-muted" to={item.to}>
@@ -41,8 +41,8 @@ export function AppLayout() {
           <NotificationBadge />
           <TeamSwitcher />
         </div>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-muted-foreground">{user?.nickname}</span>
+        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          <span className="truncate text-sm text-muted-foreground">{user?.nickname}</span>
           <Button variant="ghost" size="sm" onClick={toggleTheme}>
             {theme === "dark" ? "亮色" : "暗色"}
           </Button>
@@ -51,7 +51,7 @@ export function AppLayout() {
           </Button>
         </div>
       </header>
-      <main className="mx-auto max-w-7xl p-4">
+      <main className="w-full px-4 py-4 sm:px-6 lg:px-8">
         <Outlet />
       </main>
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background sm:hidden">
