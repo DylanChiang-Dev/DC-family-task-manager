@@ -332,12 +332,12 @@ export function DashboardPage() {
               {cells.map((cell) => (
                 <button
                   key={cell.key}
-                  className={`min-h-24 rounded-lg border p-2 text-left transition lg:min-h-0 ${
+                  className={`flex min-h-24 flex-col items-stretch justify-start rounded-lg border p-2 text-left transition lg:min-h-0 ${
                     cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
                   } ${cell.isCurrentMonth ? "opacity-100" : "opacity-40"}`}
                   onClick={() => setSelectedDate(cell.key)}
                 >
-                  <div className="flex items-start justify-between gap-1">
+                  <div className="flex shrink-0 items-start justify-between gap-1">
                     <span className="font-medium">{cell.date.getDate()}</span>
                     {cell.tasks.length > 0 && (
                       <span className="rounded-full bg-primary px-1.5 text-[10px] text-primary-foreground">
@@ -345,7 +345,7 @@ export function DashboardPage() {
                       </span>
                     )}
                   </div>
-                  <div className="mt-2 space-y-1 overflow-hidden">
+                  <div className="mt-2 min-h-0 flex-1 space-y-1 overflow-hidden">
                     {cell.tasks.slice(0, 5).map((task) => renderCalendarTask(task))}
                     {cell.tasks.length > 5 && (
                       <div className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
