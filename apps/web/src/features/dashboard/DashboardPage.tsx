@@ -278,8 +278,8 @@ export function DashboardPage() {
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(360px,0.85fr)] 2xl:grid-cols-[minmax(0,1.35fr)_minmax(400px,0.65fr)]">
         <section className="min-w-0 space-y-4 lg:order-1">
-          <Card className="hidden p-4 sm:block">
-            <div className="mb-3 flex items-center justify-between">
+          <Card className="hidden p-4 sm:flex sm:flex-col lg:min-h-[calc(100svh-13rem)]">
+            <div className="mb-3 flex shrink-0 items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold">
                   {first.getFullYear()} 年 {first.getMonth() + 1} 月
@@ -295,18 +295,18 @@ export function DashboardPage() {
                 </Button>
               </div>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
+            <div className="grid shrink-0 grid-cols-7 gap-1 text-center text-xs text-muted-foreground">
               {WEEKDAYS.map((day) => (
                 <div key={day} className="py-2">
                   {day}
                 </div>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid flex-1 grid-cols-7 grid-rows-6 gap-1">
               {cells.map((cell) => (
                 <button
                   key={cell.key}
-                  className={`min-h-24 rounded-lg border p-2 text-left transition ${
+                  className={`min-h-24 rounded-lg border p-2 text-left transition lg:min-h-0 ${
                     cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
                   } ${cell.isCurrentMonth ? "opacity-100" : "opacity-40"}`}
                   onClick={() => setSelectedDate(cell.key)}
