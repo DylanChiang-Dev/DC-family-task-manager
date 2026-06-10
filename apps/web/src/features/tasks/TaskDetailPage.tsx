@@ -10,7 +10,9 @@ import {
   useTask,
   useTaskComments,
   useTaskHistory,
+  useUpdateTask,
 } from "./hooks";
+import { TaskProgressBar } from "./TaskProgressBar";
 
 export function TaskDetailPage() {
   const id = Number(useParams().id);
@@ -18,6 +20,7 @@ export function TaskDetailPage() {
   const { data: comments } = useTaskComments(id);
   const { data: history } = useTaskHistory(id);
   const commentMutation = useCreateTaskComment(id);
+  const updateMutation = useUpdateTask();
   const [comment, setComment] = useState("");
 
   const submitComment = () => {
@@ -66,6 +69,22 @@ export function TaskDetailPage() {
           )}
         </div>
         {task.description && <p className="whitespace-pre-wrap text-sm">{task.description}</p>}
+        {task.taskType === "window" && (
+          <div className="space-y-2 border-t pt-3">
+            <p className="text-sm text-muted-foreground">
+              時間段：{task.startDate ?? "—"} ~ {task.endDate ?? "—"}
+            </p>
+            <TaskProgressBar
+              value={task.progress}
+              onChange={(next) =>
+                updateMutation.mutate(
+                  { id: task.id, input: { progress: next } },
+                  { onError: (e) => toast.error(e instanceof ApiError ? e.message : "更新失敗") },
+                )
+              }
+            />
+          </div>
+        )}
       </Card>
 
       <Card className="space-y-3 p-4">
