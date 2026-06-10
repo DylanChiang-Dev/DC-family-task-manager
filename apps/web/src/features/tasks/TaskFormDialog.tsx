@@ -129,7 +129,7 @@ export function TaskFormDialog({
       status: task?.status ?? "pending",
       taskType: task?.taskType ?? "normal",
       recurrenceConfig: task?.recurrenceConfig ?? null,
-      dueDate: task?.dueDate ?? null,
+      dueDate: task?.dueDate ?? todayISO(),
       categoryId: task?.categoryId ?? null,
       assigneeId: task?.assigneeId ?? user?.id ?? null,
       startDate: task?.startDate ?? null,
