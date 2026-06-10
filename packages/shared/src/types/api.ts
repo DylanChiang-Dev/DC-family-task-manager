@@ -122,6 +122,10 @@ export interface TaskResponse {
   taskType: TaskType;
   recurrenceConfig: RecurrenceConfig | null;
   parentTaskId: number | null;
+  startDate: string | null;
+  endDate: string | null;
+  progress: number;
+  isBacklog: boolean;
   completedAt: number | null;
   createdAt: number;
   updatedAt: number;

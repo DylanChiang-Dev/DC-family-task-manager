@@ -66,6 +66,10 @@ function shapeTask(
     taskType: t.taskType,
     recurrenceConfig: t.recurrenceConfig,
     parentTaskId: t.parentTaskId,
+    startDate: t.startDate,
+    endDate: t.endDate,
+    progress: t.progress,
+    isBacklog: t.isBacklog,
     // L-03: completedAt 在 timestamp_ms mode 下一定是 Date | null，不需雙層可選鏈
     completedAt: t.completedAt ? t.completedAt.getTime() : null,
     createdAt: t.createdAt.getTime(),

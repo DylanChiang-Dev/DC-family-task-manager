@@ -150,3 +150,14 @@ export function nextOccurrenceAfter(
   const occ = computeOccurrences(config, fromISO, toISO(end));
   return occ[0] ?? null;
 }
+
+/**
+ * @deprecated 舊版虛擬展開用，僅供 apps/api/src/services/reminder.ts 過渡。
+ * Task 11 (Plan 1) 將移除本函式與所有呼叫方。
+ */
+export function shouldShowRecurringTask(
+  _config: RecurrenceConfig | null | undefined,
+  _dateStr: string,
+): boolean {
+  return false;
+}
