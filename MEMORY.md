@@ -19,6 +19,17 @@
 
 ## Durable Decisions
 
+### 2026-06-11 — Task-types redesign: strict review found 11 defects, all fixed (`e79399b`)
+
+- Plans 1–3 (recurring/window/backlog) were "all green" (typecheck + unit tests) yet the core flow was broken in production terms: instances couldn't be completed (stale PATCH guard), instance generation always threw (D1 param limit), and legacy data had no migration. **Lesson: unit tests passing ≠ integration correct — verify cross-layer flows (schema ↔ route ↔ form) end to end.**
+- **D1 hard limit: 100 bound parameters per query.** Bulk inserts must chunk — `services/recurrence.ts` uses 8 rows/batch (8 × 12 cols = 96). Drizzle does NOT auto-chunk `.values(array)`.
+- Recurring model: template = `taskType:'recurring'` + `parentTaskId:null` + non-null `recurrenceConfig`; instance = `parentTaskId` set + `recurrenceConfig:null`. Any guard/filter touching recurring tasks must distinguish the two (this was the root cause of 3 of the 11 bugs).
+- Generation horizon: rolling **90 days** (`HORIZON_DAYS`), topped up by daily cron; `nextOccurrenceAfter` guarantees ≥1 future instance per template (yearly tasks still work). Window start is `today − 1 day` (UTC) to tolerate user-local dates behind UTC.
+- Series edit semantics: schedule change (`recurrenceConfig`/`taskType`) → prune pending future instances + regenerate (in_progress/completed preserved); content change (title/description/assignee/category/priority) → direct UPDATE on future non-completed instances. Shared helper: `pruneFutureInstances`.
+- Migration `0004_legacy_task_types.sql` converts old `{frequency:...}` configs to the new `mode` shape and `task_type='repeatable'` → `'normal'`. **Must run `db:migrate:remote` before deploying this code**, or legacy recurring tasks silently vanish.
+- Known remaining debt (non-blocking): `GET /tasks` has no date filter/pagination; duplicate helpers (`getWeekSpans` vs `getWeekBlockSpans`, 4 date formatters across api/web/shared); `idx_team_backlog` index unused (backlog filtered client-side).
+- Collaboration preference: **default to single-threaded work; multi-agent fan-out (review/research swarms) only on explicit request** — token cost of a full 7-finder × 12-verifier review is ~800k subagent tokens.
+
 ### 2026-06-08 — Full rebuild tech stack finalized
 
 - Rebuilt from PHP monolith to: **Hono (Workers) + React (Pages) + D1 + KV**, all on Cloudflare.
