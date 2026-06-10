@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { solarToLunar } from "@/lib/lunar";
 import { useTasks } from "@/features/tasks/hooks";
-import { expandRecurringTasks, formatDateKey } from "./recurrence";
+import { toCalendarTasks, formatDateKey } from "./recurrence";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -23,8 +23,8 @@ export function CalendarPage() {
 
   const { first, start, end } = monthBounds(month);
   const calendarTasks = useMemo(
-    () => expandRecurringTasks(tasks ?? [], start, end),
-    [tasks, start.getTime(), end.getTime()],
+    () => toCalendarTasks(tasks ?? []),
+    [tasks],
   );
   const cells = useMemo(
     () =>

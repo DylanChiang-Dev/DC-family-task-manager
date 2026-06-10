@@ -20,7 +20,7 @@ import { TaskFormDialog } from "@/features/tasks/TaskFormDialog";
 import { useDeleteTask, useTasks, useUpdateTask } from "@/features/tasks/hooks";
 import {
   type CalendarTask,
-  expandRecurringTasks,
+  toCalendarTasks,
   formatDateKey,
 } from "@/features/calendar/recurrence";
 import type { ScheduleBlockResponse } from "@ftm/shared";
@@ -59,10 +59,6 @@ function calendarWindow(anchor: Date) {
 
 function startOfMonth(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), 1);
-}
-
-function minDate(...dates: Date[]) {
-  return dates.reduce((earliest, date) => (date < earliest ? date : earliest));
 }
 
 function sortDashboardTasks(a: CalendarTask, b: CalendarTask) {
@@ -260,17 +256,9 @@ export function DashboardPage() {
   const { data: scheduleBlocks = [] } = useScheduleBlocks(formatDateKey(start), formatDateKey(end));
   const deleteScheduleMutation = useDeleteScheduleBlock();
   const first = startOfMonth(start);
-  const taskStart = useMemo(() => {
-    const dueDates =
-      tasks
-        ?.map((task) => task.dueDate)
-        .filter((dueDate): dueDate is string => Boolean(dueDate))
-        .map((dueDate) => new Date(`${dueDate}T00:00:00`)) ?? [];
-    return minDate(start, ...dueDates);
-  }, [tasks, start.getTime()]);
   const calendarTasks = useMemo(
-    () => expandRecurringTasks(tasks ?? [], taskStart, end),
-    [tasks, taskStart.getTime(), end.getTime()],
+    () => toCalendarTasks(tasks ?? []),
+    [tasks],
   );
   const monthTasks = useMemo(
     () =>
