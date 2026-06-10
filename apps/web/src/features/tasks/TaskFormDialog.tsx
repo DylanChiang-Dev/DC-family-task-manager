@@ -6,6 +6,7 @@ import {
   type RecurrenceUnit,
   type TaskResponse,
   RECURRENCE_UNIT,
+  formatDateKey,
 } from "@ftm/shared";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -35,8 +36,7 @@ import { useAuthStore } from "@/stores/auth-store";
 import { useCreateTask, useUpdateTask } from "./hooks";
 
 function todayISO(): string {
-  const n = new Date();
-  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+  return formatDateKey(new Date());
 }
 
 type RecurrenceMode = "interval" | "anchored";

@@ -2,11 +2,10 @@ import { beforeEach, describe, expect, it } from "vitest";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { screen, waitFor, within } from "@testing-library/react";
-import type { ScheduleBlockResponse, TaskResponse } from "@ftm/shared";
+import { formatDateKey, type ScheduleBlockResponse, type TaskResponse } from "@ftm/shared";
 import { server } from "@/test/msw-server";
 import { renderWithProviders } from "@/test/test-utils";
 import { useAuthStore } from "@/stores/auth-store";
-import { formatDateKey } from "@/features/calendar/recurrence";
 import { DashboardPage } from "./DashboardPage";
 
 const BASE = "http://localhost:8787/api";

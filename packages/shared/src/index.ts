@@ -8,3 +8,4 @@ export * from "./schemas/comment";
 export * from "./schemas/schedule-block";
 export * from "./types/api";
 export * from "./lib/recurring";
+export * from "./lib/date";

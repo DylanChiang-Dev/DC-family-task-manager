@@ -18,10 +18,10 @@ import { ScheduleBlockDialog } from "@/features/schedule-blocks/ScheduleBlockDia
 import { useDeleteScheduleBlock, useScheduleBlocks } from "@/features/schedule-blocks/hooks";
 import { TaskFormDialog } from "@/features/tasks/TaskFormDialog";
 import { useDeleteTask, useTasks, useUpdateTask } from "@/features/tasks/hooks";
+import { formatDateKey } from "@ftm/shared";
 import {
   type CalendarTask,
   toCalendarTasks,
-  formatDateKey,
 } from "@/features/calendar/recurrence";
 import {
   getWindowTasks,
@@ -111,21 +111,6 @@ function scheduleBlockStyle(block: ScheduleBlockResponse): CSSProperties {
 
 function blockOverlapsDate(block: ScheduleBlockResponse, dateKey: string) {
   return block.startDate <= dateKey && block.endDate >= dateKey;
-}
-
-function getWeekBlockSpans(
-  weekCells: { key: string }[],
-  allBlocks: ScheduleBlockResponse[],
-): { block: ScheduleBlockResponse; colStart: number; colEnd: number }[] {
-  const weekStartKey = weekCells[0]!.key;
-  const weekEndKey = weekCells[6]!.key;
-  return allBlocks
-    .filter((b) => b.startDate <= weekEndKey && b.endDate >= weekStartKey)
-    .map((b) => {
-      const colStart = b.startDate <= weekStartKey ? 0 : weekCells.findIndex((c) => c.key === b.startDate);
-      const colEnd = b.endDate >= weekEndKey ? 6 : weekCells.findIndex((c) => c.key === b.endDate);
-      return { block: b, colStart: colStart < 0 ? 0 : colStart, colEnd: colEnd < 0 ? 6 : colEnd };
-    });
 }
 
 function scheduleLabel(block: ScheduleBlockResponse) {
@@ -470,7 +455,7 @@ export function DashboardPage() {
             <div className="flex flex-1 flex-col gap-1">
               {Array.from({ length: 6 }, (_, weekIndex) => {
                 const weekCells = cells.slice(weekIndex * 7, (weekIndex + 1) * 7);
-                const weekSpans = getWeekBlockSpans(weekCells, scheduleBlocks);
+                const weekSpans = getWeekSpans(weekCells, scheduleBlocks);
                 const windowSpans = getWeekSpans(
                   weekCells,
                   windowTasks.map((t) => ({ id: t.id, startDate: t.startDate!, endDate: t.endDate! })),
@@ -509,21 +494,21 @@ export function DashboardPage() {
                       ))}
                     </div>
                     {weekSpans.map((span) => {
-                      const isStart = span.block.startDate >= weekCells[0]!.key;
-                      const isEnd = span.block.endDate <= weekCells[6]!.key;
+                      const isStart = span.item.startDate >= weekCells[0]!.key;
+                      const isEnd = span.item.endDate <= weekCells[6]!.key;
                       return (
-                        <div key={span.block.id} className="mt-0.5 grid grid-cols-7 gap-1 h-5">
+                        <div key={span.item.id} className="mt-0.5 grid grid-cols-7 gap-1 h-5">
                           <button
                             type="button"
                             className={`truncate border px-1.5 text-[10px] font-medium leading-5 text-left cursor-pointer hover:brightness-95 transition-[filter] ${isStart ? "rounded-l-md" : "border-l-0"} ${isEnd ? "rounded-r-md" : "border-r-0"}`}
                             style={{
                               gridColumn: `${span.colStart + 1} / ${span.colEnd + 2}`,
-                              ...scheduleBlockStyle(span.block),
+                              ...scheduleBlockStyle(span.item),
                             }}
-                            title={`${span.block.title} · ${span.block.startDate} - ${span.block.endDate}`}
-                            onClick={() => setEditingSchedule(span.block)}
+                            title={`${span.item.title} · ${span.item.startDate} - ${span.item.endDate}`}
+                            onClick={() => setEditingSchedule(span.item)}
                           >
-                            {isStart && scheduleLabel(span.block)}
+                            {isStart && scheduleLabel(span.item)}
                           </button>
                         </div>
                       );
@@ -599,7 +584,7 @@ export function DashboardPage() {
               <div className="flex flex-col gap-1">
                 {Array.from({ length: 6 }, (_, weekIndex) => {
                   const weekCells = cells.slice(weekIndex * 7, (weekIndex + 1) * 7);
-                  const weekSpans = getWeekBlockSpans(weekCells, scheduleBlocks);
+                  const weekSpans = getWeekSpans(weekCells, scheduleBlocks);
                   return (
                     <div key={weekIndex}>
                       <div className="grid grid-cols-7 gap-1">
@@ -618,21 +603,21 @@ export function DashboardPage() {
                         ))}
                       </div>
                       {weekSpans.map((span) => {
-                        const isStart = span.block.startDate >= weekCells[0]!.key;
-                        const isEnd = span.block.endDate <= weekCells[6]!.key;
+                        const isStart = span.item.startDate >= weekCells[0]!.key;
+                        const isEnd = span.item.endDate <= weekCells[6]!.key;
                         return (
-                          <div key={span.block.id} className="mt-0.5 grid grid-cols-7 gap-1 h-4">
+                          <div key={span.item.id} className="mt-0.5 grid grid-cols-7 gap-1 h-4">
                             <button
                               type="button"
                               className={`truncate border px-1 text-[9px] font-medium leading-4 text-left cursor-pointer hover:brightness-95 transition-[filter] ${isStart ? "rounded-l" : "border-l-0"} ${isEnd ? "rounded-r" : "border-r-0"}`}
                               style={{
                                 gridColumn: `${span.colStart + 1} / ${span.colEnd + 2}`,
-                                ...scheduleBlockStyle(span.block),
+                                ...scheduleBlockStyle(span.item),
                               }}
-                              title={`${span.block.title} · ${span.block.startDate} - ${span.block.endDate}`}
-                              onClick={() => setEditingSchedule(span.block)}
+                              title={`${span.item.title} · ${span.item.startDate} - ${span.item.endDate}`}
+                              onClick={() => setEditingSchedule(span.item)}
                             >
-                              {isStart && scheduleLabel(span.block)}
+                              {isStart && scheduleLabel(span.item)}
                             </button>
                           </div>
                         );

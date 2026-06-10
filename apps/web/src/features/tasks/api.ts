@@ -11,9 +11,25 @@ import { request } from "@/lib/api-client";
 
 export type TaskStatusFilter = TaskStatus | "all";
 
-export function fetchTasks(status: TaskStatusFilter) {
-  const qs = status === "all" ? "" : `?status=${status}`;
-  return request<TaskResponse[]>(`/tasks${qs}`);
+export interface TaskListFilter {
+  /** YYYY-MM-DD，與 to 構成日期重疊過濾（無日期任務會被排除） */
+  from?: string;
+  /** YYYY-MM-DD */
+  to?: string;
+  /** 1-500；offset 必須搭配 limit */
+  limit?: number;
+  offset?: number;
+}
+
+export function fetchTasks(status: TaskStatusFilter, filter?: TaskListFilter) {
+  const params = new URLSearchParams();
+  if (status !== "all") params.set("status", status);
+  if (filter?.from) params.set("from", filter.from);
+  if (filter?.to) params.set("to", filter.to);
+  if (filter?.limit != null) params.set("limit", String(filter.limit));
+  if (filter?.offset != null) params.set("offset", String(filter.offset));
+  const qs = params.toString();
+  return request<TaskResponse[]>(`/tasks${qs ? `?${qs}` : ""}`);
 }
 
 export function fetchTask(id: number) {

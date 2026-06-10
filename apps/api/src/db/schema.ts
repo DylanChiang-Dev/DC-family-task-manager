@@ -153,7 +153,6 @@ export const tasks = sqliteTable(
     dueDateIdx: index("idx_due_date").on(t.dueDate),
     taskTypeIdx: index("idx_task_type").on(t.taskType),
     parentIdx: index("idx_parent").on(t.parentTaskId),
-    backlogIdx: index("idx_team_backlog").on(t.teamId, t.isBacklog),
   }),
 );
 

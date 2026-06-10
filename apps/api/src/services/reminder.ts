@@ -2,6 +2,7 @@ import type { Env } from "../types";
 import { createDb } from "../db/client";
 import { users, tasks, notifications } from "../db/schema";
 import { eq, and, or, notInArray, isNotNull, lte, gte, inArray, ne } from "drizzle-orm";
+import { formatDateKeyUTC } from "@ftm/shared";
 import { sendEmail } from "./mail";
 
 /**
@@ -12,12 +13,12 @@ export async function runDueReminders(env: Env): Promise<void> {
   try {
     const db = createDb(env.DB);
     const now = new Date();
-    const todayStr = toDateStr(now);
+    const todayStr = formatDateKeyUTC(now);
 
     // L-02: 安全獲取明天日期字串，防止 DST 問題
     const tomorrow = new Date(now);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const tomorrowStr = toDateStr(tomorrow);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    const tomorrowStr = formatDateKeyUTC(tomorrow);
 
     console.log(`[reminder] scanning due tasks: ${todayStr} ~ ${tomorrowStr}`);
 
@@ -160,11 +161,4 @@ export async function runDueReminders(env: Env): Promise<void> {
   } catch (err) {
     console.error("[reminder] runDueReminders execution error:", err);
   }
-}
-
-function toDateStr(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
 }

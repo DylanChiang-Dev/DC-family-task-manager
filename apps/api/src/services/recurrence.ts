@@ -2,7 +2,7 @@ import type { Env } from "../types";
 import { createDb } from "../db/client";
 import { tasks } from "../db/schema";
 import { and, eq, gte, inArray, isNull, isNotNull } from "drizzle-orm";
-import { computeOccurrences, nextOccurrenceAfter } from "@ftm/shared";
+import { computeOccurrences, nextOccurrenceAfter, formatDateKeyUTC } from "@ftm/shared";
 import type { RecurrenceConfig } from "@ftm/shared";
 
 // 滾動視界：cron 每日補齊，不需一次物化太遠（也避免 GET /tasks 被實例淹沒）
@@ -10,12 +10,7 @@ const HORIZON_DAYS = 90;
 // D1 上限 100 bound parameters/query；每行 12 欄 → 每批最多 8 行
 const INSERT_CHUNK_SIZE = 8;
 
-export function todayISO(now: Date): string {
-  const y = now.getUTCFullYear();
-  const m = String(now.getUTCMonth() + 1).padStart(2, "0");
-  const d = String(now.getUTCDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
+export const todayISO = formatDateKeyUTC;
 
 function shiftDays(now: Date, days: number): string {
   const d = new Date(now);

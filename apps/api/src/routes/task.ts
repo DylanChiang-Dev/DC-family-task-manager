@@ -5,7 +5,7 @@ import type { TaskResponse, TaskStatus } from "@ftm/shared";
 import type { Env, Variables } from "../types";
 import { createDb } from "../db/client";
 import { users, tasks, taskComments, taskHistory, notifications, categories, teamMembers } from "../db/schema";
-import { eq, and, inArray, desc, ne, gte } from "drizzle-orm";
+import { eq, and, or, inArray, desc, ne, gte, lte, isNotNull, type SQL } from "drizzle-orm";
 import { authMiddleware } from "../middleware/auth";
 import { teamMiddleware } from "../middleware/team";
 import { fail, ok } from "../lib/response";
@@ -97,25 +97,67 @@ async function validateCategory(db: ReturnType<typeof createDb>, teamId: number,
 }
 
 // ── GET /tasks ──
+// 可選查詢參數（均不帶時行為與舊版一致）：
+// - status: 任務狀態
+// - from/to (YYYY-MM-DD): 日期重疊過濾——dueDate 落在 [from, to]，或 window 的
+//   [startDate, endDate] 與 [from, to] 重疊；無任何日期的任務（含 backlog、週期模板）會被排除
+// - limit (1-500) / offset (≥0): 分頁；offset 必須搭配 limit
+const DATE_PARAM_RE = /^\d{4}-\d{2}-\d{2}$/;
+
 taskRoutes.get("/", async (c) => {
   const teamId = c.get("teamId")!;
   const db = createDb(c.env.DB);
   const statusParam = c.req.query("status");
+  const from = c.req.query("from");
+  const to = c.req.query("to");
+  const limitParam = c.req.query("limit");
+  const offsetParam = c.req.query("offset");
 
   const validStatuses: TaskStatus[] = ["pending", "in_progress", "completed", "cancelled"];
   const status = validStatuses.includes(statusParam as TaskStatus) ? (statusParam as TaskStatus) : null;
 
-  const rows = status
-    ? await db
-        .select()
-        .from(tasks)
-        .where(and(eq(tasks.teamId, teamId), eq(tasks.status, status)))
-        .orderBy(desc(tasks.createdAt))
-    : await db
-        .select()
-        .from(tasks)
-        .where(eq(tasks.teamId, teamId))
-        .orderBy(desc(tasks.createdAt));
+  if ((from && !DATE_PARAM_RE.test(from)) || (to && !DATE_PARAM_RE.test(to))) {
+    return c.json(fail("VALIDATION_ERROR", "from/to 必須為 YYYY-MM-DD 格式"), 400);
+  }
+  let limit: number | null = null;
+  if (limitParam !== undefined) {
+    limit = Number(limitParam);
+    if (!Number.isInteger(limit) || limit < 1 || limit > 500) {
+      return c.json(fail("VALIDATION_ERROR", "limit 必須為 1-500 的整數"), 400);
+    }
+  }
+  let offset: number | null = null;
+  if (offsetParam !== undefined) {
+    offset = Number(offsetParam);
+    if (!Number.isInteger(offset) || offset < 0) {
+      return c.json(fail("VALIDATION_ERROR", "offset 必須為不小於 0 的整數"), 400);
+    }
+    if (limit === null) {
+      return c.json(fail("VALIDATION_ERROR", "offset 必須搭配 limit 使用"), 400);
+    }
+  }
+
+  const conds: SQL[] = [eq(tasks.teamId, teamId)];
+  if (status) conds.push(eq(tasks.status, status));
+  if (from || to) {
+    const dueConds: SQL[] = [isNotNull(tasks.dueDate)];
+    if (from) dueConds.push(gte(tasks.dueDate, from));
+    if (to) dueConds.push(lte(tasks.dueDate, to));
+    const windowConds: SQL[] = [isNotNull(tasks.startDate), isNotNull(tasks.endDate)];
+    if (to) windowConds.push(lte(tasks.startDate, to));
+    if (from) windowConds.push(gte(tasks.endDate, from));
+    conds.push(or(and(...dueConds)!, and(...windowConds)!)!);
+  }
+
+  let query = db
+    .select()
+    .from(tasks)
+    .where(and(...conds))
+    .orderBy(desc(tasks.createdAt))
+    .$dynamic();
+  if (limit !== null) query = query.limit(limit);
+  if (offset !== null) query = query.offset(offset);
+  const rows = await query;
 
   const userIds = rows.flatMap((t) => [t.creatorId, t.assigneeId].filter(Boolean) as number[]);
   const catIds = rows.map((t) => t.categoryId).filter(Boolean) as number[];

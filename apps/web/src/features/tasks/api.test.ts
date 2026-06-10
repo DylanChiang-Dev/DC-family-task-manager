@@ -44,6 +44,20 @@ describe("tasks api", () => {
     expect(search).toBe("?status=pending");
   });
 
+  it("fetchTasks with date filter and pagination adds query params", async () => {
+    let search = "";
+    server.use(
+      http.get(`${BASE}/tasks`, ({ request: req }) => {
+        search = new URL(req.url).search;
+        return HttpResponse.json({ success: true, data: [] });
+      }),
+    );
+
+    await fetchTasks("all", { from: "2026-06-01", to: "2026-06-30", limit: 50, offset: 100 });
+
+    expect(search).toBe("?from=2026-06-01&to=2026-06-30&limit=50&offset=100");
+  });
+
   it("createTask posts body and returns created task", async () => {
     server.use(
       http.post(`${BASE}/tasks`, () =>

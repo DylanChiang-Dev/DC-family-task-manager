@@ -1,0 +1,1 @@
+DROP INDEX `idx_team_backlog`;

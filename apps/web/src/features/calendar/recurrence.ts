@@ -4,13 +4,6 @@ export interface CalendarTask extends TaskResponse {
   isRecurringInstance?: boolean;
 }
 
-export function formatDateKey(date: Date) {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, "0");
-  const d = String(date.getDate()).padStart(2, "0");
-  return `${y}-${m}-${d}`;
-}
-
 /**
  * 把後端任務列表轉成日曆任務：
  * - 濾掉週期「模板」（recurring 且 parentTaskId 為空，本身無 dueDate）

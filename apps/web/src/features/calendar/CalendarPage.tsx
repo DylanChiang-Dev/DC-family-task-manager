@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { solarToLunar } from "@/lib/lunar";
 import { useTasks } from "@/features/tasks/hooks";
-import { toCalendarTasks, formatDateKey } from "./recurrence";
+import { formatDateKey } from "@ftm/shared";
+import { toCalendarTasks } from "./recurrence";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
