@@ -3,7 +3,9 @@ import {
   createTaskSchema,
   type CreateTaskInput,
   type RecurrenceConfig,
+  type RecurrenceUnit,
   type TaskResponse,
+  RECURRENCE_UNIT,
 } from "@ftm/shared";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -32,64 +34,65 @@ import { ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
 import { useCreateTask, useUpdateTask } from "./hooks";
 
-type Frequency = RecurrenceConfig["frequency"];
+function todayISO(): string {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, "0")}-${String(n.getDate()).padStart(2, "0")}`;
+}
 
-function defaultRecurrenceConfig(frequency: Frequency): RecurrenceConfig {
-  switch (frequency) {
-    case "daily":
-      return { frequency: "daily" };
-    case "weekly":
-      return { frequency: "weekly", days: [1] };
-    case "monthly":
-      return { frequency: "monthly", dates: [1] };
-    case "yearly":
-      return { frequency: "yearly", month: 1, date: 1 };
+type RecurrenceMode = "interval" | "anchored";
+
+function recurrenceMode(config: RecurrenceConfig | null | undefined): RecurrenceMode {
+  return config?.mode === "interval" ? "interval" : "anchored";
+}
+
+function recurrenceUnit(config: RecurrenceConfig | null | undefined): RecurrenceUnit {
+  if (!config) return "week";
+  if (config.mode === "interval") return config.unit;
+  return config.unit;
+}
+
+function defaultForMode(mode: RecurrenceMode, unit: RecurrenceUnit): RecurrenceConfig {
+  if (mode === "interval") {
+    return { mode: "interval", every: 1, unit, anchorDate: todayISO() };
+  }
+  switch (unit) {
+    case "week":
+      return { mode: "anchored", unit: "week", weekdays: [1] };
+    case "month":
+      return { mode: "anchored", unit: "month", dates: [1] };
+    case "year":
+      return { mode: "anchored", unit: "year", month: 1, date: 1 };
+    case "day":
+      return { mode: "interval", every: 1, unit: "day", anchorDate: todayISO() };
   }
 }
 
-function serializeRecurrenceConfig(frequency: Frequency, value: string): RecurrenceConfig {
-  if (frequency === "weekly") {
-    const days = value
+function serializeAnchored(unit: RecurrenceUnit, value: string): RecurrenceConfig {
+  if (unit === "week") {
+    const weekdays = value
       .split(",")
-      .map((item) => Number(item.trim()))
-      .filter((item) => Number.isInteger(item) && item >= 0 && item <= 6);
-    return { frequency, days: days.length > 0 ? days : [1] };
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+    return { mode: "anchored", unit: "week", weekdays: weekdays.length ? weekdays : [1] };
   }
-
-  if (frequency === "monthly") {
+  if (unit === "month") {
     const dates = value
       .split(",")
-      .map((item) => Number(item.trim()))
-      .filter((item) => Number.isInteger(item) && item >= 1 && item <= 31);
-    return { frequency, dates: dates.length > 0 ? dates : [1] };
+      .map((s) => Number(s.trim()))
+      .filter((n) => Number.isInteger(n) && n >= 1 && n <= 31);
+    return { mode: "anchored", unit: "month", dates: dates.length ? dates : [1] };
   }
-
-  if (frequency === "yearly") {
-    const parts = value.split("-").map((item) => Number(item.trim()));
-    const monthValue = parts[0] ?? 1;
-    const dateValue = parts[1] ?? 1;
-    return {
-      frequency,
-      month: Number.isInteger(monthValue) && monthValue >= 1 && monthValue <= 12 ? monthValue : 1,
-      date: Number.isInteger(dateValue) && dateValue >= 1 && dateValue <= 31 ? dateValue : 1,
-    };
-  }
-
-  return { frequency };
+  const parts = value.split("-").map((s) => Number(s.trim()));
+  const month = Number.isInteger(parts[0]) && parts[0]! >= 1 && parts[0]! <= 12 ? parts[0]! : 1;
+  const date = Number.isInteger(parts[1]) && parts[1]! >= 1 && parts[1]! <= 31 ? parts[1]! : 1;
+  return { mode: "anchored", unit: "year", month, date };
 }
 
-function recurrenceValue(config: RecurrenceConfig | null | undefined) {
-  if (!config) return "1";
-  switch (config.frequency) {
-    case "daily":
-      return "1";
-    case "weekly":
-      return config.days.join(",");
-    case "monthly":
-      return config.dates.join(",");
-    case "yearly":
-      return `${config.month}-${config.date}`;
-  }
+function anchoredValue(config: RecurrenceConfig | null | undefined): string {
+  if (!config || config.mode !== "anchored") return "1";
+  if (config.unit === "week") return config.weekdays.join(",");
+  if (config.unit === "month") return config.dates.join(",");
+  return `${config.month}-${config.date}`;
 }
 
 export function TaskFormDialog({
@@ -126,11 +129,14 @@ export function TaskFormDialog({
       dueDate: task?.dueDate ?? null,
       categoryId: task?.categoryId ?? null,
       assigneeId: task?.assigneeId ?? null,
+      startDate: task?.startDate ?? null,
+      endDate: task?.endDate ?? null,
     },
   });
   const taskType = watch("taskType");
   const recurrenceConfig = watch("recurrenceConfig");
-  const recurrenceFrequency = recurrenceConfig?.frequency ?? "daily";
+  const rMode = recurrenceMode(recurrenceConfig);
+  const rUnit = recurrenceUnit(recurrenceConfig);
 
   const onSubmit = async (values: CreateTaskInput) => {
     const input: CreateTaskInput = {
@@ -140,6 +146,8 @@ export function TaskFormDialog({
       categoryId: values.categoryId || null,
       assigneeId: values.assigneeId || null,
       recurrenceConfig: values.taskType === "recurring" ? values.recurrenceConfig : null,
+      startDate: values.taskType === "window" ? values.startDate || null : null,
+      endDate: values.taskType === "window" ? values.endDate || null : null,
     };
 
     try {
@@ -245,8 +253,13 @@ export function TaskFormDialog({
                   setValue("taskType", nextType);
                   setValue(
                     "recurrenceConfig",
-                    nextType === "recurring" ? defaultRecurrenceConfig("daily") : null,
+                    nextType === "recurring" ? defaultForMode("anchored", "week") : null,
                   );
+                  if (nextType === "window") {
+                    const t = todayISO();
+                    if (!watch("startDate")) setValue("startDate", t);
+                    if (!watch("endDate")) setValue("endDate", t);
+                  }
                 }}
               >
                 <SelectTrigger aria-label="任務類型">
@@ -255,53 +268,113 @@ export function TaskFormDialog({
                 <SelectContent>
                   <SelectItem value="normal">一般</SelectItem>
                   <SelectItem value="recurring">週期</SelectItem>
-                  <SelectItem value="repeatable">可重複</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {taskType === "recurring" && (
               <div className="space-y-1.5">
-                <Label>週期頻率</Label>
+                <Label>重複模式</Label>
                 <Select
-                  value={recurrenceFrequency}
+                  value={rMode}
                   onValueChange={(v) =>
-                    setValue("recurrenceConfig", defaultRecurrenceConfig(v as Frequency))
+                    setValue("recurrenceConfig", defaultForMode(v as RecurrenceMode, rUnit === "day" ? "week" : rUnit))
                   }
                 >
-                  <SelectTrigger aria-label="週期頻率">
+                  <SelectTrigger aria-label="重複模式">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="daily">每日</SelectItem>
-                    <SelectItem value="weekly">每週</SelectItem>
-                    <SelectItem value="monthly">每月</SelectItem>
-                    <SelectItem value="yearly">每年</SelectItem>
+                    <SelectItem value="interval">固定間隔</SelectItem>
+                    <SelectItem value="anchored">對齊特定日</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             )}
           </div>
-          {taskType === "recurring" && recurrenceFrequency !== "daily" && (
-            <div className="space-y-1.5">
-              <Label htmlFor="recurrenceValue">
-                {recurrenceFrequency === "weekly"
-                  ? "星期（0=日，逗號分隔）"
-                  : recurrenceFrequency === "monthly"
-                    ? "日期（1-31，逗號分隔）"
-                    : "月份-日期"}
-              </Label>
-              <Input
-                id="recurrenceValue"
-                value={recurrenceValue(recurrenceConfig)}
-                onChange={(e) =>
-                  setValue(
-                    "recurrenceConfig",
-                    serializeRecurrenceConfig(recurrenceFrequency, e.target.value),
-                  )
-                }
-              />
+
+          {taskType === "recurring" && rMode === "interval" && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="intervalEvery">間隔數</Label>
+                <Input
+                  id="intervalEvery"
+                  type="number"
+                  min={1}
+                  value={recurrenceConfig?.mode === "interval" ? recurrenceConfig.every : 1}
+                  onChange={(e) =>
+                    setValue("recurrenceConfig", {
+                      mode: "interval",
+                      every: Math.max(1, Number(e.target.value) || 1),
+                      unit: rUnit === "day" || rUnit === "week" || rUnit === "month" || rUnit === "year" ? rUnit : "week",
+                      anchorDate: todayISO(),
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label>間隔單位</Label>
+                <Select
+                  value={rUnit}
+                  onValueChange={(v) =>
+                    setValue("recurrenceConfig", {
+                      mode: "interval",
+                      every: recurrenceConfig?.mode === "interval" ? recurrenceConfig.every : 1,
+                      unit: v as RecurrenceUnit,
+                      anchorDate: todayISO(),
+                    })
+                  }
+                >
+                  <SelectTrigger aria-label="間隔單位">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="day">天</SelectItem>
+                    <SelectItem value="week">週</SelectItem>
+                    <SelectItem value="month">月</SelectItem>
+                    <SelectItem value="year">年</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           )}
+
+          {taskType === "recurring" && rMode === "anchored" && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label>對齊單位</Label>
+                <Select
+                  value={rUnit === "day" ? "week" : rUnit}
+                  onValueChange={(v) => setValue("recurrenceConfig", defaultForMode("anchored", v as RecurrenceUnit))}
+                >
+                  <SelectTrigger aria-label="對齊單位">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="week">每週</SelectItem>
+                    <SelectItem value="month">每月</SelectItem>
+                    <SelectItem value="year">每年</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="anchoredValue">
+                  {rUnit === "week"
+                    ? "星期（0=日，逗號分隔）"
+                    : rUnit === "month"
+                      ? "日期（1-31，逗號分隔）"
+                      : "月份-日期"}
+                </Label>
+                <Input
+                  id="anchoredValue"
+                  value={anchoredValue(recurrenceConfig)}
+                  onChange={(e) =>
+                    setValue("recurrenceConfig", serializeAnchored(rUnit === "day" ? "week" : rUnit, e.target.value))
+                  }
+                />
+              </div>
+            </div>
+          )}
+
           <DialogFooter>
             <Button type="button" variant="ghost" onClick={() => onOpenChange(false)}>
               取消

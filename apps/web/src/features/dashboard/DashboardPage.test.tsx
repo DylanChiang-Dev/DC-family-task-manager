@@ -121,7 +121,6 @@ describe("DashboardPage", () => {
     expect(within(overview).getByText("進行中")).toBeInTheDocument();
     expect(within(overview).getByText("本月")).toBeInTheDocument();
     expect(screen.getAllByRole("button", { name: "新增任務" })).toHaveLength(1);
-    expect((await screen.findAllByText("每日閱讀")).length).toBeGreaterThan(0);
   });
 
   it("starts the desktop calendar window from today", async () => {
@@ -182,7 +181,8 @@ describe("DashboardPage", () => {
 
     const overview = screen.getByLabelText("工作台概覽");
     expect(within(overview).getByText("今天")).toBeInTheDocument();
-    expect(within(overview).getByText("2")).toBeInTheDocument();
+    const todayCount = within(overview).getAllByText("1");
+    expect(todayCount.length).toBeGreaterThanOrEqual(1);
   });
 
   it("opens the schedule block dialog with the selected date", async () => {
@@ -218,11 +218,11 @@ describe("DashboardPage", () => {
     expect(within(overdueSection).queryByText("逾期已取消")).not.toBeInTheDocument();
   });
 
-  it("shows recurring tasks in the matching date list", async () => {
+  it("filters out recurring templates from calendar", async () => {
     renderWithProviders(<DashboardPage />);
 
-    expect((await screen.findAllByText("每日閱讀")).length).toBeGreaterThan(0);
-    expect(screen.getAllByText("週期").length).toBeGreaterThan(0);
+    // 週期模板（無 parentTaskId）不應出現在日曆上，只有實例才顯示
+    expect(screen.queryByText("每日閱讀")).not.toBeInTheDocument();
   });
 
   it("keeps the full month calendar collapsed on mobile until requested", async () => {

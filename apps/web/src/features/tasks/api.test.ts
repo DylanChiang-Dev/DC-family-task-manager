@@ -56,6 +56,8 @@ describe("tasks api", () => {
       priority: "high",
       status: "pending",
       taskType: "normal",
+      progress: 0,
+      isBacklog: false,
     });
 
     expect(t.id).toBe(10);

@@ -48,7 +48,7 @@ describe("TaskFormDialog", () => {
     await waitFor(() => expect(posted).toMatchObject({ title: "倒垃圾" }));
   });
 
-  it("creates a recurring assigned task", async () => {
+  it("creates an anchored weekly recurring task", async () => {
     let posted: unknown = null;
     server.use(
       http.post(`${BASE}/tasks`, async ({ request: req }) => {
@@ -60,22 +60,56 @@ describe("TaskFormDialog", () => {
 
     renderWithProviders(<TaskFormDialog open onOpenChange={() => {}} />);
     await user.type(screen.getByLabelText("標題"), "每週掃地");
-    await user.click(screen.getByLabelText("指派對象"));
-    await user.click((await screen.findAllByText("Bob")).at(-1)!);
     await user.click(screen.getByLabelText("任務類型"));
     await user.click((await screen.findAllByText("週期")).at(-1)!);
-    await user.click(await screen.findByLabelText("週期頻率"));
+
+    // 預設模式為「對齊」週，輸入週幾
+    await user.click(screen.getByLabelText("重複模式"));
+    await user.click((await screen.findAllByText("對齊特定日")).at(-1)!);
+    await user.click(screen.getByLabelText("對齊單位"));
     await user.click((await screen.findAllByText("每週")).at(-1)!);
     await user.clear(screen.getByLabelText("星期（0=日，逗號分隔）"));
     await user.type(screen.getByLabelText("星期（0=日，逗號分隔）"), "1,3");
+
     await user.click(screen.getByRole("button", { name: "建立" }));
 
     await waitFor(() =>
       expect(posted).toMatchObject({
         title: "每週掃地",
-        assigneeId: 2,
         taskType: "recurring",
-        recurrenceConfig: { frequency: "weekly", days: [1, 3] },
+        recurrenceConfig: { mode: "anchored", unit: "week", weekdays: [1, 3] },
+      }),
+    );
+  });
+
+  it("creates an interval recurring task", async () => {
+    let posted: unknown = null;
+    server.use(
+      http.post(`${BASE}/tasks`, async ({ request: req }) => {
+        posted = await req.json();
+        return HttpResponse.json({ success: true, data: { id: 1 } }, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderWithProviders(<TaskFormDialog open onOpenChange={() => {}} />);
+    await user.type(screen.getByLabelText("標題"), "每10週回診");
+    await user.click(screen.getByLabelText("任務類型"));
+    await user.click((await screen.findAllByText("週期")).at(-1)!);
+
+    await user.click(screen.getByLabelText("重複模式"));
+    await user.click((await screen.findAllByText("固定間隔")).at(-1)!);
+    const everyInput = screen.getByLabelText("間隔數");
+    await user.tripleClick(everyInput);
+    await user.keyboard("10");
+
+    await user.click(screen.getByRole("button", { name: "建立" }));
+
+    await waitFor(() =>
+      expect(posted).toMatchObject({
+        title: "每10週回診",
+        taskType: "recurring",
+        recurrenceConfig: { mode: "interval", every: 10, unit: "week" },
       }),
     );
   });
