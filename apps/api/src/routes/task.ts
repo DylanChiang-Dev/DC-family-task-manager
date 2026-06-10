@@ -10,6 +10,7 @@ import { authMiddleware } from "../middleware/auth";
 import { teamMiddleware } from "../middleware/team";
 import { fail, ok } from "../lib/response";
 import { zodErrorHook } from "../lib/zod-hook";
+import { generateInstancesForTemplate } from "../services/recurrence";
 
 export const taskRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -187,6 +188,10 @@ taskRoutes.post("/", zValidator("json", createTaskSchema, zodErrorHook), async (
       taskType: body.taskType,
       recurrenceConfig: body.recurrenceConfig ?? null,
       parentTaskId: body.parentTaskId ?? null,
+      startDate: body.startDate ?? null,
+      endDate: body.endDate ?? null,
+      progress: body.progress ?? 0,
+      isBacklog: body.isBacklog ?? false,
     })
     .returning();
 
@@ -200,6 +205,11 @@ taskRoutes.post("/", zValidator("json", createTaskSchema, zodErrorHook), async (
     action: "created",
     changes: { title: body.title, status: body.status },
   });
+
+  // 建立週期模板時即時產生實例（補齊 3 年窗 + 保底），不必等 cron
+  if (task.taskType === "recurring" && task.parentTaskId == null && task.recurrenceConfig) {
+    await generateInstancesForTemplate(db, task, new Date());
+  }
 
   if (body.assigneeId && body.assigneeId !== userId) {
     await db.insert(notifications).values({
