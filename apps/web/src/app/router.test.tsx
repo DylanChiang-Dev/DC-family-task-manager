@@ -6,6 +6,7 @@ import { server } from "@/test/msw-server";
 import { renderWithProviders } from "@/test/test-utils";
 import { useAuthStore } from "@/stores/auth-store";
 import { DashboardPage } from "@/features/dashboard/DashboardPage";
+import { BacklogPage } from "@/features/backlog/BacklogPage";
 
 const BASE = "http://localhost:8787/api";
 
@@ -34,5 +35,16 @@ describe("router", () => {
 
     expect(await screen.findByText("家庭工作台")).toBeInTheDocument();
     await waitFor(() => expect(window.location.pathname).toBe("/"));
+  });
+
+  it("renders the backlog page at /backlog", async () => {
+    renderWithProviders(
+      <Routes>
+        <Route path="/backlog" element={<BacklogPage />} />
+      </Routes>,
+      { route: "/backlog" },
+    );
+
+    expect(await screen.findByText("🗂 靈感箱")).toBeInTheDocument();
   });
 });

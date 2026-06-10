@@ -10,6 +10,7 @@ import { SettingsPage } from "@/features/profile/SettingsPage";
 import { TaskDetailPage } from "@/features/tasks/TaskDetailPage";
 import { TeamMembersPage } from "@/features/teams/TeamMembersPage";
 import { TeamsPage } from "@/features/teams/TeamsPage";
+import { BacklogPage } from "@/features/backlog/BacklogPage";
 
 export const router: ReturnType<typeof createBrowserRouter> = createBrowserRouter([
   { path: "/login", element: <LoginPage /> },
@@ -21,6 +22,7 @@ export const router: ReturnType<typeof createBrowserRouter> = createBrowserRoute
         element: <AppLayout />,
         children: [
           { path: "/", element: <DashboardPage /> },
+          { path: "/backlog", element: <BacklogPage /> },
           { path: "/tasks", element: <Navigate to="/" replace /> },
           { path: "/tasks/:id", element: <TaskDetailPage /> },
           { path: "/calendar", element: <Navigate to="/" replace /> },
