@@ -79,6 +79,10 @@ scheduleBlockRoutes.post("/", zValidator("json", createScheduleBlockSchema, zodE
     })
     .returning();
 
+  if (!row) {
+    return c.json(fail("INTERNAL", "創建行程失敗"), 500);
+  }
+
   return c.json(ok(shapeScheduleBlock(row)), 201);
 });
 
@@ -110,6 +114,10 @@ scheduleBlockRoutes.patch("/:id", zValidator("json", updateScheduleBlockSchema, 
     })
     .where(and(eq(scheduleBlocks.id, id), eq(scheduleBlocks.userId, userId)))
     .returning();
+
+  if (!row) {
+    return c.json(fail("INTERNAL", "更新行程失敗"), 500);
+  }
 
   return c.json(ok(shapeScheduleBlock(row)));
 });
