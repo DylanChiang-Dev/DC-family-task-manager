@@ -111,6 +111,7 @@ export function TaskFormDialog({
   const updateMutation = useUpdateTask();
   const { data: categories } = useCategories();
   const currentTeamId = useAuthStore((s) => s.currentTeamId);
+  const user = useAuthStore((s) => s.user);
   const { data: members } = useTeamMembers(currentTeamId ?? Number.NaN);
 
   const {
@@ -130,7 +131,7 @@ export function TaskFormDialog({
       recurrenceConfig: task?.recurrenceConfig ?? null,
       dueDate: task?.dueDate ?? null,
       categoryId: task?.categoryId ?? null,
-      assigneeId: task?.assigneeId ?? null,
+      assigneeId: task?.assigneeId ?? user?.id ?? null,
       startDate: task?.startDate ?? null,
       endDate: task?.endDate ?? null,
       progress: task?.progress ?? 0,
