@@ -15,6 +15,20 @@
       "when": 1780932633417,
       "tag": "0001_outgoing_emma_frost",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1781074622187,
+      "tag": "0002_schedule_blocks",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1781074664632,
+      "tag": "0003_chilly_namora",
+      "breakpoints": true
     }
   ]
 }

@@ -9,7 +9,7 @@ export const TASK_STATUS = [
   "completed",
   "cancelled",
 ] as const;
-export const TASK_TYPE = ["normal", "recurring", "repeatable"] as const;
+export const TASK_TYPE = ["normal", "recurring", "window"] as const;
 
 export const TEAM_ROLE = ["admin", "member"] as const;
 
@@ -29,12 +29,7 @@ export const NOTIFICATION_TYPE = [
   "task_deleted",
 ] as const;
 
-export const RECURRENCE_FREQ = [
-  "daily",
-  "weekly",
-  "monthly",
-  "yearly",
-] as const;
+export const RECURRENCE_UNIT = ["day", "week", "month", "year"] as const;
 
 export type TaskPriority = (typeof TASK_PRIORITY)[number];
 export type TaskStatus = (typeof TASK_STATUS)[number];
@@ -42,4 +37,4 @@ export type TaskType = (typeof TASK_TYPE)[number];
 export type TeamRole = (typeof TEAM_ROLE)[number];
 export type HistoryAction = (typeof HISTORY_ACTION)[number];
 export type NotificationType = (typeof NOTIFICATION_TYPE)[number];
-export type RecurrenceFreq = (typeof RECURRENCE_FREQ)[number];
+export type RecurrenceUnit = (typeof RECURRENCE_UNIT)[number];

@@ -138,6 +138,12 @@ export const tasks = sqliteTable(
       mode: "json",
     }).$type<RecurrenceConfig>(),
     parentTaskId: integer("parent_task_id"),
+    // window 類型：區間 + 進度
+    startDate: text("start_date"),
+    endDate: text("end_date"),
+    progress: integer("progress").notNull().default(0),
+    // 靈感箱旗標（與類型正交）
+    isBacklog: integer("is_backlog", { mode: "boolean" }).notNull().default(false),
     completedAt: integer("completed_at", { mode: "timestamp_ms" }),
     ...timestamps(),
   },
@@ -147,6 +153,7 @@ export const tasks = sqliteTable(
     dueDateIdx: index("idx_due_date").on(t.dueDate),
     taskTypeIdx: index("idx_task_type").on(t.taskType),
     parentIdx: index("idx_parent").on(t.parentTaskId),
+    backlogIdx: index("idx_team_backlog").on(t.teamId, t.isBacklog),
   }),
 );
 
