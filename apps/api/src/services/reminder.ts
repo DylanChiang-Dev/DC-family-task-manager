@@ -1,8 +1,7 @@
 import type { Env } from "../types";
 import { createDb } from "../db/client";
 import { users, tasks, notifications } from "../db/schema";
-import { eq, and, notInArray, isNotNull, lte, gte, inArray, ne } from "drizzle-orm";
-import { shouldShowRecurringTask } from "@ftm/shared";
+import { eq, and, or, notInArray, isNotNull, lte, gte, inArray, ne } from "drizzle-orm";
 import { sendEmail } from "./mail";
 
 /**
@@ -22,8 +21,8 @@ export async function runDueReminders(env: Env): Promise<void> {
 
     console.log(`[reminder] scanning due tasks: ${todayStr} ~ ${tomorrowStr}`);
 
-    // ── 1. 到期提醒（due_date 在窗口內的普通任務） ──
-    // M-01: 排除週期任務，避免雙重處理
+    // ── 1. 到期提醒（due_date 在窗口內） ──
+    // 排除週期「模板」本身（recurring 且 parentTaskId 為空），實例正常走到期路徑
     const dueTasks = await db
       .select({
         id: tasks.id,
@@ -36,45 +35,21 @@ export async function runDueReminders(env: Env): Promise<void> {
       .from(tasks)
       .where(
         and(
-          ne(tasks.taskType, "recurring"),
+          isNotNull(tasks.dueDate),
           notInArray(tasks.status, ["completed", "cancelled"]),
           gte(tasks.dueDate, todayStr),
           lte(tasks.dueDate, tomorrowStr),
+          // 排除週期「模板」本身（recurring 且 parentTaskId 為空），實例正常走到期路徑
+          or(
+            ne(tasks.taskType, "recurring"),
+            isNotNull(tasks.parentTaskId),
+          ),
         ),
       );
 
     console.log(`[reminder] found ${dueTasks.length} due tasks`);
 
-    // ── 2. 週期任務提醒 ──
-    const recurringTasks = await db
-      .select({
-        id: tasks.id,
-        teamId: tasks.teamId,
-        title: tasks.title,
-        assigneeId: tasks.assigneeId,
-        creatorId: tasks.creatorId,
-        recurrenceConfig: tasks.recurrenceConfig,
-      })
-      .from(tasks)
-      .where(
-        and(
-          eq(tasks.taskType, "recurring"),
-          isNotNull(tasks.recurrenceConfig),
-          notInArray(tasks.status, ["completed", "cancelled"]),
-        ),
-      );
-
-    console.log(`[reminder] found ${recurringTasks.length} recurring tasks`);
-
-    // 篩選出今天符合顯示規則的週期任務
-    const activeRecurringTasks = recurringTasks.filter((task) =>
-      shouldShowRecurringTask(task.recurrenceConfig, todayStr)
-    );
-
-    console.log(`[reminder] active recurring tasks today: ${activeRecurringTasks.length}`);
-
-    // 合併兩種類型的任務列表進行統一處理
-    const allTasks = [...dueTasks, ...activeRecurringTasks];
+    const allTasks = dueTasks;
     if (allTasks.length === 0) {
       console.log("[reminder] no tasks to process, done");
       return;
