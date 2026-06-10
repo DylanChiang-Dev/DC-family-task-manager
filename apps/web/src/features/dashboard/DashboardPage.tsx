@@ -23,6 +23,12 @@ import {
   toCalendarTasks,
   formatDateKey,
 } from "@/features/calendar/recurrence";
+import {
+  getWindowTasks,
+  getWeekSpans,
+  windowState,
+  windowOverlapsDate,
+} from "@/features/calendar/windows";
 import type { ScheduleBlockResponse } from "@ftm/shared";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
@@ -260,6 +266,10 @@ export function DashboardPage() {
     () => toCalendarTasks(tasks ?? []),
     [tasks],
   );
+  const windowTasks = useMemo(
+    () => getWindowTasks(tasks ?? []),
+    [tasks],
+  );
   const monthTasks = useMemo(
     () =>
       calendarTasks
@@ -298,6 +308,10 @@ export function DashboardPage() {
     () => scheduleBlocks.filter((block) => blockOverlapsDate(block, selectedDate)),
     [scheduleBlocks, selectedDate],
   );
+  const selectedWindowTasks = useMemo(
+    () => windowTasks.filter((t) => windowOverlapsDate(t, selectedDate)),
+    [windowTasks, selectedDate],
+  );
   const todayTasks = useMemo(
     () => calendarTasks.filter((task) => task.dueDate === todayKey).sort(sortDashboardTasks),
     [calendarTasks, todayKey],
@@ -308,6 +322,10 @@ export function DashboardPage() {
         .filter((task) => task.dueDate && task.dueDate < todayKey && isActiveTask(task))
         .sort(sortDashboardTasks),
     [calendarTasks, todayKey],
+  );
+  const overdueWindows = useMemo(
+    () => windowTasks.filter((t) => windowState(t, todayKey) === "overdue"),
+    [windowTasks, todayKey],
   );
   const inProgressTasks = useMemo(
     () => calendarTasks.filter((task) => task.status === "in_progress").sort(sortDashboardTasks),
@@ -401,7 +419,7 @@ export function DashboardPage() {
           <div className="grid grid-cols-4 gap-2 text-right" aria-label="工作台概覽">
             {[
               ["今天", todayTasks.length],
-              ["逾期", overdueTasks.length],
+              ["逾期", overdueTasks.length + overdueWindows.length],
               ["進行中", inProgressTasks.length],
               ["本月", monthTasks.length],
             ].map(([label, count]) => (
@@ -452,6 +470,10 @@ export function DashboardPage() {
               {Array.from({ length: 6 }, (_, weekIndex) => {
                 const weekCells = cells.slice(weekIndex * 7, (weekIndex + 1) * 7);
                 const weekSpans = getWeekBlockSpans(weekCells, scheduleBlocks);
+                const windowSpans = getWeekSpans(
+                  weekCells,
+                  windowTasks.map((t) => ({ id: t.id, startDate: t.startDate!, endDate: t.endDate! })),
+                );
                 return (
                   <div key={weekIndex} className="flex flex-1 flex-col min-h-0">
                     <div className="grid min-h-0 flex-1 grid-cols-7 gap-1">
@@ -502,6 +524,32 @@ export function DashboardPage() {
                           >
                             {isStart && scheduleLabel(span.block)}
                           </button>
+                        </div>
+                      );
+                    })}
+                    {windowSpans.map((span) => {
+                      const t = windowTasks.find((wt) => wt.id === span.item.id)!;
+                      const isStart = t.startDate! >= weekCells[0]!.key;
+                      const isEnd = t.endDate! <= weekCells[6]!.key;
+                      const state = windowState(t, todayKey);
+                      const tone =
+                        state === "overdue"
+                          ? "bg-rose-100 border-rose-300 text-rose-900"
+                          : state === "done"
+                            ? "bg-muted border-border text-muted-foreground line-through"
+                            : state === "upcoming"
+                              ? "bg-indigo-50 border-indigo-200 text-indigo-500"
+                              : "bg-indigo-100 border-indigo-300 text-indigo-900";
+                      return (
+                        <div key={`w-${t.id}`} className="mt-0.5 grid grid-cols-7 gap-1 h-5">
+                          <Link
+                            to={`/tasks/${t.id}`}
+                            className={`truncate border px-1.5 text-[10px] font-medium leading-5 text-left hover:brightness-95 transition-[filter] ${tone} ${isStart ? "rounded-l-md" : "border-l-0"} ${isEnd ? "rounded-r-md" : "border-r-0"}`}
+                            style={{ gridColumn: `${span.colStart + 1} / ${span.colEnd + 2}` }}
+                            title={`${t.title} · ${t.startDate} - ${t.endDate} · ${t.progress}%`}
+                          >
+                            {isStart && `${t.title}（${t.progress}%）`}
+                          </Link>
                         </div>
                       );
                     })}
@@ -642,10 +690,24 @@ export function DashboardPage() {
                 ))}
               </div>
             )}
+            {selectedWindowTasks.length > 0 && (
+              <div className="space-y-1" aria-label="當日時間段任務">
+                {selectedWindowTasks.map((t) => (
+                  <Link
+                    key={t.id}
+                    to={`/tasks/${t.id}`}
+                    className="block rounded-md border border-indigo-200 bg-indigo-50/70 p-2 text-xs hover:bg-indigo-50"
+                  >
+                    <p className="truncate font-medium">{t.title}（{t.progress}%）</p>
+                    <p className="text-muted-foreground">{t.startDate} - {t.endDate}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
             {renderTaskList(selectedTasks, "這天沒有任務")}
           </Card>
 
-          {overdueTasks.length > 0 && (
+          {(overdueTasks.length > 0 || overdueWindows.length > 0) && (
             <Card className="space-y-2 border-rose-100 bg-rose-50/70 p-3" aria-label="逾期未完成任務">
               <div className="flex items-start justify-between gap-2">
                 <div>
@@ -653,10 +715,24 @@ export function DashboardPage() {
                   <p className="text-sm text-muted-foreground">先處理這些最有影響</p>
                 </div>
                 <span className="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-700">
-                  {overdueTasks.length} 件
+                  {overdueTasks.length + overdueWindows.length} 件
                 </span>
               </div>
               {renderTaskList(overdueTasks.slice(0, 4), "沒有逾期任務")}
+              {overdueWindows.length > 0 && (
+                <div className="space-y-1">
+                  {overdueWindows.slice(0, 4).map((t) => (
+                    <Link
+                      key={t.id}
+                      to={`/tasks/${t.id}`}
+                      className="block rounded-md border border-rose-200 bg-white/60 p-2 text-xs hover:bg-white"
+                    >
+                      <p className="truncate font-medium">{t.title}（{t.progress}%）</p>
+                      <p className="text-muted-foreground">截止 {t.endDate}</p>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </Card>
           )}
 
