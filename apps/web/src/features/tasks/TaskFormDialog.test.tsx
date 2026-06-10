@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { http, HttpResponse } from "msw";
 import userEvent from "@testing-library/user-event";
-import { screen, waitFor } from "@testing-library/react";
+import { screen, waitFor, fireEvent } from "@testing-library/react";
 import { server } from "@/test/msw-server";
 import { renderWithProviders } from "@/test/test-utils";
 import { useAuthStore } from "@/stores/auth-store";
@@ -110,6 +110,34 @@ describe("TaskFormDialog", () => {
         title: "每10週回診",
         taskType: "recurring",
         recurrenceConfig: { mode: "interval", every: 10, unit: "week" },
+      }),
+    );
+  });
+
+  it("creates a window task with start/end", async () => {
+    let posted: unknown = null;
+    server.use(
+      http.post(`${BASE}/tasks`, async ({ request: req }) => {
+        posted = await req.json();
+        return HttpResponse.json({ success: true, data: { id: 1 } }, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderWithProviders(<TaskFormDialog open onOpenChange={() => {}} />);
+    await user.type(screen.getByLabelText("標題"), "規劃旅遊");
+    await user.click(screen.getByLabelText("任務類型"));
+    await user.click((await screen.findAllByText("時間段")).at(-1)!);
+    fireEvent.change(screen.getByLabelText("開始日期"), { target: { value: "2026-06-10" } });
+    fireEvent.change(screen.getByLabelText("結束日期"), { target: { value: "2026-06-20" } });
+    await user.click(screen.getByRole("button", { name: "建立" }));
+
+    await waitFor(() =>
+      expect(posted).toMatchObject({
+        title: "規劃旅遊",
+        taskType: "window",
+        startDate: "2026-06-10",
+        endDate: "2026-06-20",
       }),
     );
   });

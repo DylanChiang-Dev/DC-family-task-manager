@@ -268,6 +268,7 @@ export function TaskFormDialog({
                 <SelectContent>
                   <SelectItem value="normal">一般</SelectItem>
                   <SelectItem value="recurring">週期</SelectItem>
+                  <SelectItem value="window">時間段</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -370,6 +371,27 @@ export function TaskFormDialog({
                   onChange={(e) =>
                     setValue("recurrenceConfig", serializeAnchored(rUnit === "day" ? "week" : rUnit, e.target.value))
                   }
+                />
+              </div>
+            </div>
+          )}
+
+          {taskType === "window" && (
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="startDate">開始日期</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  {...register("startDate", { setValueAs: (v) => v || null })}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="endDate">結束日期</Label>
+                <Input
+                  id="endDate"
+                  type="date"
+                  {...register("endDate", { setValueAs: (v) => v || null })}
                 />
               </div>
             </div>
