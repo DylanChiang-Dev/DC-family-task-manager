@@ -29,6 +29,13 @@
       "when": 1781074664632,
       "tag": "0003_chilly_namora",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1781118343932,
+      "tag": "0004_legacy_task_types",
+      "breakpoints": true
     }
   ]
 }

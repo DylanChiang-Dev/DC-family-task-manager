@@ -46,9 +46,7 @@ function recurrenceMode(config: RecurrenceConfig | null | undefined): Recurrence
 }
 
 function recurrenceUnit(config: RecurrenceConfig | null | undefined): RecurrenceUnit {
-  if (!config) return "week";
-  if (config.mode === "interval") return config.unit;
-  return config.unit;
+  return config?.unit ?? "week";
 }
 
 function defaultForMode(mode: RecurrenceMode, unit: RecurrenceUnit): RecurrenceConfig {
@@ -107,6 +105,8 @@ export function TaskFormDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const isEdit = !!task;
+  // 週期實例：配置屬於系列模板，不在實例上編輯
+  const isInstance = task != null && task.parentTaskId != null;
   const createMutation = useCreateTask();
   const updateMutation = useUpdateTask();
   const { data: categories } = useCategories();
@@ -133,6 +133,8 @@ export function TaskFormDialog({
       assigneeId: task?.assigneeId ?? null,
       startDate: task?.startDate ?? null,
       endDate: task?.endDate ?? null,
+      progress: task?.progress ?? 0,
+      parentTaskId: task?.parentTaskId ?? null,
       isBacklog: task?.isBacklog ?? false,
     },
   });
@@ -148,7 +150,7 @@ export function TaskFormDialog({
       dueDate: values.dueDate || null,
       categoryId: values.categoryId || null,
       assigneeId: values.assigneeId || null,
-      recurrenceConfig: values.taskType === "recurring" ? values.recurrenceConfig : null,
+      recurrenceConfig: values.taskType === "recurring" && !isInstance ? values.recurrenceConfig : null,
       startDate: values.taskType === "window" ? values.startDate || null : null,
       endDate: values.taskType === "window" ? values.endDate || null : null,
       isBacklog: promote ? false : values.isBacklog,
@@ -247,6 +249,7 @@ export function TaskFormDialog({
               </SelectContent>
             </Select>
           </div>
+          {!isInstance && (
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label>任務類型</Label>
@@ -296,8 +299,9 @@ export function TaskFormDialog({
               </div>
             )}
           </div>
+          )}
 
-          {taskType === "recurring" && rMode === "interval" && (
+          {taskType === "recurring" && !isInstance && rMode === "interval" && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="intervalEvery">間隔數</Label>
@@ -310,8 +314,8 @@ export function TaskFormDialog({
                     setValue("recurrenceConfig", {
                       mode: "interval",
                       every: Math.max(1, Number(e.target.value) || 1),
-                      unit: rUnit === "day" || rUnit === "week" || rUnit === "month" || rUnit === "year" ? rUnit : "week",
-                      anchorDate: todayISO(),
+                      unit: rUnit,
+                      anchorDate: recurrenceConfig?.mode === "interval" ? recurrenceConfig.anchorDate : todayISO(),
                     })
                   }
                 />
@@ -325,7 +329,7 @@ export function TaskFormDialog({
                       mode: "interval",
                       every: recurrenceConfig?.mode === "interval" ? recurrenceConfig.every : 1,
                       unit: v as RecurrenceUnit,
-                      anchorDate: todayISO(),
+                      anchorDate: recurrenceConfig?.mode === "interval" ? recurrenceConfig.anchorDate : todayISO(),
                     })
                   }
                 >
@@ -343,7 +347,7 @@ export function TaskFormDialog({
             </div>
           )}
 
-          {taskType === "recurring" && rMode === "anchored" && (
+          {taskType === "recurring" && !isInstance && rMode === "anchored" && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>對齊單位</Label>

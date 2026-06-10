@@ -10,7 +10,7 @@ import { authMiddleware } from "../middleware/auth";
 import { teamMiddleware } from "../middleware/team";
 import { fail, ok } from "../lib/response";
 import { zodErrorHook } from "../lib/zod-hook";
-import { generateInstancesForTemplate } from "../services/recurrence";
+import { generateInstancesForTemplate, pruneFutureInstances, todayISO } from "../services/recurrence";
 
 export const taskRoutes = new Hono<{ Bindings: Env; Variables: Variables }>();
 
@@ -271,11 +271,21 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
     finalRecurrenceConfig = null;
   }
 
-  if (finalTaskType === "recurring" && !finalRecurrenceConfig) {
+  // 實例（parentTaskId 非空）的 recurrenceConfig 恆為 null，配置要求只針對模板
+  const isExistingInstance = existing.parentTaskId != null;
+  if (isExistingInstance && body.recurrenceConfig) {
+    return c.json(fail("VALIDATION_ERROR", "週期實例不可設定週期配置，請編輯系列模板"), 400);
+  }
+  if (finalTaskType === "recurring" && !isExistingInstance && !finalRecurrenceConfig) {
     return c.json(fail("VALIDATION_ERROR", "週期任務必須提供週期配置 (recurrenceConfig)"), 400);
   }
   if (finalTaskType !== "recurring" && finalRecurrenceConfig) {
     return c.json(fail("VALIDATION_ERROR", "只有週期任務才能設置週期配置"), 400);
+  }
+
+  // schema 在 update 未帶 taskType 時不檢查 progress，這裡按最終類型兜底
+  if (body.progress != null && body.progress !== 0 && finalTaskType !== "window") {
+    return c.json(fail("VALIDATION_ERROR", "只有時間段任務可設定進度"), 400);
   }
 
   // L-04: 使用 Partial 類型代替 Record<string, unknown> 增強類型安全
@@ -383,24 +393,35 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
     return c.json(fail("INTERNAL", "更新任務失敗"), 500);
   }
 
-  // 系列模板被編輯：刪掉未來未完成實例後重生，已完成歷史保留
+  // 系列模板被編輯：排程變更 → 重生未來實例；內容變更 → 直接傳播到未來未完成實例
   const isTemplate = updated.taskType === "recurring" && updated.parentTaskId == null;
-  const recurrenceChanged =
-    changes.recurrenceConfig !== undefined ||
-    changes.title !== undefined ||
-    changes.taskType !== undefined;
-  if (isTemplate && recurrenceChanged && updated.recurrenceConfig) {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    await db
-      .delete(tasks)
-      .where(
-        and(
-          eq(tasks.parentTaskId, updated.id),
-          ne(tasks.status, "completed"),
-          gte(tasks.dueDate, todayStr),
-        ),
-      );
-    await generateInstancesForTemplate(db, updated, new Date());
+  if (isTemplate && updated.recurrenceConfig) {
+    const now = new Date();
+    const scheduleChanged = changes.recurrenceConfig !== undefined || changes.taskType !== undefined;
+    if (scheduleChanged) {
+      // 保留已完成與已開工的實例，只重排 pending
+      await pruneFutureInstances(db, updated.id, now, { keepInProgress: true });
+      await generateInstancesForTemplate(db, updated, now);
+    } else {
+      const propagated: Partial<typeof tasks.$inferInsert> = {};
+      if (changes.title !== undefined) propagated.title = updated.title;
+      if (changes.description !== undefined) propagated.description = updated.description;
+      if (changes.assigneeId !== undefined) propagated.assigneeId = updated.assigneeId;
+      if (changes.categoryId !== undefined) propagated.categoryId = updated.categoryId;
+      if (changes.priority !== undefined) propagated.priority = updated.priority;
+      if (Object.keys(propagated).length > 0) {
+        await db
+          .update(tasks)
+          .set({ ...propagated, updatedAt: now })
+          .where(
+            and(
+              eq(tasks.parentTaskId, updated.id),
+              ne(tasks.status, "completed"),
+              gte(tasks.dueDate, todayISO(now)),
+            ),
+          );
+      }
+    }
   }
 
   // M-04: 記錄主要 action，但 changes 物件已包含所有變更欄位
@@ -502,16 +523,7 @@ taskRoutes.delete("/:id", async (c) => {
 
   // 若刪的是系列模板：先刪未來未完成實例，保留已完成歷史
   if (existing.taskType === "recurring" && existing.parentTaskId == null) {
-    const todayStr = new Date().toISOString().slice(0, 10);
-    await db
-      .delete(tasks)
-      .where(
-        and(
-          eq(tasks.parentTaskId, taskId),
-          ne(tasks.status, "completed"),
-          gte(tasks.dueDate, todayStr),
-        ),
-      );
+    await pruneFutureInstances(db, taskId, new Date());
   }
 
   await db.delete(tasks).where(and(eq(tasks.id, taskId), eq(tasks.teamId, teamId)));

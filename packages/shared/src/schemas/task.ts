@@ -41,8 +41,8 @@ function refineTask(
   const type = data.taskType;
   const isTemplate = type === "recurring" && data.parentTaskId == null;
 
-  // progress 僅 window 可非 0
-  if (data.progress != null && data.progress !== 0 && type !== "window") {
+  // progress 僅 window 可非 0；update 未帶 taskType 時交由路由按既有任務類型檢查
+  if (data.progress != null && data.progress !== 0 && type !== undefined && type !== "window") {
     ctx.addIssue({
       code: z.ZodIssueCode.custom,
       message: "只有時間段任務可設定進度",

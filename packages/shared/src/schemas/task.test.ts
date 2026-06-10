@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createTaskSchema } from "./task";
+import { createTaskSchema, updateTaskSchema } from "./task";
 
 const base = { title: "x" };
 
@@ -54,6 +54,28 @@ describe("createTaskSchema validation", () => {
 
   it("progress only allowed for window", () => {
     const r = createTaskSchema.safeParse({ ...base, taskType: "normal", progress: 50 });
+    expect(r.success).toBe(false);
+  });
+
+  it("recurring instance (parentTaskId set) does not require recurrenceConfig", () => {
+    const r = createTaskSchema.safeParse({ ...base, taskType: "recurring", parentTaskId: 7 });
+    expect(r.success).toBe(true);
+  });
+});
+
+describe("updateTaskSchema validation", () => {
+  it("progress-only update passes without taskType (route checks against existing type)", () => {
+    const r = updateTaskSchema.safeParse({ progress: 60 });
+    expect(r.success).toBe(true);
+  });
+
+  it("status-only update passes", () => {
+    const r = updateTaskSchema.safeParse({ status: "completed" });
+    expect(r.success).toBe(true);
+  });
+
+  it("nonzero progress with explicit non-window type rejected", () => {
+    const r = updateTaskSchema.safeParse({ taskType: "normal", progress: 60 });
     expect(r.success).toBe(false);
   });
 });

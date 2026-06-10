@@ -35,14 +35,23 @@ export async function runDueReminders(env: Env): Promise<void> {
       .from(tasks)
       .where(
         and(
-          isNotNull(tasks.dueDate),
           notInArray(tasks.status, ["completed", "cancelled"]),
-          gte(tasks.dueDate, todayStr),
-          lte(tasks.dueDate, tomorrowStr),
-          // 排除週期「模板」本身（recurring 且 parentTaskId 為空），實例正常走到期路徑
+          eq(tasks.isBacklog, false),
           or(
-            ne(tasks.taskType, "recurring"),
-            isNotNull(tasks.parentTaskId),
+            // 到期任務（排除週期「模板」本身，實例正常走到期路徑）
+            and(
+              isNotNull(tasks.dueDate),
+              gte(tasks.dueDate, todayStr),
+              lte(tasks.dueDate, tomorrowStr),
+              or(ne(tasks.taskType, "recurring"), isNotNull(tasks.parentTaskId)),
+            ),
+            // 時間段任務以 endDate 為截止
+            and(
+              eq(tasks.taskType, "window"),
+              isNotNull(tasks.endDate),
+              gte(tasks.endDate, todayStr),
+              lte(tasks.endDate, tomorrowStr),
+            ),
           ),
         ),
       );
