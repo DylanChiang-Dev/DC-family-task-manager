@@ -66,9 +66,9 @@ export function TaskListPage() {
 
       {isLoading ? (
         <p className="text-muted-foreground">載入中...</p>
-      ) : tasks && tasks.length > 0 ? (
+      ) : tasks && tasks.filter((t) => !t.isBacklog).length > 0 ? (
         <div className="space-y-3">
-          {tasks.map((t) => (
+          {tasks.filter((t) => !t.isBacklog).map((t) => (
             <TaskCard
               key={t.id}
               task={t}

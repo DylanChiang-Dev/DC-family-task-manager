@@ -98,10 +98,12 @@ function anchoredValue(config: RecurrenceConfig | null | undefined): string {
 export function TaskFormDialog({
   open,
   task,
+  promote = false,
   onOpenChange,
 }: {
   open: boolean;
   task?: TaskResponse;
+  promote?: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const isEdit = !!task;
@@ -131,6 +133,7 @@ export function TaskFormDialog({
       assigneeId: task?.assigneeId ?? null,
       startDate: task?.startDate ?? null,
       endDate: task?.endDate ?? null,
+      isBacklog: task?.isBacklog ?? false,
     },
   });
   const taskType = watch("taskType");
@@ -148,6 +151,7 @@ export function TaskFormDialog({
       recurrenceConfig: values.taskType === "recurring" ? values.recurrenceConfig : null,
       startDate: values.taskType === "window" ? values.startDate || null : null,
       endDate: values.taskType === "window" ? values.endDate || null : null,
+      isBacklog: promote ? false : values.isBacklog,
     };
 
     try {
@@ -166,7 +170,7 @@ export function TaskFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{isEdit ? "編輯任務" : "新增任務"}</DialogTitle>
+          <DialogTitle>{promote ? "升級成任務" : isEdit ? "編輯任務" : "新增任務"}</DialogTitle>
           <DialogDescription>填寫任務內容、優先級與截止日期。</DialogDescription>
         </DialogHeader>
         <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>

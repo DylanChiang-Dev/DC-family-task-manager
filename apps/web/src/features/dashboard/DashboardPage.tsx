@@ -29,6 +29,7 @@ import {
   windowState,
   windowOverlapsDate,
 } from "@/features/calendar/windows";
+import { BacklogDrawer } from "@/features/backlog/BacklogDrawer";
 import type { ScheduleBlockResponse } from "@ftm/shared";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
@@ -752,6 +753,8 @@ export function DashboardPage() {
           </Card>
         </aside>
       </div>
+
+      <BacklogDrawer />
 
       {creating && <TaskFormDialog open onOpenChange={(o) => !o && setCreating(false)} />}
       {creatingSchedule && (
