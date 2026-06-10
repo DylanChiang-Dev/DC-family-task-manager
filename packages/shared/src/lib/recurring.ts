@@ -9,7 +9,7 @@ interface Ymd {
 }
 
 function parseISO(iso: string): Ymd {
-  const [y, m, d] = iso.split("-").map(Number);
+  const [y, m, d] = iso.split("-").map(Number) as [number, number, number];
   return { y, m, d };
 }
 
