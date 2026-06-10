@@ -648,7 +648,10 @@ export function DashboardPage() {
                   <div key={block.id} className="rounded-md border bg-background/70 p-2 text-xs">
                     <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="truncate font-medium">{scheduleLabel(block)}</p>
+                        <p className="truncate font-medium">{block.title}</p>
+                        {block.location && (
+                          <p className="truncate text-muted-foreground">{block.location}</p>
+                        )}
                         <p className="text-muted-foreground">
                           {block.startDate} - {block.endDate}
                         </p>
