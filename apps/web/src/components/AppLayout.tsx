@@ -9,6 +9,7 @@ import { useThemeStore } from "@/stores/theme-store";
 
 const NAV_ITEMS = [
   { to: "/", label: "工作台" },
+  { to: "/backlog", label: "靈感箱" },
   { to: "/teams", label: "團隊" },
   { to: "/categories", label: "分類" },
   { to: "/settings", label: "我的" },
@@ -54,7 +55,7 @@ export function AppLayout() {
       <main className="w-full px-4 py-4 sm:px-6 lg:px-8">
         <Outlet />
       </main>
-      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-background sm:hidden">
+      <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-6 border-t bg-background sm:hidden">
         {MOBILE_NAV_ITEMS.map((item) => (
           <Link key={item.to} className="py-3 text-center text-sm" to={item.to}>
             {item.label}
