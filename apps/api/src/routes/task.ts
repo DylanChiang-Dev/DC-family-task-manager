@@ -5,7 +5,7 @@ import type { TaskResponse, TaskStatus } from "@ftm/shared";
 import type { Env, Variables } from "../types";
 import { createDb } from "../db/client";
 import { users, tasks, taskComments, taskHistory, notifications, categories, teamMembers } from "../db/schema";
-import { eq, and, inArray, desc } from "drizzle-orm";
+import { eq, and, inArray, desc, ne, gte } from "drizzle-orm";
 import { authMiddleware } from "../middleware/auth";
 import { teamMiddleware } from "../middleware/team";
 import { fail, ok } from "../lib/response";
@@ -334,6 +334,38 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
     updateData.parentTaskId = body.parentTaskId;
     changes.parentTaskId = body.parentTaskId;
   }
+  if (body.startDate !== undefined && body.startDate !== existing.startDate) {
+    updateData.startDate = body.startDate;
+    changes.startDate = body.startDate;
+  }
+  if (body.endDate !== undefined && body.endDate !== existing.endDate) {
+    updateData.endDate = body.endDate;
+    changes.endDate = body.endDate;
+  }
+  if (body.progress !== undefined && body.progress !== existing.progress) {
+    updateData.progress = body.progress;
+    changes.progress = body.progress;
+    // 進度拉到 100 視為完成
+    if (body.progress >= 100 && existing.status !== "completed") {
+      updateData.status = "completed";
+      changes.status = "completed";
+      updateData.completedAt = new Date();
+      changes.completedAt = Date.now();
+    }
+  }
+  if (body.isBacklog !== undefined && body.isBacklog !== existing.isBacklog) {
+    updateData.isBacklog = body.isBacklog;
+    changes.isBacklog = body.isBacklog;
+  }
+  // 標記完成的 window 任務，進度補滿 100
+  if (
+    body.status === "completed" &&
+    (body.taskType ?? existing.taskType) === "window" &&
+    body.progress === undefined
+  ) {
+    updateData.progress = 100;
+    changes.progress = 100;
+  }
 
   if (Object.keys(changes).length === 0) {
     const userMap = await loadUserMap(db, [existing.creatorId, existing.assigneeId].filter(Boolean) as number[]);
@@ -349,6 +381,26 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
 
   if (!updated) {
     return c.json(fail("INTERNAL", "更新任務失敗"), 500);
+  }
+
+  // 系列模板被編輯：刪掉未來未完成實例後重生，已完成歷史保留
+  const isTemplate = updated.taskType === "recurring" && updated.parentTaskId == null;
+  const recurrenceChanged =
+    changes.recurrenceConfig !== undefined ||
+    changes.title !== undefined ||
+    changes.taskType !== undefined;
+  if (isTemplate && recurrenceChanged && updated.recurrenceConfig) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    await db
+      .delete(tasks)
+      .where(
+        and(
+          eq(tasks.parentTaskId, updated.id),
+          ne(tasks.status, "completed"),
+          gte(tasks.dueDate, todayStr),
+        ),
+      );
+    await generateInstancesForTemplate(db, updated, new Date());
   }
 
   // M-04: 記錄主要 action，但 changes 物件已包含所有變更欄位
@@ -446,6 +498,20 @@ taskRoutes.delete("/:id", async (c) => {
         content: `任務「${existing.title}」已被刪除`,
       });
     }
+  }
+
+  // 若刪的是系列模板：先刪未來未完成實例，保留已完成歷史
+  if (existing.taskType === "recurring" && existing.parentTaskId == null) {
+    const todayStr = new Date().toISOString().slice(0, 10);
+    await db
+      .delete(tasks)
+      .where(
+        and(
+          eq(tasks.parentTaskId, taskId),
+          ne(tasks.status, "completed"),
+          gte(tasks.dueDate, todayStr),
+        ),
+      );
   }
 
   await db.delete(tasks).where(and(eq(tasks.id, taskId), eq(tasks.teamId, teamId)));
