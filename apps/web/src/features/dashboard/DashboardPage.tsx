@@ -113,7 +113,7 @@ function blockOverlapsDate(block: ScheduleBlockResponse, dateKey: string) {
 }
 
 function scheduleLabel(block: ScheduleBlockResponse) {
-  return block.location || block.title;
+  return block.location ? `${block.title} · ${block.location}` : block.title;
 }
 
 function calendarCountTone(count: number) {
