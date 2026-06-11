@@ -97,6 +97,82 @@ describe("TaskDetailPage", () => {
     expect(await screen.findByText(/created/)).toBeInTheDocument();
   });
 
+  it("renders project view with progress, children and daily rhythm", async () => {
+    const project = {
+      ...task,
+      id: 9,
+      title: "寫《家庭手冊》",
+      taskType: "project",
+      projectId: null,
+      projectStats: { total: 2, completed: 1, progress: 50 },
+      startDate: "2026-06-11",
+      endDate: "2026-12-31",
+      progress: 0,
+      isBacklog: false,
+    };
+    const children = [
+      { ...task, id: 11, title: "寫第一章", status: "completed", projectId: 9, projectStats: null, isBacklog: false, progress: 0 },
+      { ...task, id: 12, title: "擬大綱", status: "pending", projectId: 9, projectStats: null, isBacklog: false, progress: 0 },
+      {
+        ...task,
+        id: 13,
+        title: "每日寫作",
+        taskType: "recurring",
+        recurrenceConfig: { mode: "interval", every: 1, unit: "day", anchorDate: "2026-06-11" },
+        projectId: 9,
+        projectStats: null,
+        isBacklog: false,
+        progress: 0,
+      },
+    ];
+    server.use(
+      http.get(`${BASE}/tasks/9`, () => HttpResponse.json({ success: true, data: project })),
+      http.get(`${BASE}/tasks`, () => HttpResponse.json({ success: true, data: children })),
+      http.get(`${BASE}/tasks/9/comments`, () => HttpResponse.json({ success: true, data: [] })),
+      http.get(`${BASE}/tasks/9/history`, () => HttpResponse.json({ success: true, data: [] })),
+    );
+
+    renderWithProviders(<Tree />, { route: "/tasks/9" });
+
+    expect(await screen.findByText("寫《家庭手冊》")).toBeInTheDocument();
+    expect(await screen.findByText("寫第一章")).toBeInTheDocument();
+    expect(screen.getByText("擬大綱")).toBeInTheDocument();
+    expect(screen.getByText("已完成 1/2")).toBeInTheDocument();
+    expect(screen.getByText("50%")).toBeInTheDocument();
+    expect(screen.getByText("每日節奏")).toBeInTheDocument();
+    expect(screen.getByText("每日寫作")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "新增子任務" })).toBeInTheDocument();
+  });
+
+  it("shows parent project breadcrumb on a child task", async () => {
+    server.use(
+      http.get(`${BASE}/tasks/9`, () =>
+        HttpResponse.json({ success: true, data: { ...task, projectId: 5, projectStats: null } }),
+      ),
+      http.get(`${BASE}/tasks/5`, () =>
+        HttpResponse.json({
+          success: true,
+          data: {
+            ...task,
+            id: 5,
+            title: "寫《家庭手冊》",
+            taskType: "project",
+            projectId: null,
+            projectStats: { total: 1, completed: 0, progress: 0 },
+          },
+        }),
+      ),
+      http.get(`${BASE}/tasks/9/comments`, () => HttpResponse.json({ success: true, data: [] })),
+      http.get(`${BASE}/tasks/9/history`, () => HttpResponse.json({ success: true, data: [] })),
+    );
+
+    renderWithProviders(<Tree />, { route: "/tasks/9" });
+
+    expect(await screen.findByText("倒垃圾")).toBeInTheDocument();
+    expect(await screen.findByText(/所屬項目/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "寫《家庭手冊》" })).toBeInTheDocument();
+  });
+
   it("posts a new comment", async () => {
     let posted: unknown = null;
     server.use(
