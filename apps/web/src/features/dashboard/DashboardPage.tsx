@@ -519,23 +519,35 @@ export function DashboardPage() {
                       const isStart = t.startDate! >= weekCells[0]!.key;
                       const isEnd = t.endDate! <= weekCells[6]!.key;
                       const state = windowState(t, todayKey);
+                      const isProject = t.taskType === "project";
+                      // 項目進度來自子任務即時聚合，存庫 progress 恆 0
+                      const progress = isProject ? (t.projectStats?.progress ?? 0) : t.progress;
+                      const label = isProject ? `項目 · ${t.title}（${progress}%）` : `${t.title}（${progress}%）`;
+                      // 三類帶狀的視覺身份：行程＝用戶自選色；時間段＝靛藍；項目＝琥珀（粗左邊框加強識別）
                       const tone =
                         state === "overdue"
                           ? "bg-rose-100 border-rose-300 text-rose-900 dark:bg-rose-500/15 dark:border-rose-500/40 dark:text-rose-200"
                           : state === "done"
                             ? "bg-muted border-border text-muted-foreground line-through"
-                            : state === "upcoming"
-                              ? "bg-indigo-50 border-indigo-200 text-indigo-500 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-300"
-                              : "bg-indigo-100 border-indigo-300 text-indigo-900 dark:bg-indigo-500/20 dark:border-indigo-500/40 dark:text-indigo-200";
+                            : isProject
+                              ? state === "upcoming"
+                                ? "bg-amber-50 border-amber-200 text-amber-600 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-300"
+                                : "bg-amber-100 border-amber-300 text-amber-900 dark:bg-amber-500/20 dark:border-amber-500/40 dark:text-amber-200"
+                              : state === "upcoming"
+                                ? "bg-indigo-50 border-indigo-200 text-indigo-500 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-300"
+                                : "bg-indigo-100 border-indigo-300 text-indigo-900 dark:bg-indigo-500/20 dark:border-indigo-500/40 dark:text-indigo-200";
+                      const accent = isProject
+                        ? "border-l-4 border-l-amber-500 dark:border-l-amber-400"
+                        : "";
                       return (
                         <div key={`w-${t.id}`} className="mt-0.5 grid grid-cols-7 gap-1 h-5">
                           <Link
                             to={`/tasks/${t.id}`}
-                            className={`truncate border px-1.5 text-[10px] font-medium leading-5 text-left hover:brightness-95 dark:hover:brightness-125 transition-[filter] ${tone} ${isStart ? "rounded-l-md" : "border-l-0"} ${isEnd ? "rounded-r-md" : "border-r-0"}`}
+                            className={`truncate border px-1.5 text-[10px] font-medium leading-5 text-left hover:brightness-95 dark:hover:brightness-125 transition-[filter] ${tone} ${isStart ? `rounded-l-md ${accent}` : "border-l-0"} ${isEnd ? "rounded-r-md" : "border-r-0"}`}
                             style={{ gridColumn: `${span.colStart + 1} / ${span.colEnd + 2}` }}
-                            title={`${t.title} · ${t.startDate} - ${t.endDate} · ${t.progress}%`}
+                            title={`${label} · ${t.startDate} - ${t.endDate}`}
                           >
-                            {isStart && `${t.title}（${t.progress}%）`}
+                            {isStart && label}
                           </Link>
                         </div>
                       );

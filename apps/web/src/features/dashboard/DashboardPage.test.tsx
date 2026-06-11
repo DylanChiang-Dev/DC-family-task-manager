@@ -77,6 +77,14 @@ const tasks = [
     recurrenceConfig: { mode: "interval", every: 1, unit: "day", anchorDate: "2026-01-01" },
     dueDate: dateKey(0),
   }),
+  task({
+    id: 8,
+    title: "寫書",
+    taskType: "project",
+    startDate: dateKey(0),
+    endDate: dateKey(5),
+    projectStats: { total: 5, completed: 2, progress: 40 },
+  }),
 ];
 
 const scheduleBlocks: ScheduleBlockResponse[] = [
@@ -186,6 +194,12 @@ describe("DashboardPage", () => {
     expect(within(overview).getByText("今天")).toBeInTheDocument();
     const todayCount = within(overview).getAllByText("1");
     expect(todayCount.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("renders project span with 項目 prefix and aggregated progress", async () => {
+    renderWithProviders(<DashboardPage />);
+
+    expect(await screen.findByText("項目 · 寫書（40%）")).toBeInTheDocument();
   });
 
   it("opens the schedule block dialog with the selected date", async () => {
