@@ -49,9 +49,11 @@ describe("useBootstrapAuth", () => {
 
     const { result } = renderHook(() => useBootstrapAuth());
 
+    // 有持久化 token 時立即放行渲染，/auth/me 在後台校驗
     await waitFor(() => expect(result.current).toBe(true));
+
+    await waitFor(() => expect(useAuthStore.getState().user?.username).toBe("alice"));
     expect(seenAuth).toBe("Bearer persisted-token");
-    expect(useAuthStore.getState().user?.username).toBe("alice");
     expect(useAuthStore.getState().accessToken).toBe("persisted-token");
   });
 
@@ -81,7 +83,7 @@ describe("useBootstrapAuth", () => {
     const { result } = renderHook(() => useBootstrapAuth());
 
     await waitFor(() => expect(result.current).toBe(true));
-    expect(useAuthStore.getState().accessToken).toBeNull();
+    await waitFor(() => expect(useAuthStore.getState().accessToken).toBeNull());
     expect(useAuthStore.getState().user).toBeNull();
   });
 });

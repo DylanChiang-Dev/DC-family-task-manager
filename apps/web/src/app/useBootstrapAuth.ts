@@ -16,15 +16,23 @@ export function useBootstrapAuth() {
       try {
         const existingToken = useAuthStore.getState().accessToken;
         if (existingToken) {
-          const me = await fetchMe();
-          if (cancelled) return;
+          // 有持久化 token：立即放行渲染（避免刷新時全屏白等一個網路來回），
+          // /auth/me 留在後台靜默校驗；token 過期時 api-client 會自動 refresh 一次
+          useAuthStore.getState().setBootstrapped(true);
+          try {
+            const me = await fetchMe();
+            if (cancelled) return;
 
-          const accessToken = useAuthStore.getState().accessToken ?? existingToken;
-          useAuthStore.getState().setAuth({
-            accessToken,
-            user: me.user,
-            currentTeamId: me.currentTeam?.id ?? me.user.currentTeamId,
-          });
+            const accessToken = useAuthStore.getState().accessToken ?? existingToken;
+            useAuthStore.getState().setAuth({
+              accessToken,
+              user: me.user,
+              currentTeamId: me.currentTeam?.id ?? me.user.currentTeamId,
+            });
+          } catch {
+            // 走到這裡代表靜默 refresh 也失敗，會話確實失效
+            if (!cancelled) useAuthStore.getState().clearAuth();
+          }
           return;
         }
 
