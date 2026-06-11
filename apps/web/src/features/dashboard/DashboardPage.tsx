@@ -1,4 +1,5 @@
-import { useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import type { TaskResponse, TaskStatus } from "@ftm/shared";
 import { toast } from "sonner";
@@ -242,6 +243,11 @@ export function DashboardPage() {
   const [editing, setEditing] = useState<TaskResponse | null>(null);
   const [creatingSchedule, setCreatingSchedule] = useState(false);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleBlockResponse | null>(null);
+  // 統計與快捷按鈕注入頂欄插槽（AppLayout #app-header-slot），掛載後才拿得到節點
+  const [headerSlot, setHeaderSlot] = useState<HTMLElement | null>(null);
+  useEffect(() => {
+    setHeaderSlot(document.getElementById("app-header-slot"));
+  }, []);
   const { data: tasks, isLoading } = useTasks("all");
   const updateMutation = useUpdateTask();
   const deleteMutation = useDeleteTask();
@@ -398,47 +404,40 @@ export function DashboardPage() {
 
   return (
     <div className="w-full min-w-0 space-y-4">
-      <section className="flex flex-col gap-3 rounded-xl border bg-card p-4 shadow-sm xl:flex-row xl:items-center xl:justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">家庭工作台</p>
-          <h1 className="text-2xl font-semibold tracking-normal">今天要做什麼，一眼看清</h1>
-        </div>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between xl:justify-end">
-          <div className="grid grid-cols-4 gap-2 text-right" aria-label="工作台概覽">
-            {[
-              ["今天", todayTasks.length],
-              ["逾期", overdueTasks.length + overdueWindows.length],
-              ["進行中", inProgressTasks.length],
-              ["本月", monthTasks.length],
-            ].map(([label, count]) => (
-              <div key={label} className="rounded-md border bg-background/70 px-2.5 py-1.5">
-                <p className="text-[11px] leading-none text-muted-foreground">{label}</p>
-                <p className="mt-1 text-base font-semibold leading-none">{count}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" className="sm:w-auto" onClick={() => setCreatingSchedule(true)}>
+      {headerSlot &&
+        createPortal(
+          <>
+            <div className="hidden items-center gap-1.5 md:flex" aria-label="工作台概覽">
+              {[
+                ["今天", todayTasks.length],
+                ["逾期", overdueTasks.length + overdueWindows.length],
+                ["進行中", inProgressTasks.length],
+                ["本月", monthTasks.length],
+              ].map(([label, count]) => (
+                <span key={label} className="rounded-md border bg-background/70 px-2 py-0.5 text-xs text-muted-foreground">
+                  {label} <span className="font-semibold text-foreground">{count}</span>
+                </span>
+              ))}
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setCreatingSchedule(true)}>
               新增行程
             </Button>
-            <Button className="sm:w-auto" onClick={() => setCreating(true)}>
+            <Button size="sm" onClick={() => setCreating(true)}>
               新增任務
             </Button>
-          </div>
-        </div>
-      </section>
+          </>,
+          headerSlot,
+        )}
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="min-w-0 space-y-4 lg:order-1">
           <ProjectGanttPanel tasks={tasks ?? []} start={start} todayKey={todayKey} />
           <Card className="hidden p-4 sm:flex sm:flex-col lg:min-h-[calc(100svh-13rem)]" aria-label="未來 6 週日曆">
-            <div className="mb-3 flex shrink-0 items-center justify-between">
-              <div>
-                <h2 className="text-lg font-semibold">
-                  {compactDateLabel(formatDateKey(start))} - {compactDateLabel(formatDateKey(end))}
-                </h2>
-                <p className="text-sm text-muted-foreground">從今天開始，向後查看 6 週安排</p>
-              </div>
+            <div className="mb-2 flex shrink-0 items-center justify-between">
+              <h2 className="text-sm font-semibold">
+                {compactDateLabel(formatDateKey(start))} - {compactDateLabel(formatDateKey(end))}
+                <span className="ml-2 font-normal text-muted-foreground">未來 6 週</span>
+              </h2>
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={() => shiftWindow(-1)}>
                   前 6 週

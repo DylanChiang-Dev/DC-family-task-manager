@@ -33,7 +33,7 @@ describe("router", () => {
       { route: "/calendar" },
     );
 
-    expect(await screen.findByText("家庭工作台")).toBeInTheDocument();
+    expect(await screen.findByLabelText("未來 6 週日曆")).toBeInTheDocument();
     await waitFor(() => expect(window.location.pathname).toBe("/"));
   });
 

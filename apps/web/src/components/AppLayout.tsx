@@ -43,6 +43,8 @@ export function AppLayout() {
           <TeamSwitcher />
         </div>
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+          {/* 頁面級內容插槽（如工作台的統計與快捷按鈕），由各頁 createPortal 注入 */}
+          <div id="app-header-slot" className="flex min-w-0 items-center gap-2" />
           <span className="truncate text-sm text-muted-foreground">{user?.nickname}</span>
           <Button variant="ghost" size="sm" onClick={toggleTheme}>
             {theme === "dark" ? "亮色" : "暗色"}

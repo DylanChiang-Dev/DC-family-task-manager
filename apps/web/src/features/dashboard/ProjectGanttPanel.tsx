@@ -82,11 +82,11 @@ export function ProjectGanttPanel({
   const todayLeftPct = ((dayDiff(windowStartKey, todayKey) + 0.5) / WINDOW_DAYS) * 100;
 
   return (
-    <Card className="p-4" aria-label="進行中項目甘特">
-      <div className="mb-2 flex items-center justify-between">
-        <h2 className="text-lg font-semibold">進行中項目</h2>
-        <p className="text-xs text-muted-foreground">
-          與日曆同步：{mdLabel(windowStartKey)} – {mdLabel(endKey)}
+    <Card className="p-3" aria-label="進行中項目甘特">
+      <div className="mb-1 flex items-center justify-between">
+        <h2 className="text-sm font-semibold">進行中項目</h2>
+        <p className="text-[10px] text-muted-foreground">
+          {mdLabel(windowStartKey)} – {mdLabel(endKey)}
         </p>
       </div>
       <div className="grid grid-cols-6 border-b pb-1 text-[10px] text-muted-foreground">

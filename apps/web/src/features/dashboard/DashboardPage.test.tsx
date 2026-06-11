@@ -103,6 +103,11 @@ const scheduleBlocks: ScheduleBlockResponse[] = [
 ];
 
 beforeEach(() => {
+  // 統計與按鈕經 createPortal 注入 AppLayout 的頂欄插槽，測試環境手動提供
+  document.getElementById("app-header-slot")?.remove();
+  const slot = document.createElement("div");
+  slot.id = "app-header-slot";
+  document.body.appendChild(slot);
   useAuthStore.setState({
     accessToken: "tok",
     user: null,
@@ -123,8 +128,7 @@ describe("DashboardPage", () => {
   it("renders calendar, summary cards, and a single create task button", async () => {
     renderWithProviders(<DashboardPage />);
 
-    expect(await screen.findByText("家庭工作台")).toBeInTheDocument();
-    const overview = screen.getByLabelText("工作台概覽");
+    const overview = await screen.findByLabelText("工作台概覽");
     expect(within(overview).getByText("今天")).toBeInTheDocument();
     expect(within(overview).getByText("逾期")).toBeInTheDocument();
     expect(within(overview).getByText("進行中")).toBeInTheDocument();
@@ -135,8 +139,7 @@ describe("DashboardPage", () => {
   it("starts the desktop calendar window from today", async () => {
     renderWithProviders(<DashboardPage />);
 
-    expect(await screen.findByText("家庭工作台")).toBeInTheDocument();
-    const calendar = screen.getByLabelText("未來 6 週日曆");
+    const calendar = await screen.findByLabelText("未來 6 週日曆");
     const firstCalendarDay = within(calendar).getByRole("button", { name: dateKey(0) });
 
     await waitFor(() => expect(firstCalendarDay).toHaveTextContent("今天高優先任務"));
@@ -190,7 +193,7 @@ describe("DashboardPage", () => {
     expect(startDay).not.toHaveTextContent("廣州");
     expect(middleDay).not.toHaveTextContent("廣州");
 
-    const overview = screen.getByLabelText("工作台概覽");
+    const overview = await screen.findByLabelText("工作台概覽");
     expect(within(overview).getByText("今天")).toBeInTheDocument();
     const todayCount = within(overview).getAllByText("1");
     expect(todayCount.length).toBeGreaterThanOrEqual(1);
