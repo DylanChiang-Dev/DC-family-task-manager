@@ -79,3 +79,55 @@ describe("updateTaskSchema validation", () => {
     expect(r.success).toBe(false);
   });
 });
+
+describe("project task type", () => {
+  it("project type with start/end passes", () => {
+    const r = createTaskSchema.safeParse({
+      ...base,
+      taskType: "project",
+      startDate: "2026-06-01",
+      endDate: "2026-12-31",
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it("project rejects projectId (no nesting)", () => {
+    const r = createTaskSchema.safeParse({ ...base, taskType: "project", projectId: 3 });
+    expect(r.success).toBe(false);
+  });
+
+  it("project rejects parentTaskId", () => {
+    const r = createTaskSchema.safeParse({ ...base, taskType: "project", parentTaskId: 3 });
+    expect(r.success).toBe(false);
+  });
+
+  it("project rejects start > end", () => {
+    const r = createTaskSchema.safeParse({
+      ...base,
+      taskType: "project",
+      startDate: "2026-12-31",
+      endDate: "2026-06-01",
+    });
+    expect(r.success).toBe(false);
+  });
+
+  it("project rejects nonzero progress", () => {
+    const r = createTaskSchema.safeParse({ ...base, taskType: "project", progress: 50 });
+    expect(r.success).toBe(false);
+  });
+
+  it("normal task accepts projectId", () => {
+    const r = createTaskSchema.safeParse({ ...base, taskType: "normal", projectId: 3 });
+    expect(r.success).toBe(true);
+  });
+
+  it("recurring template accepts projectId", () => {
+    const r = createTaskSchema.safeParse({
+      ...base,
+      taskType: "recurring",
+      projectId: 3,
+      recurrenceConfig: { mode: "interval", every: 1, unit: "day", anchorDate: "2026-06-11" },
+    });
+    expect(r.success).toBe(true);
+  });
+});

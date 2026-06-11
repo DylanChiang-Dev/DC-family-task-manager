@@ -9,7 +9,7 @@ export const TASK_STATUS = [
   "completed",
   "cancelled",
 ] as const;
-export const TASK_TYPE = ["normal", "recurring", "window"] as const;
+export const TASK_TYPE = ["normal", "recurring", "window", "project"] as const;
 
 export const TEAM_ROLE = ["admin", "member"] as const;
 

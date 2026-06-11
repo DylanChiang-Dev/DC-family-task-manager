@@ -15,6 +15,7 @@ const taskFields = {
   taskType: z.enum(TASK_TYPE),
   recurrenceConfig: recurrenceConfigSchema.nullable().optional(),
   parentTaskId: z.number().int().positive().nullable().optional(),
+  projectId: z.number().int().positive().nullable().optional(),
   startDate: z.string().regex(ISO_DATE).nullable().optional(),
   endDate: z.string().regex(ISO_DATE).nullable().optional(),
   progress: z.number().int().min(0).max(100).optional(),
@@ -34,12 +35,38 @@ function refineTask(
     progress?: number;
     isBacklog?: boolean;
     parentTaskId?: number | null;
+    projectId?: number | null;
   },
   ctx: z.RefinementCtx,
 ) {
   const isBacklog = data.isBacklog === true;
   const type = data.taskType;
   const isTemplate = type === "recurring" && data.parentTaskId == null;
+
+  // 項目結構約束不因靈感箱而豁免，置於 isBacklog 早退之前
+  if (type === "project") {
+    if (data.projectId != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "項目不可掛在其他項目下",
+        path: ["projectId"],
+      });
+    }
+    if (data.parentTaskId != null) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "項目不能成為其他任務的子任務",
+        path: ["parentTaskId"],
+      });
+    }
+    if (data.startDate && data.endDate && data.startDate > data.endDate) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "開始日期不能晚於結束日期",
+        path: ["endDate"],
+      });
+    }
+  }
 
   // progress 僅 window 可非 0；update 未帶 taskType 時交由路由按既有任務類型檢查
   if (data.progress != null && data.progress !== 0 && type !== undefined && type !== "window") {
