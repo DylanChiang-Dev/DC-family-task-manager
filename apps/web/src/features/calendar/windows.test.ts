@@ -7,7 +7,7 @@ function mk(p: Partial<TaskResponse>): TaskResponse {
     id: 1, teamId: 1, title: "t", description: null, creatorId: 1, creatorNickname: "",
     assigneeId: null, assigneeNickname: null, categoryId: null, categoryName: null,
     categoryColor: null, priority: "medium", status: "pending", dueDate: null,
-    taskType: "normal", recurrenceConfig: null, parentTaskId: null,
+    taskType: "normal", recurrenceConfig: null, parentTaskId: null, projectId: null, projectStats: null,
     startDate: null, endDate: null, progress: 0, isBacklog: false,
     completedAt: null, createdAt: 0, updatedAt: 0, ...p,
   };

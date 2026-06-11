@@ -36,6 +36,8 @@ function task(overrides: Partial<TaskResponse> & Pick<TaskResponse, "id" | "titl
     taskType: "normal",
     recurrenceConfig: null,
     parentTaskId: null,
+    projectId: null,
+    projectStats: null,
     startDate: null,
     endDate: null,
     progress: 0,

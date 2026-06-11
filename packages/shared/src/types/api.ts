@@ -122,6 +122,9 @@ export interface TaskResponse {
   taskType: TaskType;
   recurrenceConfig: RecurrenceConfig | null;
   parentTaskId: number | null;
+  projectId: number | null;
+  /** 僅 project 類型任務非 null；由子任務即時聚合（normal/window、非 cancelled、非 backlog） */
+  projectStats: { total: number; completed: number; progress: number } | null;
   startDate: string | null;
   endDate: string | null;
   progress: number;

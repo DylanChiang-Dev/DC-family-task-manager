@@ -45,6 +45,7 @@ function shapeTask(
   t: typeof tasks.$inferSelect,
   userMap: Map<number, { username: string; nickname: string }>,
   catMap: Map<number, { name: string; color: string }>,
+  statsMap?: Map<number, { total: number; completed: number; progress: number }>,
 ): TaskResponse {
   const creator = userMap.get(t.creatorId);
   const assignee = t.assigneeId ? userMap.get(t.assigneeId) : undefined;
@@ -67,6 +68,11 @@ function shapeTask(
     taskType: t.taskType,
     recurrenceConfig: t.recurrenceConfig,
     parentTaskId: t.parentTaskId,
+    projectId: t.projectId,
+    projectStats:
+      t.taskType === "project" && statsMap
+        ? statsMap.get(t.id) ?? { total: 0, completed: 0, progress: 0 }
+        : null,
     startDate: t.startDate,
     endDate: t.endDate,
     progress: t.progress,
@@ -230,6 +236,7 @@ taskRoutes.post("/", zValidator("json", createTaskSchema, zodErrorHook), async (
       taskType: body.taskType,
       recurrenceConfig: body.recurrenceConfig ?? null,
       parentTaskId: body.parentTaskId ?? null,
+      projectId: body.projectId ?? null,
       startDate: body.startDate ?? null,
       endDate: body.endDate ?? null,
       progress: body.progress ?? 0,
@@ -385,6 +392,10 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
   if (body.parentTaskId !== undefined && body.parentTaskId !== existing.parentTaskId) {
     updateData.parentTaskId = body.parentTaskId;
     changes.parentTaskId = body.parentTaskId;
+  }
+  if (body.projectId !== undefined && body.projectId !== existing.projectId) {
+    updateData.projectId = body.projectId;
+    changes.projectId = body.projectId;
   }
   if (body.startDate !== undefined && body.startDate !== existing.startDate) {
     updateData.startDate = body.startDate;
