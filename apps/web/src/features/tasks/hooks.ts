@@ -31,6 +31,16 @@ export function useTask(id: number) {
   });
 }
 
+export function useProjectTasks(projectId: number) {
+  const teamId = useAuthStore((s) => s.currentTeamId);
+
+  return useQuery({
+    queryKey: ["tasks", teamId, "project", projectId],
+    queryFn: () => fetchTasks("all", { projectId }),
+    enabled: teamId != null && Number.isFinite(projectId),
+  });
+}
+
 export function useCreateTask() {
   const qc = useQueryClient();
 

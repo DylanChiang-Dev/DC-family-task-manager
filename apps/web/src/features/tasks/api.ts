@@ -19,6 +19,8 @@ export interface TaskListFilter {
   /** 1-500；offset 必須搭配 limit */
   limit?: number;
   offset?: number;
+  /** 僅列出歸屬此項目的任務 */
+  projectId?: number;
 }
 
 export function fetchTasks(status: TaskStatusFilter, filter?: TaskListFilter) {
@@ -28,6 +30,7 @@ export function fetchTasks(status: TaskStatusFilter, filter?: TaskListFilter) {
   if (filter?.to) params.set("to", filter.to);
   if (filter?.limit != null) params.set("limit", String(filter.limit));
   if (filter?.offset != null) params.set("offset", String(filter.offset));
+  if (filter?.projectId != null) params.set("projectId", String(filter.projectId));
   const qs = params.toString();
   return request<TaskResponse[]>(`/tasks${qs ? `?${qs}` : ""}`);
 }
