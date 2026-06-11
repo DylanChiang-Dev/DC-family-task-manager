@@ -90,7 +90,7 @@ function colorWithAlpha(color: string, alpha: string) {
     const [, r, g, b] = color;
     return `#${r}${r}${g}${g}${b}${b}${alpha}`;
   }
-  return `color-mix(in srgb, ${color} 16%, white)`;
+  return `color-mix(in srgb, ${color} 16%, transparent)`;
 }
 
 function calendarTaskStyle(task: CalendarTask): CSSProperties | undefined {
@@ -117,9 +117,11 @@ function scheduleLabel(block: ScheduleBlockResponse) {
 }
 
 function calendarCountTone(count: number) {
-  if (count >= 3) return "border-rose-200 bg-rose-500 text-white shadow-rose-200/70";
-  if (count === 2) return "border-amber-200 bg-amber-400 text-amber-950 shadow-amber-200/70";
-  return "border-sky-200 bg-sky-500 text-white shadow-sky-200/70";
+  if (count >= 3)
+    return "border-rose-200 bg-rose-500 text-white shadow-rose-200/70 dark:border-rose-400/40 dark:shadow-rose-950/60";
+  if (count === 2)
+    return "border-amber-200 bg-amber-400 text-amber-950 shadow-amber-200/70 dark:border-amber-300/40 dark:shadow-amber-950/60";
+  return "border-sky-200 bg-sky-500 text-white shadow-sky-200/70 dark:border-sky-400/40 dark:shadow-sky-950/60";
 }
 
 function calendarStatusDotTone(status: TaskStatus) {
@@ -499,7 +501,7 @@ export function DashboardPage() {
                         <div key={span.item.id} className="mt-0.5 grid grid-cols-7 gap-1 h-5">
                           <button
                             type="button"
-                            className={`truncate border px-1.5 text-[10px] font-medium leading-5 text-left cursor-pointer hover:brightness-95 transition-[filter] ${isStart ? "rounded-l-md" : "border-l-0"} ${isEnd ? "rounded-r-md" : "border-r-0"}`}
+                            className={`truncate border px-1.5 text-[10px] font-medium leading-5 text-left cursor-pointer hover:brightness-95 dark:hover:brightness-125 transition-[filter] ${isStart ? "rounded-l-md" : "border-l-0"} ${isEnd ? "rounded-r-md" : "border-r-0"}`}
                             style={{
                               gridColumn: `${span.colStart + 1} / ${span.colEnd + 2}`,
                               ...scheduleBlockStyle(span.item),
@@ -519,17 +521,17 @@ export function DashboardPage() {
                       const state = windowState(t, todayKey);
                       const tone =
                         state === "overdue"
-                          ? "bg-rose-100 border-rose-300 text-rose-900"
+                          ? "bg-rose-100 border-rose-300 text-rose-900 dark:bg-rose-500/15 dark:border-rose-500/40 dark:text-rose-200"
                           : state === "done"
                             ? "bg-muted border-border text-muted-foreground line-through"
                             : state === "upcoming"
-                              ? "bg-indigo-50 border-indigo-200 text-indigo-500"
-                              : "bg-indigo-100 border-indigo-300 text-indigo-900";
+                              ? "bg-indigo-50 border-indigo-200 text-indigo-500 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-300"
+                              : "bg-indigo-100 border-indigo-300 text-indigo-900 dark:bg-indigo-500/20 dark:border-indigo-500/40 dark:text-indigo-200";
                       return (
                         <div key={`w-${t.id}`} className="mt-0.5 grid grid-cols-7 gap-1 h-5">
                           <Link
                             to={`/tasks/${t.id}`}
-                            className={`truncate border px-1.5 text-[10px] font-medium leading-5 text-left hover:brightness-95 transition-[filter] ${tone} ${isStart ? "rounded-l-md" : "border-l-0"} ${isEnd ? "rounded-r-md" : "border-r-0"}`}
+                            className={`truncate border px-1.5 text-[10px] font-medium leading-5 text-left hover:brightness-95 dark:hover:brightness-125 transition-[filter] ${tone} ${isStart ? "rounded-l-md" : "border-l-0"} ${isEnd ? "rounded-r-md" : "border-r-0"}`}
                             style={{ gridColumn: `${span.colStart + 1} / ${span.colEnd + 2}` }}
                             title={`${t.title} · ${t.startDate} - ${t.endDate} · ${t.progress}%`}
                           >
@@ -608,7 +610,7 @@ export function DashboardPage() {
                           <div key={span.item.id} className="mt-0.5 grid grid-cols-7 gap-1 h-4">
                             <button
                               type="button"
-                              className={`truncate border px-1 text-[9px] font-medium leading-4 text-left cursor-pointer hover:brightness-95 transition-[filter] ${isStart ? "rounded-l" : "border-l-0"} ${isEnd ? "rounded-r" : "border-r-0"}`}
+                              className={`truncate border px-1 text-[9px] font-medium leading-4 text-left cursor-pointer hover:brightness-95 dark:hover:brightness-125 transition-[filter] ${isStart ? "rounded-l" : "border-l-0"} ${isEnd ? "rounded-r" : "border-r-0"}`}
                               style={{
                                 gridColumn: `${span.colStart + 1} / ${span.colEnd + 2}`,
                                 ...scheduleBlockStyle(span.item),
@@ -630,7 +632,7 @@ export function DashboardPage() {
         </section>
 
         <aside className="min-w-0 space-y-3 lg:order-2">
-          <Card className="space-y-2 border-sky-100 bg-sky-50/70 p-3">
+          <Card className="space-y-2 border-sky-100 bg-sky-50/70 p-3 dark:border-sky-500/25 dark:bg-sky-500/10">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <h2 className="font-semibold">{selectedLabel}</h2>
@@ -638,7 +640,7 @@ export function DashboardPage() {
                   {compactDateLabel(selectedDate)} · {selectedLunar.day}
                 </p>
               </div>
-              <span className="rounded-full bg-sky-100 px-2 py-1 text-xs text-sky-700">
+              <span className="rounded-full bg-sky-100 px-2 py-1 text-xs text-sky-700 dark:bg-sky-500/15 dark:text-sky-300">
                 {selectedTasks.length} 件
               </span>
             </div>
@@ -684,7 +686,7 @@ export function DashboardPage() {
                   <Link
                     key={t.id}
                     to={`/tasks/${t.id}`}
-                    className="block rounded-md border border-indigo-200 bg-indigo-50/70 p-2 text-xs hover:bg-indigo-50"
+                    className="block rounded-md border border-indigo-200 bg-indigo-50/70 p-2 text-xs hover:bg-indigo-50 dark:border-indigo-500/30 dark:bg-indigo-500/10 dark:hover:bg-indigo-500/20"
                   >
                     <p className="truncate font-medium">{t.title}（{t.progress}%）</p>
                     <p className="text-muted-foreground">{t.startDate} - {t.endDate}</p>
@@ -696,13 +698,16 @@ export function DashboardPage() {
           </Card>
 
           {(overdueTasks.length > 0 || overdueWindows.length > 0) && (
-            <Card className="space-y-2 border-rose-100 bg-rose-50/70 p-3" aria-label="逾期未完成任務">
+            <Card
+              className="space-y-2 border-rose-100 bg-rose-50/70 p-3 dark:border-rose-500/25 dark:bg-rose-500/10"
+              aria-label="逾期未完成任務"
+            >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h2 className="font-semibold">逾期未完成</h2>
                   <p className="text-sm text-muted-foreground">先處理這些最有影響</p>
                 </div>
-                <span className="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-700">
+                <span className="rounded-full bg-rose-100 px-2 py-1 text-xs text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">
                   {overdueTasks.length + overdueWindows.length} 件
                 </span>
               </div>
@@ -713,7 +718,7 @@ export function DashboardPage() {
                     <Link
                       key={t.id}
                       to={`/tasks/${t.id}`}
-                      className="block rounded-md border border-rose-200 bg-white/60 p-2 text-xs hover:bg-white"
+                      className="block rounded-md border border-rose-200 bg-white/60 p-2 text-xs hover:bg-white dark:border-rose-500/30 dark:bg-white/5 dark:hover:bg-white/10"
                     >
                       <p className="truncate font-medium">{t.title}（{t.progress}%）</p>
                       <p className="text-muted-foreground">截止 {t.endDate}</p>
@@ -724,7 +729,7 @@ export function DashboardPage() {
             </Card>
           )}
 
-          <Card className="space-y-2 border-emerald-100 bg-emerald-50/70 p-3">
+          <Card className="space-y-2 border-emerald-100 bg-emerald-50/70 p-3 dark:border-emerald-500/25 dark:bg-emerald-500/10">
             <div className="flex items-start justify-between gap-2">
               <div>
                 <h2 className="font-semibold">本月接下來</h2>
@@ -732,7 +737,7 @@ export function DashboardPage() {
                   {first.getMonth() + 1} 月剩餘安排
                 </p>
               </div>
-              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700">
+              <span className="rounded-full bg-emerald-100 px-2 py-1 text-xs text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
                 {upcomingTasks.length} 件
               </span>
             </div>

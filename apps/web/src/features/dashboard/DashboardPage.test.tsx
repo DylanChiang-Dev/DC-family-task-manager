@@ -170,7 +170,9 @@ describe("DashboardPage", () => {
     const calendar = await screen.findByLabelText("未來 6 週日曆");
 
     // Block label appears as a spanning bar outside the date cell buttons
-    await waitFor(() => expect(within(calendar).getByText("廣州")).toBeInTheDocument());
+    await waitFor(() =>
+      expect(within(calendar).getByText("廣州出差 · 廣州")).toBeInTheDocument(),
+    );
 
     // Date cell buttons themselves should not contain the schedule label
     const startDay = within(calendar).getByRole("button", { name: dateKey(1) });
