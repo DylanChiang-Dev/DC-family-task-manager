@@ -10,6 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { TaskProgressBar } from "./TaskProgressBar";
 
 const STATUS_LABEL: Record<TaskStatus, string> = {
   pending: "待處理",
@@ -42,6 +43,7 @@ export function TaskCard({
           <Link className="truncate font-medium underline-offset-4 hover:underline" to={`/tasks/${task.id}`}>
             {task.title}
           </Link>
+          {task.taskType === "project" && <Badge>項目</Badge>}
           <Badge variant="secondary">{PRIORITY_LABEL[task.priority]}</Badge>
           {task.categoryName && (
             <Badge style={{ backgroundColor: task.categoryColor ?? undefined }}>
@@ -53,6 +55,14 @@ export function TaskCard({
           {task.assigneeNickname ? `指派給 ${task.assigneeNickname}` : "未指派"}
           {task.dueDate ? ` · 截止 ${task.dueDate}` : ""}
         </div>
+        {task.taskType === "project" && task.projectStats && (
+          <div className="mt-2 max-w-xs space-y-1">
+            <TaskProgressBar value={task.projectStats.progress} readOnly />
+            <p className="text-xs text-muted-foreground">
+              {task.projectStats.completed}/{task.projectStats.total} 任務
+            </p>
+          </div>
+        )}
       </div>
       <div className="flex shrink-0 items-center gap-2">
         <Select value={task.status} onValueChange={(v) => onStatusChange(v as TaskStatus)}>
