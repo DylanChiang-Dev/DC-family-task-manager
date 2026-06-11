@@ -30,6 +30,7 @@ import {
   windowOverlapsDate,
 } from "@/features/calendar/windows";
 import type { ScheduleBlockResponse } from "@ftm/shared";
+import { ProjectGanttPanel } from "./ProjectGanttPanel";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 const STATUS_LABEL: Record<TaskStatus, string> = {
@@ -429,6 +430,7 @@ export function DashboardPage() {
 
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="min-w-0 space-y-4 lg:order-1">
+          <ProjectGanttPanel tasks={tasks ?? []} start={start} todayKey={todayKey} />
           <Card className="hidden p-4 sm:flex sm:flex-col lg:min-h-[calc(100svh-13rem)]" aria-label="未來 6 週日曆">
             <div className="mb-3 flex shrink-0 items-center justify-between">
               <div>

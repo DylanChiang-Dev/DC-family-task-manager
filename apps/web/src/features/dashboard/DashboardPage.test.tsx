@@ -196,10 +196,11 @@ describe("DashboardPage", () => {
     expect(todayCount.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("renders project span with 項目 prefix and aggregated progress", async () => {
+  it("renders the gantt panel with project bar and progress", async () => {
     renderWithProviders(<DashboardPage />);
 
-    expect(await screen.findByText("項目 · 寫書（40%）")).toBeInTheDocument();
+    expect(await screen.findByText("進行中項目")).toBeInTheDocument();
+    expect(screen.getByText(/寫書 · 40%（2\/5 任務）/)).toBeInTheDocument();
   });
 
   it("opens the schedule block dialog with the selected date", async () => {
