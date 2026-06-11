@@ -17,6 +17,7 @@ beforeEach(() => {
     isBootstrapped: true,
   });
   server.use(
+    http.get(`${BASE}/tasks`, () => HttpResponse.json({ success: true, data: [] })),
     http.get(`${BASE}/categories`, () => HttpResponse.json({ success: true, data: [] })),
     http.get(`${BASE}/teams/1/members`, () =>
       HttpResponse.json({
@@ -140,6 +141,88 @@ describe("TaskFormDialog", () => {
         endDate: "2026-06-20",
       }),
     );
+  });
+
+  it("creates a project task with start/end", async () => {
+    let posted: unknown = null;
+    server.use(
+      http.post(`${BASE}/tasks`, async ({ request: req }) => {
+        posted = await req.json();
+        return HttpResponse.json({ success: true, data: { id: 1 } }, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderWithProviders(<TaskFormDialog open onOpenChange={() => {}} />);
+    await user.type(screen.getByLabelText("標題"), "寫《家庭手冊》");
+    await user.click(screen.getByLabelText("任務類型"));
+    await user.click((await screen.findAllByText("項目")).at(-1)!);
+    fireEvent.change(screen.getByLabelText("開始日期"), { target: { value: "2026-06-11" } });
+    fireEvent.change(screen.getByLabelText("結束日期"), { target: { value: "2026-12-31" } });
+    await user.click(screen.getByRole("button", { name: "建立" }));
+
+    await waitFor(() =>
+      expect(posted).toMatchObject({
+        title: "寫《家庭手冊》",
+        taskType: "project",
+        startDate: "2026-06-11",
+        endDate: "2026-12-31",
+      }),
+    );
+  });
+
+  it("assigns a task to a project via 所屬項目", async () => {
+    let posted: unknown = null;
+    server.use(
+      http.get(`${BASE}/tasks`, () =>
+        HttpResponse.json({
+          success: true,
+          data: [
+            {
+              id: 5,
+              teamId: 1,
+              title: "寫《家庭手冊》",
+              description: null,
+              creatorId: 1,
+              creatorNickname: "A",
+              assigneeId: null,
+              assigneeNickname: null,
+              categoryId: null,
+              categoryName: null,
+              categoryColor: null,
+              priority: "medium",
+              status: "in_progress",
+              dueDate: null,
+              taskType: "project",
+              recurrenceConfig: null,
+              parentTaskId: null,
+              projectId: null,
+              projectStats: { total: 0, completed: 0, progress: 0 },
+              startDate: "2026-06-11",
+              endDate: "2026-12-31",
+              progress: 0,
+              isBacklog: false,
+              completedAt: null,
+              createdAt: 0,
+              updatedAt: 0,
+            },
+          ],
+        }),
+      ),
+      http.post(`${BASE}/tasks`, async ({ request: req }) => {
+        posted = await req.json();
+        return HttpResponse.json({ success: true, data: { id: 6 } }, { status: 201 });
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderWithProviders(<TaskFormDialog open onOpenChange={() => {}} />);
+    await user.type(screen.getByLabelText("標題"), "擬大綱");
+    await user.click(await screen.findByLabelText("所屬項目"));
+    await user.click((await screen.findAllByText("寫《家庭手冊》")).at(-1)!);
+    await user.click(screen.getByRole("button", { name: "建立" }));
+
+    await waitFor(() => expect(posted).toMatchObject({ title: "擬大綱", projectId: 5 }));
   });
 
   it("shows validation error when title is empty", async () => {

@@ -33,7 +33,7 @@ import { useCategories } from "@/features/categories/hooks";
 import { useTeamMembers } from "@/features/teams/hooks";
 import { ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/stores/auth-store";
-import { useCreateTask, useUpdateTask } from "./hooks";
+import { useCreateTask, useTasks, useUpdateTask } from "./hooks";
 
 function todayISO(): string {
   return formatDateKey(new Date());
@@ -97,11 +97,13 @@ export function TaskFormDialog({
   open,
   task,
   promote = false,
+  defaultProjectId,
   onOpenChange,
 }: {
   open: boolean;
   task?: TaskResponse;
   promote?: boolean;
+  defaultProjectId?: number;
   onOpenChange: (open: boolean) => void;
 }) {
   const isEdit = !!task;
@@ -113,6 +115,8 @@ export function TaskFormDialog({
   const currentTeamId = useAuthStore((s) => s.currentTeamId);
   const user = useAuthStore((s) => s.user);
   const { data: members } = useTeamMembers(currentTeamId ?? Number.NaN);
+  const { data: allTasks } = useTasks("all");
+  const projects = (allTasks ?? []).filter((t) => t.taskType === "project" && t.id !== task?.id);
 
   const {
     register,
@@ -136,6 +140,7 @@ export function TaskFormDialog({
       endDate: task?.endDate ?? null,
       progress: task?.progress ?? 0,
       parentTaskId: task?.parentTaskId ?? null,
+      projectId: task?.projectId ?? defaultProjectId ?? null,
       isBacklog: task?.isBacklog ?? false,
     },
   });
@@ -152,8 +157,9 @@ export function TaskFormDialog({
       categoryId: values.categoryId || null,
       assigneeId: values.assigneeId || null,
       recurrenceConfig: values.taskType === "recurring" && !isInstance ? values.recurrenceConfig : null,
-      startDate: values.taskType === "window" ? values.startDate || null : null,
-      endDate: values.taskType === "window" ? values.endDate || null : null,
+      startDate: values.taskType === "window" || values.taskType === "project" ? values.startDate || null : null,
+      endDate: values.taskType === "window" || values.taskType === "project" ? values.endDate || null : null,
+      projectId: values.taskType === "project" ? null : values.projectId || null,
       isBacklog: promote ? false : values.isBacklog,
     };
 
@@ -250,6 +256,27 @@ export function TaskFormDialog({
               </SelectContent>
             </Select>
           </div>
+          {taskType !== "project" && !isInstance && projects.length > 0 && (
+            <div className="space-y-1.5">
+              <Label>所屬項目</Label>
+              <Select
+                value={watch("projectId") ? String(watch("projectId")) : "none"}
+                onValueChange={(v) => setValue("projectId", v === "none" ? null : Number(v))}
+              >
+                <SelectTrigger aria-label="所屬項目">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">無</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={String(p.id)}>
+                      {p.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {!isInstance && (
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
@@ -263,7 +290,7 @@ export function TaskFormDialog({
                     "recurrenceConfig",
                     nextType === "recurring" ? defaultForMode("anchored", "week") : null,
                   );
-                  if (nextType === "window") {
+                  if (nextType === "window" || nextType === "project") {
                     const t = todayISO();
                     if (!watch("startDate")) setValue("startDate", t);
                     if (!watch("endDate")) setValue("endDate", t);
@@ -277,6 +304,7 @@ export function TaskFormDialog({
                   <SelectItem value="normal">一般</SelectItem>
                   <SelectItem value="recurring">週期</SelectItem>
                   <SelectItem value="window">時間段</SelectItem>
+                  <SelectItem value="project">項目</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -385,7 +413,7 @@ export function TaskFormDialog({
             </div>
           )}
 
-          {taskType === "window" && (
+          {(taskType === "window" || taskType === "project") && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="startDate">開始日期</Label>
