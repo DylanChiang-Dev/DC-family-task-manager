@@ -14,16 +14,15 @@ function mk(p: Partial<TaskResponse>): TaskResponse {
 }
 
 describe("getWindowTasks", () => {
-  it("keeps only non-backlog window/project tasks with both dates", () => {
+  it("keeps only non-backlog window tasks with both dates (projects excluded)", () => {
     const out = getWindowTasks([
       mk({ id: 1, taskType: "window", startDate: "2026-06-10", endDate: "2026-06-20" }),
       mk({ id: 2, taskType: "window", startDate: null, endDate: "2026-06-20" }),
       mk({ id: 3, taskType: "window", startDate: "2026-06-10", endDate: "2026-06-20", isBacklog: true }),
       mk({ id: 4, taskType: "normal" }),
       mk({ id: 5, taskType: "project", startDate: "2026-06-11", endDate: "2026-07-11" }),
-      mk({ id: 6, taskType: "project", startDate: "2026-06-11", endDate: null }),
     ]);
-    expect(out.map((t) => t.id)).toEqual([1, 5]);
+    expect(out.map((t) => t.id)).toEqual([1]);
   });
 });
 

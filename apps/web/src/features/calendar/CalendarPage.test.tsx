@@ -56,7 +56,7 @@ describe("CalendarPage", () => {
     expect((await screen.findAllByText("繳水費")).length).toBeGreaterThan(0);
   });
 
-  it("shows a project task on every overlapping day of the month", async () => {
+  it("does not render project tasks in month cells (gantt owns them)", async () => {
     const today = new Date();
     const iso = (d: Date) => d.toISOString().slice(0, 10);
     const start = new Date(today);
@@ -96,6 +96,34 @@ describe("CalendarPage", () => {
               createdAt: 0,
               updatedAt: 0,
             },
+            {
+              id: 8,
+              teamId: 1,
+              title: "錨點任務",
+              description: null,
+              creatorId: 1,
+              creatorNickname: "A",
+              assigneeId: null,
+              assigneeNickname: null,
+              categoryId: null,
+              categoryName: null,
+              categoryColor: null,
+              priority: "medium",
+              status: "pending",
+              dueDate: iso(today),
+              taskType: "normal",
+              recurrenceConfig: null,
+              parentTaskId: null,
+              projectId: null,
+              projectStats: null,
+              startDate: null,
+              endDate: null,
+              progress: 0,
+              isBacklog: false,
+              completedAt: null,
+              createdAt: 0,
+              updatedAt: 0,
+            },
           ],
         }),
       ),
@@ -103,8 +131,8 @@ describe("CalendarPage", () => {
 
     renderWithProviders(<CalendarPage />);
 
-    // 跨 7 天的項目應出現在多個日期格（同月內至少 5 格）+ 選中日詳情
-    const chips = await screen.findAllByText("寫書");
-    expect(chips.length).toBeGreaterThanOrEqual(5);
+    // 等錨點任務出現（證明數據已載入渲染），再斷言項目不在格中
+    expect((await screen.findAllByText("錨點任務")).length).toBeGreaterThan(0);
+    expect(screen.queryByText("寫書")).not.toBeInTheDocument();
   });
 });
