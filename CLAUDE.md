@@ -50,7 +50,7 @@ curl http://localhost:8787/api/health
 - Cron: `wrangler.toml` schedules daily at 01:00 UTC → `src/services/reminder.ts`.
 
 **Web (`apps/web`):**
-- Auth state: Zustand store (`src/stores/auth-store.ts`) — `accessToken` in memory, `currentTeamId` persisted to localStorage. On 401, `src/lib/api-client.ts` silently refreshes once before clearing auth.
+- Auth state: Zustand store (`src/stores/auth-store.ts`) — `accessToken`/`user`/`currentTeamId` persisted to localStorage (key `ftm-auth`). On refresh with a persisted token the app renders immediately and `/auth/me` validates in the background (`src/app/useBootstrapAuth.ts`). On 401, `src/lib/api-client.ts` silently refreshes once before clearing auth.
 - API calls: `src/lib/api-client.ts` — `request<T>(path, options)` auto-attaches `Authorization` and `X-Team-Id` headers from auth store.
 - Data fetching: TanStack Query. Each feature folder has `api.ts` (raw fetch functions) + `hooks.ts` (React Query wrappers).
 - Routing: `src/app/router.tsx` — `ProtectedRoute` wraps all authenticated pages; `AppLayout` wraps the shell.
