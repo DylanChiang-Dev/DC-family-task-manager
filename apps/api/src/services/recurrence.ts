@@ -7,8 +7,9 @@ import type { RecurrenceConfig } from "@ftm/shared";
 
 // 滾動視界：cron 每日補齊，不需一次物化太遠（也避免 GET /tasks 被實例淹沒）
 const HORIZON_DAYS = 90;
-// D1 上限 100 bound parameters/query；每行 12 欄 → 每批最多 8 行
-const INSERT_CHUNK_SIZE = 8;
+// D1 上限 100 bound parameters/query。drizzle 多行插入會列出全表欄位，
+// 每行實際綁定 15 個參數（13 個指定欄位 + progress/is_backlog 的字面默認值）→ 每批最多 6 行
+const INSERT_CHUNK_SIZE = 6;
 
 export const todayISO = formatDateKeyUTC;
 
@@ -88,6 +89,7 @@ export async function generateInstancesForTemplate(
       taskType: "recurring" as const,
       recurrenceConfig: null,
       parentTaskId: template.id,
+      projectId: template.projectId,
     }));
 
   if (toInsert.length === 0) return 0;
