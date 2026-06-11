@@ -43,6 +43,13 @@
       "when": 1781119362159,
       "tag": "0005_amazing_magdalene",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "6",
+      "when": 1781169430845,
+      "tag": "0006_dazzling_the_call",
+      "breakpoints": true
     }
   ]
 }

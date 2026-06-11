@@ -4,6 +4,7 @@ import {
   integer,
   index,
   uniqueIndex,
+  type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 import { sql } from "drizzle-orm";
 import {
@@ -138,6 +139,10 @@ export const tasks = sqliteTable(
       mode: "json",
     }).$type<RecurrenceConfig>(),
     parentTaskId: integer("parent_task_id"),
+    // 項目歸屬（與 parentTaskId 的「模板→實例」鏈正交）；刪項目時子任務自動脫鉤
+    projectId: integer("project_id").references((): AnySQLiteColumn => tasks.id, {
+      onDelete: "set null",
+    }),
     // window 類型：區間 + 進度
     startDate: text("start_date"),
     endDate: text("end_date"),
@@ -153,6 +158,7 @@ export const tasks = sqliteTable(
     dueDateIdx: index("idx_due_date").on(t.dueDate),
     taskTypeIdx: index("idx_task_type").on(t.taskType),
     parentIdx: index("idx_parent").on(t.parentTaskId),
+    projectIdx: index("idx_project").on(t.projectId),
   }),
 );
 
