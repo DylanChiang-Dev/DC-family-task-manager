@@ -102,6 +102,15 @@ async function validateCategory(db: ReturnType<typeof createDb>, teamId: number,
   return !!cat;
 }
 
+// 驗證 projectId 是否指向同團隊的 project 類型任務
+async function validateProject(db: ReturnType<typeof createDb>, teamId: number, projectId: number): Promise<boolean> {
+  const p = await db.query.tasks.findFirst({
+    where: and(eq(tasks.id, projectId), eq(tasks.teamId, teamId), eq(tasks.taskType, "project")),
+    columns: { id: true },
+  });
+  return !!p;
+}
+
 // ── GET /tasks ──
 // 可選查詢參數（均不帶時行為與舊版一致）：
 // - status: 任務狀態
@@ -221,6 +230,13 @@ taskRoutes.post("/", zValidator("json", createTaskSchema, zodErrorHook), async (
     }
   }
 
+  if (body.projectId) {
+    const isValid = await validateProject(db, teamId, body.projectId);
+    if (!isValid) {
+      return c.json(fail("VALIDATION_ERROR", "所屬項目不存在或不是項目類型"), 400);
+    }
+  }
+
   const [task] = await db
     .insert(tasks)
     .values({
@@ -330,6 +346,36 @@ taskRoutes.patch("/:id", zValidator("json", updateTaskSchema, zodErrorHook), asy
   }
   if (finalTaskType !== "recurring" && finalRecurrenceConfig) {
     return c.json(fail("VALIDATION_ERROR", "只有週期任務才能設置週期配置"), 400);
+  }
+
+  // 項目類型約束：不可嵌套、不可成為子任務；有成員任務時不可改類型
+  if (finalTaskType === "project") {
+    const finalProjectId = body.projectId !== undefined ? body.projectId : existing.projectId;
+    if (finalProjectId != null) {
+      return c.json(fail("VALIDATION_ERROR", "項目不可掛在其他項目下"), 400);
+    }
+    const finalParentId = body.parentTaskId !== undefined ? body.parentTaskId : existing.parentTaskId;
+    if (finalParentId != null) {
+      return c.json(fail("VALIDATION_ERROR", "項目不能成為其他任務的子任務"), 400);
+    }
+  }
+  if (existing.taskType === "project" && finalTaskType !== "project") {
+    const child = await db.query.tasks.findFirst({
+      where: and(eq(tasks.projectId, taskId), eq(tasks.teamId, teamId)),
+      columns: { id: true },
+    });
+    if (child) {
+      return c.json(fail("VALIDATION_ERROR", "項目下還有任務，請先移除任務歸屬再變更類型"), 400);
+    }
+  }
+  if (body.projectId != null && body.projectId !== existing.projectId) {
+    if (body.projectId === taskId) {
+      return c.json(fail("VALIDATION_ERROR", "任務不能歸屬自己"), 400);
+    }
+    const isValid = await validateProject(db, teamId, body.projectId);
+    if (!isValid) {
+      return c.json(fail("VALIDATION_ERROR", "所屬項目不存在或不是項目類型"), 400);
+    }
   }
 
   // schema 在 update 未帶 taskType 時不檢查 progress，這裡按最終類型兜底
