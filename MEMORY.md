@@ -19,6 +19,26 @@
 
 ## Durable Decisions
 
+### 2026-06-11 — Production Worker/Pages 刪除後全量重建（wrangler 已升 4.x）
+
+- D1 與 KV 獨立於 Worker/Pages 存在，刪 Worker 不丟數據與賬號；但 **secrets 隨 Worker 一起消失，重建後必須重設** `JWT_SECRET`/`JWT_REFRESH_SECRET`（隨機生成即可——密碼哈希自帶 salt，與 JWT secret 無關，換 secret 不影響既有賬號登入）。
+- 名稱互相鎖定，重建必須複用：Worker = `ftm-api`（前端硬編碼其 URL），Pages = `dc-family-task-manager`（API 的 `ALLOWED_ORIGINS` 指向該域名）。
+- 重建命令序列：
+  ```bash
+  # API
+  pnpm --filter @ftm/api run deploy
+  cd apps/api
+  openssl rand -base64 48 | npx wrangler secret put JWT_SECRET --env production
+  openssl rand -base64 48 | npx wrangler secret put JWT_REFRESH_SECRET --env production
+  # Web（web 無 deploy 腳本；wrangler 裝在 apps/api）
+  pnpm --filter @ftm/web build
+  cd apps/web
+  ../api/node_modules/.bin/wrangler pages project create dc-family-task-manager --production-branch main  # 僅項目不存在時
+  ../api/node_modules/.bin/wrangler pages deploy dist --project-name dc-family-task-manager --branch main
+  ```
+- 驗證三件套：`/api/health` 返回 `environment:"production"`；pages.dev 返回 200；對 API 發 CORS preflight 確認 `access-control-allow-origin` 指向 pages.dev。
+- wrangler `^3.99.0` → `4.99.0`（`5b49ed1`），現有 `wrangler.toml` 無需改動。
+
 ### 2026-06-11 — Backlog standalone page + UX defaults (frontend-only, no deploy needed)
 
 - 靈感箱從工作台底部抽屜改為獨立頁面 `/backlog`（`features/backlog/BacklogPage.tsx`）；`BacklogDrawer` 已刪除。導航：桌面「工作台／靈感箱／團隊／分類／我的」，手機底部 nav 改 **6 格**（`grid-cols-6`）。Spec/plan 在 `docs/superpowers/specs|plans/2026-06-11-backlog-page*`。
@@ -47,7 +67,7 @@
 
 - Access token: JWT HS256, 15 min, carried in `Authorization: Bearer` header.
 - Refresh token: JWT HS256, 30 days, stored in KV as `refresh:{userId}:{jti}`, delivered via HttpOnly cookie.
-- Frontend: access token lives in Zustand memory only (not persisted); `currentTeamId` persisted to localStorage.
+- Frontend: `accessToken`/`user`/`currentTeamId` persisted to localStorage (key `ftm-auth`); on refresh the app renders immediately and `/auth/me` validates in the background.
 
 ### Agent files standardized — 2026-06-09
 
