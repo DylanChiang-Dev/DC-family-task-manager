@@ -5,7 +5,7 @@ import type { TaskResponse, TaskStatus } from "@ftm/shared";
 import type { Env, Variables } from "../types";
 import { createDb } from "../db/client";
 import { users, tasks, taskComments, taskHistory, notifications, categories, teamMembers } from "../db/schema";
-import { eq, and, or, inArray, desc, ne, gte, lte, isNotNull, type SQL } from "drizzle-orm";
+import { eq, and, or, inArray, desc, ne, gte, lte, isNotNull, sql, type SQL } from "drizzle-orm";
 import { authMiddleware } from "../middleware/auth";
 import { teamMiddleware } from "../middleware/team";
 import { fail, ok } from "../lib/response";
@@ -111,6 +111,37 @@ async function validateProject(db: ReturnType<typeof createDb>, teamId: number, 
   return !!p;
 }
 
+/** 聚合項目進度：計件子任務 = projectId 指向、normal/window、非 cancelled、非 backlog */
+async function loadProjectStats(db: ReturnType<typeof createDb>, projectIds: number[]) {
+  const map = new Map<number, { total: number; completed: number; progress: number }>();
+  if (projectIds.length === 0) return map;
+  const rows = await db
+    .select({
+      projectId: tasks.projectId,
+      total: sql<number>`count(*)`,
+      completed: sql<number>`sum(case when ${tasks.status} = 'completed' then 1 else 0 end)`,
+    })
+    .from(tasks)
+    .where(
+      and(
+        inArray(tasks.projectId, projectIds),
+        inArray(tasks.taskType, ["normal", "window"]),
+        ne(tasks.status, "cancelled"),
+        eq(tasks.isBacklog, false),
+      ),
+    )
+    .groupBy(tasks.projectId);
+  for (const r of rows) {
+    const completed = r.completed ?? 0;
+    map.set(r.projectId!, {
+      total: r.total,
+      completed,
+      progress: r.total > 0 ? Math.round((completed / r.total) * 100) : 0,
+    });
+  }
+  return map;
+}
+
 // ── GET /tasks ──
 // 可選查詢參數（均不帶時行為與舊版一致）：
 // - status: 任務狀態
@@ -151,9 +182,18 @@ taskRoutes.get("/", async (c) => {
       return c.json(fail("VALIDATION_ERROR", "offset 必須搭配 limit 使用"), 400);
     }
   }
+  const projectIdParam = c.req.query("projectId");
+  let projectIdFilter: number | null = null;
+  if (projectIdParam !== undefined) {
+    projectIdFilter = Number(projectIdParam);
+    if (!Number.isInteger(projectIdFilter) || projectIdFilter < 1) {
+      return c.json(fail("VALIDATION_ERROR", "projectId 必須為正整數"), 400);
+    }
+  }
 
   const conds: SQL[] = [eq(tasks.teamId, teamId)];
   if (status) conds.push(eq(tasks.status, status));
+  if (projectIdFilter !== null) conds.push(eq(tasks.projectId, projectIdFilter));
   if (from || to) {
     const dueConds: SQL[] = [isNotNull(tasks.dueDate)];
     if (from) dueConds.push(gte(tasks.dueDate, from));
@@ -178,8 +218,12 @@ taskRoutes.get("/", async (c) => {
   const catIds = rows.map((t) => t.categoryId).filter(Boolean) as number[];
   const userMap = await loadUserMap(db, userIds);
   const catMap = await loadCategoryMap(db, catIds);
+  const statsMap = await loadProjectStats(
+    db,
+    rows.filter((t) => t.taskType === "project").map((t) => t.id),
+  );
 
-  return c.json(ok(rows.map((t) => shapeTask(t, userMap, catMap))));
+  return c.json(ok(rows.map((t) => shapeTask(t, userMap, catMap, statsMap))));
 });
 
 // ── GET /tasks/:id ──
@@ -203,8 +247,9 @@ taskRoutes.get("/:id", async (c) => {
   const catIds = [t.categoryId].filter(Boolean) as number[];
   const userMap = await loadUserMap(db, userIds);
   const catMap = await loadCategoryMap(db, catIds);
+  const statsMap = t.taskType === "project" ? await loadProjectStats(db, [t.id]) : undefined;
 
-  return c.json(ok(shapeTask(t, userMap, catMap)));
+  return c.json(ok(shapeTask(t, userMap, catMap, statsMap)));
 });
 
 // ── POST /tasks ──
