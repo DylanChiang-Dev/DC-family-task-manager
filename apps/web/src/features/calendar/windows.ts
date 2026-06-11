@@ -1,9 +1,13 @@
 import type { TaskResponse } from "@ftm/shared";
 
-/** 取出可在日曆顯示的時間段任務（非靈感箱、兩端日期齊全） */
+/** 取出可在日曆顯示的區間任務（時間段 + 項目；非靈感箱、兩端日期齊全） */
 export function getWindowTasks(tasks: TaskResponse[]): TaskResponse[] {
   return tasks.filter(
-    (t) => t.taskType === "window" && !t.isBacklog && !!t.startDate && !!t.endDate,
+    (t) =>
+      (t.taskType === "window" || t.taskType === "project") &&
+      !t.isBacklog &&
+      !!t.startDate &&
+      !!t.endDate,
   );
 }
 

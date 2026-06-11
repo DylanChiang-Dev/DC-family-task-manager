@@ -153,7 +153,8 @@ export function TaskFormDialog({
     const input: CreateTaskInput = {
       ...values,
       description: values.description || null,
-      dueDate: values.dueDate || null,
+      // 項目以起止區間表達，不留截止日期（否則日曆會把它當單日任務畫一個點）
+      dueDate: values.taskType === "project" ? null : values.dueDate || null,
       categoryId: values.categoryId || null,
       assigneeId: values.assigneeId || null,
       recurrenceConfig: values.taskType === "recurring" && !isInstance ? values.recurrenceConfig : null,
@@ -209,14 +210,16 @@ export function TaskFormDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="dueDate">截止日期</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                {...register("dueDate", { setValueAs: (v) => v || null })}
-              />
-            </div>
+            {taskType !== "project" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="dueDate">截止日期</Label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  {...register("dueDate", { setValueAs: (v) => v || null })}
+                />
+              </div>
+            )}
           </div>
           <div className="space-y-1.5">
             <Label>分類</Label>

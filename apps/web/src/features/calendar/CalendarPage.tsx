@@ -5,6 +5,7 @@ import { solarToLunar } from "@/lib/lunar";
 import { useTasks } from "@/features/tasks/hooks";
 import { formatDateKey } from "@ftm/shared";
 import { toCalendarTasks } from "./recurrence";
+import { getWindowTasks, windowOverlapsDate } from "./windows";
 
 const WEEKDAYS = ["日", "一", "二", "三", "四", "五", "六"];
 
@@ -27,6 +28,13 @@ export function CalendarPage() {
     () => toCalendarTasks(tasks ?? []),
     [tasks],
   );
+  // 區間任務（時間段 + 項目）顯示在每一個重疊的日期上，避免與 dueDate 圓點重複
+  const rangeTasks = useMemo(() => getWindowTasks(tasks ?? []), [tasks]);
+  const rangeIds = useMemo(() => new Set(rangeTasks.map((t) => t.id)), [rangeTasks]);
+  const tasksForDay = (key: string) => [
+    ...rangeTasks.filter((t) => windowOverlapsDate(t, key)),
+    ...calendarTasks.filter((task) => task.dueDate === key && !rangeIds.has(task.id)),
+  ];
   const cells = useMemo(
     () =>
       Array.from({ length: 42 }, (_, index) => {
@@ -38,13 +46,14 @@ export function CalendarPage() {
           date,
           key,
           lunar,
-          tasks: calendarTasks.filter((task) => task.dueDate === key),
+          tasks: tasksForDay(key),
           isCurrentMonth: date.getMonth() === first.getMonth(),
         };
       }),
-    [calendarTasks, first, start],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [calendarTasks, rangeTasks, first, start],
   );
-  const selectedTasks = calendarTasks.filter((task) => task.dueDate === selectedDate);
+  const selectedTasks = tasksForDay(selectedDate);
 
   const shiftMonth = (delta: number) => {
     const next = new Date(month);
