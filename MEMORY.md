@@ -19,6 +19,12 @@
 
 ## Durable Decisions
 
+### 2026-06-11 — Backlog standalone page + UX defaults (frontend-only, no deploy needed)
+
+- 靈感箱從工作台底部抽屜改為獨立頁面 `/backlog`（`features/backlog/BacklogPage.tsx`）；`BacklogDrawer` 已刪除。導航：桌面「工作台／靈感箱／團隊／分類／我的」，手機底部 nav 改 **6 格**（`grid-cols-6`）。Spec/plan 在 `docs/superpowers/specs|plans/2026-06-11-backlog-page*`。
+- 日曆上行程條顯示 `標題 · 地點`（`DashboardPage.tsx` `scheduleLabel`）；側欄詳情卡標題與地點分行。先前「有地點只顯示地點」是刻意設計，已按用戶要求改掉。
+- 新任務表單預設值（`TaskFormDialog.tsx`）：指派對象 = 登入用戶（`user?.id`）、截止日期 = 今天（`todayISO()`）；編輯既有任務不受影響（`task?.x ?? default` 模式）。
+
 ### 2026-06-11 — Task-types redesign: strict review found 11 defects, all fixed (`e79399b`)
 
 - Plans 1–3 (recurring/window/backlog) were "all green" (typecheck + unit tests) yet the core flow was broken in production terms: instances couldn't be completed (stale PATCH guard), instance generation always threw (D1 param limit), and legacy data had no migration. **Lesson: unit tests passing ≠ integration correct — verify cross-layer flows (schema ↔ route ↔ form) end to end.**
