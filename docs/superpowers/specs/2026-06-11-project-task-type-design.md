@@ -100,6 +100,13 @@ projectId: integer("project_id").references(() => tasks.id, { onDelete: "set nul
 - 「新增子任務」按鈕打開 TaskFormDialog 並預填 `projectId`
 - 子任務詳情頁顯示「所屬項目」面包屑可跳回
 
+### 日曆與 Dashboard 持續顯示（2026-06-11 補充：初版 spec 漏列，實施後補做）
+
+- 項目是持續性任務，在日曆視圖上必須跨整個起止區間顯示，而非單日：
+  - Dashboard 週視圖：項目與時間段任務一樣渲染為橫跨多天的帶狀（`getWindowTasks` 含 project）
+  - 日曆頁：有起止日期的任務（window + project）出現在每一個重疊的日期格與選中日詳情
+- 項目不設截止日期（表單隱藏該欄位、提交置空），避免被當成單日任務畫成圓點
+
 ### 每日寫作動線
 
 「今日寫作」實例照常出現在任務列表/今日視圖（recurring 既有行為），勾掉即打卡；同時出現在項目詳情頁「每日節奏」區。
