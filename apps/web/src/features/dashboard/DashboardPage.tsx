@@ -184,9 +184,13 @@ function DashboardTaskCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 space-y-1">
           <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-            <Link className="min-w-0 truncate text-sm font-medium underline-offset-4 hover:underline" to={`/tasks/${task.id}`}>
+            <button
+              type="button"
+              className="min-w-0 truncate text-left text-sm font-medium underline-offset-4 hover:underline"
+              onClick={onEdit}
+            >
               {task.title}
-            </Link>
+            </button>
             <Badge className="px-1.5 py-0 text-[10px]" variant={task.priority === "high" ? "default" : "secondary"}>
               {PRIORITY_LABEL[task.priority]}
             </Badge>
@@ -301,6 +305,10 @@ export function DashboardPage() {
   const selectedTasks = useMemo(
     () => calendarTasks.filter((task) => task.dueDate === selectedDate && task.status !== "completed").sort(sortDashboardTasks),
     [calendarTasks, selectedDate],
+  );
+  const completedTasks = useMemo(
+    () => calendarTasks.filter((task) => task.status === "completed"),
+    [calendarTasks],
   );
   const selectedCompletedTasks = useMemo(
     () =>
@@ -424,6 +432,7 @@ export function DashboardPage() {
                 ["逾期", overdueTasks.length + overdueWindows.length],
                 ["進行中", inProgressTasks.length],
                 ["本月", monthTasks.length],
+                ["已完成", completedTasks.length],
               ].map(([label, count]) => (
                 <span key={label} className="rounded-md border bg-background/70 px-2 py-0.5 text-xs text-muted-foreground">
                   {label} <span className="font-semibold text-foreground">{count}</span>
@@ -718,21 +727,23 @@ export function DashboardPage() {
                   {overdueTasks.length + overdueWindows.length} 件
                 </span>
               </div>
-              {renderTaskList(overdueTasks.slice(0, 4), "沒有逾期任務")}
-              {overdueWindows.length > 0 && (
-                <div className="space-y-1">
-                  {overdueWindows.slice(0, 4).map((t) => (
-                    <Link
-                      key={t.id}
-                      to={`/tasks/${t.id}`}
-                      className="block rounded-md border border-rose-200 bg-white/60 p-2 text-xs hover:bg-white dark:border-rose-500/30 dark:bg-white/5 dark:hover:bg-white/10"
-                    >
-                      <p className="truncate font-medium">{t.title}（{t.progress}%）</p>
-                      <p className="text-muted-foreground">截止 {t.endDate}</p>
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <div className="max-h-64 overflow-y-auto overscroll-contain space-y-2">
+                {renderTaskList(overdueTasks, "沒有逾期任務")}
+                {overdueWindows.length > 0 && (
+                  <div className="space-y-1">
+                    {overdueWindows.map((t) => (
+                      <Link
+                        key={t.id}
+                        to={`/tasks/${t.id}`}
+                        className="block rounded-md border border-rose-200 bg-white/60 p-2 text-xs hover:bg-white dark:border-rose-500/30 dark:bg-white/5 dark:hover:bg-white/10"
+                      >
+                        <p className="truncate font-medium">{t.title}（{t.progress}%）</p>
+                        <p className="text-muted-foreground">截止 {t.endDate}</p>
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
             </Card>
           )}
 
@@ -758,7 +769,9 @@ export function DashboardPage() {
                   {selectedCompletedTasks.length} 件
                 </span>
               </div>
-              {renderTaskList(selectedCompletedTasks, "")}
+              <div className="max-h-64 overflow-y-auto overscroll-contain">
+                {renderTaskList(selectedCompletedTasks, "")}
+              </div>
             </Card>
           )}
         </aside>
