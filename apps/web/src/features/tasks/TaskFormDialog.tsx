@@ -39,6 +39,18 @@ function todayISO(): string {
   return formatDateKey(new Date());
 }
 
+const LAST_CAT_KEY = "ftm-last-cat";
+
+function getLastCategoryId(): number | null {
+  const v = localStorage.getItem(LAST_CAT_KEY);
+  return v ? Number(v) : null;
+}
+
+function saveLastCategoryId(id: number | null) {
+  if (id) localStorage.setItem(LAST_CAT_KEY, String(id));
+  else localStorage.removeItem(LAST_CAT_KEY);
+}
+
 type RecurrenceMode = "interval" | "anchored";
 
 function recurrenceMode(config: RecurrenceConfig | null | undefined): RecurrenceMode {
@@ -107,7 +119,6 @@ export function TaskFormDialog({
   onOpenChange: (open: boolean) => void;
 }) {
   const isEdit = !!task;
-  // 週期實例：配置屬於系列模板，不在實例上編輯
   const isInstance = task != null && task.parentTaskId != null;
   const createMutation = useCreateTask();
   const updateMutation = useUpdateTask();
@@ -134,7 +145,7 @@ export function TaskFormDialog({
       taskType: task?.taskType ?? "normal",
       recurrenceConfig: task?.recurrenceConfig ?? null,
       dueDate: task?.dueDate ?? todayISO(),
-      categoryId: task?.categoryId ?? null,
+      categoryId: task ? (task.categoryId ?? null) : getLastCategoryId(),
       assigneeId: task?.assigneeId ?? user?.id ?? null,
       startDate: task?.startDate ?? null,
       endDate: task?.endDate ?? null,
@@ -153,7 +164,6 @@ export function TaskFormDialog({
     const input: CreateTaskInput = {
       ...values,
       description: values.description || null,
-      // 項目以起止區間表達，不留截止日期（否則日曆會把它當單日任務畫一個點）
       dueDate: values.taskType === "project" ? null : values.dueDate || null,
       categoryId: values.categoryId || null,
       assigneeId: values.assigneeId || null,
@@ -183,17 +193,22 @@ export function TaskFormDialog({
           <DialogTitle>{promote ? "升級成任務" : isEdit ? "編輯任務" : "新增任務"}</DialogTitle>
           <DialogDescription>填寫任務內容、優先級與截止日期。</DialogDescription>
         </DialogHeader>
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <form className="space-y-3" onSubmit={handleSubmit(onSubmit)} noValidate>
+          {/* 標題 */}
           <div className="space-y-1.5">
             <Label htmlFor="title">標題</Label>
             <Input id="title" {...register("title")} />
             {errors.title && <p className="text-sm text-destructive">{errors.title.message}</p>}
           </div>
+
+          {/* 描述 */}
           <div className="space-y-1.5">
             <Label htmlFor="description">描述</Label>
-            <Textarea id="description" {...register("description")} />
+            <Textarea id="description" rows={2} {...register("description")} />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+
+          {/* 優先級 + 截止日期 */}
+          <div className={`grid gap-3 ${taskType !== "project" ? "grid-cols-2" : "grid-cols-1"}`}>
             <div className="space-y-1.5">
               <Label>優先級</Label>
               <Select
@@ -221,118 +236,130 @@ export function TaskFormDialog({
               </div>
             )}
           </div>
-          <div className="space-y-1.5">
-            <Label>分類</Label>
-            <Select
-              defaultValue={watch("categoryId") ? String(watch("categoryId")) : "none"}
-              onValueChange={(v) => setValue("categoryId", v === "none" ? null : Number(v))}
-            >
-              <SelectTrigger aria-label="分類">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">不分類</SelectItem>
-                {(categories ?? []).map((category) => (
-                  <SelectItem key={category.id} value={String(category.id)}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-1.5">
-            <Label>指派對象</Label>
-            <Select
-              defaultValue={watch("assigneeId") ? String(watch("assigneeId")) : "none"}
-              onValueChange={(v) => setValue("assigneeId", v === "none" ? null : Number(v))}
-            >
-              <SelectTrigger aria-label="指派對象">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="none">未指派</SelectItem>
-                {(members ?? []).map((member) => (
-                  <SelectItem key={member.userId} value={String(member.userId)}>
-                    {member.nickname}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {taskType !== "project" && !isInstance && projects.length > 0 && (
+
+          {/* 分類 + 指派對象 */}
+          <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label>所屬項目</Label>
+              <Label>分類</Label>
               <Select
-                value={watch("projectId") ? String(watch("projectId")) : "none"}
-                onValueChange={(v) => setValue("projectId", v === "none" ? null : Number(v))}
+                defaultValue={watch("categoryId") ? String(watch("categoryId")) : "none"}
+                onValueChange={(v) => {
+                  const id = v === "none" ? null : Number(v);
+                  setValue("categoryId", id);
+                  if (!isEdit) saveLastCategoryId(id);
+                }}
               >
-                <SelectTrigger aria-label="所屬項目">
+                <SelectTrigger aria-label="分類">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">無</SelectItem>
-                  {projects.map((p) => (
-                    <SelectItem key={p.id} value={String(p.id)}>
-                      {p.title}
+                  <SelectItem value="none">不分類</SelectItem>
+                  {(categories ?? []).map((category) => (
+                    <SelectItem key={category.id} value={String(category.id)}>
+                      {category.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
-          {!isInstance && (
-          <div className="grid gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label>任務類型</Label>
+              <Label>指派對象</Label>
               <Select
-                value={taskType}
-                onValueChange={(v) => {
-                  const nextType = v as CreateTaskInput["taskType"];
-                  setValue("taskType", nextType);
-                  setValue(
-                    "recurrenceConfig",
-                    nextType === "recurring" ? defaultForMode("anchored", "week") : null,
-                  );
-                  if (nextType === "window" || nextType === "project") {
-                    const t = todayISO();
-                    if (!watch("startDate")) setValue("startDate", t);
-                    if (!watch("endDate")) setValue("endDate", t);
-                  }
-                }}
+                defaultValue={watch("assigneeId") ? String(watch("assigneeId")) : "none"}
+                onValueChange={(v) => setValue("assigneeId", v === "none" ? null : Number(v))}
               >
-                <SelectTrigger aria-label="任務類型">
+                <SelectTrigger aria-label="指派對象">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="normal">一般</SelectItem>
-                  <SelectItem value="recurring">週期</SelectItem>
-                  <SelectItem value="window">時間段</SelectItem>
-                  <SelectItem value="project">項目</SelectItem>
+                  <SelectItem value="none">未指派</SelectItem>
+                  {(members ?? []).map((member) => (
+                    <SelectItem key={member.userId} value={String(member.userId)}>
+                      {member.nickname}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
-            {taskType === "recurring" && (
+          </div>
+
+          {/* 任務類型 + (重複模式 | 所屬項目) */}
+          {!isInstance && (
+            <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label>重複模式</Label>
+                <Label>任務類型</Label>
                 <Select
-                  value={rMode}
-                  onValueChange={(v) =>
-                    setValue("recurrenceConfig", defaultForMode(v as RecurrenceMode, rUnit === "day" ? "week" : rUnit))
-                  }
+                  value={taskType}
+                  onValueChange={(v) => {
+                    const nextType = v as CreateTaskInput["taskType"];
+                    setValue("taskType", nextType);
+                    setValue(
+                      "recurrenceConfig",
+                      nextType === "recurring" ? defaultForMode("anchored", "week") : null,
+                    );
+                    if (nextType === "window" || nextType === "project") {
+                      const t = todayISO();
+                      if (!watch("startDate")) setValue("startDate", t);
+                      if (!watch("endDate")) setValue("endDate", t);
+                    }
+                  }}
                 >
-                  <SelectTrigger aria-label="重複模式">
+                  <SelectTrigger aria-label="任務類型">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="interval">固定間隔</SelectItem>
-                    <SelectItem value="anchored">對齊特定日</SelectItem>
+                    <SelectItem value="normal">一般</SelectItem>
+                    <SelectItem value="recurring">週期</SelectItem>
+                    <SelectItem value="window">時間段</SelectItem>
+                    <SelectItem value="project">項目</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-            )}
-          </div>
+
+              {/* 第二欄：週期模式 or 所屬項目 */}
+              {taskType === "recurring" ? (
+                <div className="space-y-1.5">
+                  <Label>重複模式</Label>
+                  <Select
+                    value={rMode}
+                    onValueChange={(v) =>
+                      setValue("recurrenceConfig", defaultForMode(v as RecurrenceMode, rUnit === "day" ? "week" : rUnit))
+                    }
+                  >
+                    <SelectTrigger aria-label="重複模式">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="interval">固定間隔</SelectItem>
+                      <SelectItem value="anchored">對齊特定日</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : taskType !== "project" && projects.length > 0 ? (
+                <div className="space-y-1.5">
+                  <Label>所屬項目</Label>
+                  <Select
+                    value={watch("projectId") ? String(watch("projectId")) : "none"}
+                    onValueChange={(v) => setValue("projectId", v === "none" ? null : Number(v))}
+                  >
+                    <SelectTrigger aria-label="所屬項目">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">無</SelectItem>
+                      {projects.map((p) => (
+                        <SelectItem key={p.id} value={String(p.id)}>
+                          {p.title}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+            </div>
           )}
 
+          {/* 週期：固定間隔設定 */}
           {taskType === "recurring" && !isInstance && rMode === "interval" && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -379,6 +406,7 @@ export function TaskFormDialog({
             </div>
           )}
 
+          {/* 週期：對齊特定日設定 */}
           {taskType === "recurring" && !isInstance && rMode === "anchored" && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
@@ -416,6 +444,7 @@ export function TaskFormDialog({
             </div>
           )}
 
+          {/* 時間段 / 項目：起止日期 */}
           {(taskType === "window" || taskType === "project") && (
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
