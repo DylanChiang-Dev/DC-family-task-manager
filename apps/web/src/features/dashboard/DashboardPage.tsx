@@ -313,7 +313,10 @@ export function DashboardPage() {
   const selectedCompletedTasks = useMemo(
     () =>
       calendarTasks
-        .filter((task) => task.dueDate === selectedDate && task.status === "completed")
+        .filter((task) => {
+          if (task.status !== "completed" || !task.completedAt) return false;
+          return formatDateKey(new Date(task.completedAt)) === selectedDate;
+        })
         .sort(sortDashboardTasks),
     [calendarTasks, selectedDate],
   );
