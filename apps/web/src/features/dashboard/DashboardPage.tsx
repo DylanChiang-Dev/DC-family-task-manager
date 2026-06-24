@@ -236,7 +236,11 @@ function DashboardTaskCard({
 export function DashboardPage() {
   const today = useMemo(() => new Date(), []);
   const todayKey = formatDateKey(today);
-  const [anchorDate, setAnchorDate] = useState(() => new Date(today));
+  const [anchorDate, setAnchorDate] = useState(() => {
+    const d = new Date(today);
+    d.setDate(d.getDate() - 1);
+    return d;
+  });
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [showMobileMonth, setShowMobileMonth] = useState(false);
   const [creating, setCreating] = useState(false);
@@ -284,7 +288,7 @@ export function DashboardPage() {
         return {
           date,
           key,
-          tasks: calendarTasks.filter((task) => task.dueDate === key).sort(sortDashboardTasks),
+          tasks: calendarTasks.filter((task) => task.dueDate === key && task.status !== "completed").sort(sortDashboardTasks),
           isPast: key < todayKey,
         };
       }),
@@ -336,7 +340,7 @@ export function DashboardPage() {
     () =>
       Array.from({ length: 14 }, (_, index) => {
         const date = new Date(today);
-        date.setDate(today.getDate() + index);
+        date.setDate(today.getDate() - 1 + index);
         const key = formatDateKey(date);
         return {
           key,
@@ -432,7 +436,7 @@ export function DashboardPage() {
       <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_360px]">
         <section className="min-w-0 space-y-4 lg:order-1">
           <ProjectGanttPanel tasks={tasks ?? []} start={start} todayKey={todayKey} />
-          <Card className="hidden p-4 sm:flex sm:flex-col lg:min-h-[calc(100svh-13rem)]" aria-label="未來 6 週日曆">
+          <Card className="hidden p-4 sm:flex sm:flex-col lg:h-[calc(100svh-13rem)] lg:overflow-hidden" aria-label="未來 6 週日曆">
             <div className="mb-2 flex shrink-0 items-center justify-between">
               <h2 className="text-sm font-semibold">
                 {compactDateLabel(formatDateKey(start))} - {compactDateLabel(formatDateKey(end))}
@@ -463,13 +467,13 @@ export function DashboardPage() {
                   windowTasks.map((t) => ({ id: t.id, startDate: t.startDate!, endDate: t.endDate! })),
                 );
                 return (
-                  <div key={weekIndex} className="flex flex-1 flex-col min-h-0">
-                    <div className="grid min-h-0 flex-1 grid-cols-7 gap-1">
+                  <div key={weekIndex} className="flex flex-1 flex-col min-h-0 overflow-hidden">
+                    <div className="grid min-h-0 flex-1 grid-cols-7 gap-1 [grid-auto-rows:minmax(0,1fr)]">
                       {weekCells.map((cell) => (
                         <button
                           key={cell.key}
                           aria-label={cell.key}
-                          className={`flex min-h-24 flex-col items-stretch justify-start rounded-lg border p-2 text-left transition lg:min-h-0 ${
+                          className={`flex min-h-24 max-h-36 flex-col items-stretch justify-start overflow-hidden rounded-lg border p-2 text-left transition lg:min-h-0 lg:max-h-none ${
                             cell.key === selectedDate ? "border-primary bg-primary/10" : "border-border hover:bg-muted"
                           } ${cell.isPast ? "opacity-50" : "opacity-100"}`}
                           onClick={() => setSelectedDate(cell.key)}
@@ -484,13 +488,8 @@ export function DashboardPage() {
                               </span>
                             )}
                           </div>
-                          <div className="mt-2 min-h-0 flex-1 space-y-1 overflow-hidden">
-                            {cell.tasks.slice(0, 5).map((task) => renderCalendarTask(task))}
-                            {cell.tasks.length > 5 && (
-                              <div className="rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground">
-                                +{cell.tasks.length - 5} 個任務
-                              </div>
-                            )}
+                          <div className="mt-2 min-h-0 flex-1 space-y-1 overflow-y-auto overscroll-contain">
+                            {cell.tasks.map((task) => renderCalendarTask(task))}
                           </div>
                         </button>
                       ))}
