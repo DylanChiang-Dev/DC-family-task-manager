@@ -5,6 +5,7 @@
   "description": "家庭任務管理系統 — 全 Cloudflare 全棧重構（Hono + React + D1）",
   "license": "MIT",
   "type": "module",
+  "packageManager": "pnpm@9.15.4",
   "engines": {
     "node": ">=20",
     "pnpm": ">=9"
