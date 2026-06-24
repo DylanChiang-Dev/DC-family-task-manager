@@ -299,7 +299,14 @@ export function DashboardPage() {
     [start],
   );
   const selectedTasks = useMemo(
-    () => calendarTasks.filter((task) => task.dueDate === selectedDate).sort(sortDashboardTasks),
+    () => calendarTasks.filter((task) => task.dueDate === selectedDate && task.status !== "completed").sort(sortDashboardTasks),
+    [calendarTasks, selectedDate],
+  );
+  const selectedCompletedTasks = useMemo(
+    () =>
+      calendarTasks
+        .filter((task) => task.dueDate === selectedDate && task.status === "completed")
+        .sort(sortDashboardTasks),
     [calendarTasks, selectedDate],
   );
   const selectedScheduleBlocks = useMemo(
@@ -743,6 +750,17 @@ export function DashboardPage() {
             </div>
             {renderTaskList(upcomingTasks, "本月接下來沒有任務")}
           </Card>
+          {selectedCompletedTasks.length > 0 && (
+            <Card className="space-y-2 border-border bg-muted/20 p-3 dark:bg-muted/10">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-muted-foreground">已完成</h3>
+                <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  {selectedCompletedTasks.length} 件
+                </span>
+              </div>
+              {renderTaskList(selectedCompletedTasks, "")}
+            </Card>
+          )}
         </aside>
       </div>
 
